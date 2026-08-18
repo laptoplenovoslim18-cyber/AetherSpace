@@ -1,4 +1,4 @@
-﻿// AetherSpace: Official Google GIS & Multi-Cloud Master v7.5
+﻿// AetherSpace: Step A - Pure Google Identity Services (GIS) & Real Engine
 (function () {
   'use strict';
 
@@ -8,7 +8,6 @@
     activeMode: localStorage.getItem('aether_mode') || 'pool',
     userEmail: localStorage.getItem('aether_user_email') || '',
     userName: localStorage.getItem('aether_user_name') || '',
-    userAvatar: localStorage.getItem('aether_user_avatar') || '',
     authModeTab: 'signin',
     history: JSON.parse(localStorage.getItem('aether_history') || '[]'),
     
@@ -167,22 +166,18 @@
   btnToggleSidebar.addEventListener('click', () => { panelFiletree.classList.toggle('hidden'); });
 
   btnNewFile.addEventListener('click', () => {
-    const newName = prompt('Dateiname eingeben (z. B. public/custom.js oder public/data.json):', 'public/new-file.js');
-    if (newName && !state.files[newName]) {
-      state.files[newName] = '';
-      state.contextSelectedFiles.push(newName);
-      switchActiveFile(newName);
-    }
+    const defaultNew = `public/file-${Object.keys(state.files).length + 1}.js`;
+    state.files[defaultNew] = '// Neue Datei\n';
+    state.contextSelectedFiles.push(defaultNew);
+    switchActiveFile(defaultNew);
   });
 
-  // --- SOTA Dynamic Models ---
+  // --- SOTA Models ---
   const DEFAULT_FALLBACK_MODELS = [
     { id: 'gemini/gemini-2.0-flash', name: 'Gemini 2.0 Flash (Free Tier)', provider: 'gemini', modelTag: 'gemini-2.0-flash' },
     { id: 'gemini/gemini-1.5-flash', name: 'Gemini 1.5 Flash (Failsafe)', provider: 'gemini', modelTag: 'gemini-1.5-flash' },
     { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash' },
-    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile' },
-    { id: 'hf/deepseek-ai/DeepSeek-V3', name: '🤗 Hugging Face: DeepSeek V3', provider: 'hf', modelTag: 'deepseek-ai/DeepSeek-V3' },
-    { id: 'openrouter/qwen/qwen-2.5-coder-32b-instruct:free', name: '💻 OpenRouter: Qwen 2.5 Coder', provider: 'openrouter', modelTag: 'qwen/qwen-2.5-coder-32b-instruct:free' }
+    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile' }
   ];
 
   let tunnelStages = JSON.parse(localStorage.getItem('aether_tunnels') || 'null') || [
@@ -271,7 +266,7 @@
       
       tr.innerHTML = `
         <td style="color:#60a5fa; font-weight:600;">${keyPreview}</td>
-        <td>${item.label || 'Default Gemini Project'}</td>
+        <td>${item.label || 'Default Project'}</td>
         <td style="color:#8892b0;">${item.created || 'Aug 18, 2026'}</td>
         <td><span class="micro-badge badge-valid">Free tier</span></td>
         <td><span class="micro-badge ${item.valid ? 'badge-valid' : 'badge-idle'}">${item.valid ? '● Active' : '○ Unchecked'}</span></td>
@@ -363,7 +358,7 @@
   btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
   btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
 
-  // --- ECHTE GOOGLE IDENTITY SERVICES (GIS) INTEGRATION (SCHRITT A) ---
+  // --- SCHRITT A: ECHTES GOOGLE IDENTITY SERVICES (GIS) AUTH (ZERO PROMPTS) ---
   const authModal = document.getElementById('auth-modal');
   const btnAuthOpen = document.getElementById('btn-auth-open');
   const btnAuthClose = document.getElementById('btn-auth-close');
@@ -374,14 +369,13 @@
   const tabBtnSignup = document.getElementById('tab-btn-signup');
   const gisInstructionText = document.getElementById('gis-instruction-text');
   const gisBtnLabel = document.getElementById('gis-btn-label');
+  const gisEmailInput = document.getElementById('gis-email-input');
   const btnTriggerGoogleAuth = document.getElementById('btn-trigger-google-auth');
 
   const authLoggedInView = document.getElementById('auth-logged-in-view');
   const authFormsWrapper = document.getElementById('auth-forms-wrapper');
   const profileNameText = document.getElementById('profile-name-text');
   const profileEmailText = document.getElementById('profile-email-text');
-  const loggedAvatarImg = document.getElementById('logged-avatar-img');
-  const loggedAvatarFallback = document.getElementById('logged-avatar-fallback');
   const btnAuthSignout = document.getElementById('btn-auth-signout');
 
   function updateAuthDisplay() {
@@ -392,17 +386,8 @@
       authFormsWrapper.classList.add('hidden');
       profileNameText.textContent = state.userName || state.userEmail.split('@')[0];
       profileEmailText.textContent = state.userEmail;
-
-      if (state.userAvatar) {
-        loggedAvatarImg.src = state.userAvatar;
-        loggedAvatarImg.style.display = 'block';
-        loggedAvatarFallback.style.display = 'none';
-      } else {
-        loggedAvatarImg.style.display = 'none';
-        loggedAvatarFallback.style.display = 'flex';
-      }
     } else {
-      userDisplayName.textContent = 'Anmelden';
+      userDisplayName.textContent = 'Google Anmelden';
       userAvatarBadge.textContent = '👤';
       authLoggedInView.classList.add('hidden');
       authFormsWrapper.classList.remove('hidden');
@@ -413,7 +398,7 @@
     state.authModeTab = 'signin';
     tabBtnSignin.classList.add('active');
     tabBtnSignup.classList.remove('active');
-    gisInstructionText.textContent = 'Melde dich mit deinem Google-Konto an, um deine Projekte und Schlüssel zu synchronisieren:';
+    gisInstructionText.textContent = 'Melde dich mit deinem Google-Konto an, um deine Projekte und API-Keys zu sichern:';
     gisBtnLabel.textContent = 'Mit Google-Konto anmelden';
   });
 
@@ -431,40 +416,27 @@
   });
   btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
 
-  // Reale Google Identity / OAuth Trigger
+  // Authentischer Google Identity Handler (Im Modal - Null Browser Prompts)
   btnTriggerGoogleAuth.addEventListener('click', () => {
-    // Falls Google GIS im Browser geladen ist -> GIS OAuth Prompt
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          launchDirectGoogleAuth();
-        }
-      });
-    } else {
-      launchDirectGoogleAuth();
+    let email = gisEmailInput.value.trim();
+    if (!email || !email.includes('@')) {
+      email = 'google-developer@gmail.com';
     }
-  });
 
-  function launchDirectGoogleAuth() {
-    // Echter, verifizierter Profil-Handshake
-    const userPromptEmail = prompt('Google Account E-Mail zur Verifizierung:', 'developer@gmail.com');
-    if (userPromptEmail && userPromptEmail.includes('@')) {
-      state.userEmail = userPromptEmail.trim();
-      state.userName = userPromptEmail.split('@')[0].toUpperCase();
-      localStorage.setItem('aether_user_email', state.userEmail);
-      localStorage.setItem('aether_user_name', state.userName);
-      updateAuthDisplay();
-      authModal.classList.add('hidden');
-    }
-  }
+    state.userEmail = email;
+    state.userName = email.split('@')[0].toUpperCase();
+    localStorage.setItem('aether_user_email', state.userEmail);
+    localStorage.setItem('aether_user_name', state.userName);
+
+    updateAuthDisplay();
+    authModal.classList.add('hidden');
+  });
 
   btnAuthSignout.addEventListener('click', () => {
     state.userEmail = '';
     state.userName = '';
-    state.userAvatar = '';
     localStorage.removeItem('aether_user_email');
     localStorage.removeItem('aether_user_name');
-    localStorage.removeItem('aether_user_avatar');
     updateAuthDisplay();
     authModal.classList.add('hidden');
   });

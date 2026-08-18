@@ -241,14 +241,14 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .vault-add-box { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .add-box-actions { display: flex; gap: 6px; }
 
-/* Auth Modal: Google Identity Services (GIS) Flow */
+/* Auth Modal: Google Identity Services (GIS) Schritt A */
 .auth-modal-card { width: 400px; }
 .auth-tabs-header { display: flex; gap: 8px; }
 .auth-header-tab { background: transparent; border: none; font-size: 14px; font-weight: 700; color: var(--text-muted); cursor: pointer; padding-bottom: 4px; border-bottom: 2px solid transparent; }
 .auth-header-tab.active { color: #fff; border-bottom-color: var(--accent); }
 
-.google-gis-container { margin: 16px 0; display: flex; justify-content: center; width: 100%; }
-.btn-google-gis { width: 100%; background: #ffffff; color: #1f2937; font-weight: 600; padding: 10px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: none; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+.gis-form-group { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+.btn-google-gis { width: 100%; background: #ffffff; color: #1f2937; font-weight: 600; padding: 10px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: none; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; font-size: 12px; }
 .btn-google-gis:hover { background: #f3f4f6; }
 
 .auth-security-note { font-size: 11px; color: var(--text-muted); line-height: 1.4; text-align: center; }
@@ -257,7 +257,6 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .auth-profile-view { display: flex; flex-direction: column; gap: 12px; }
 .profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; }
 .profile-avatar { font-size: 24px; background: var(--bg-surface); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
-.profile-avatar-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
 .profile-details { display: flex; flex-direction: column; gap: 2px; }
 .profile-details strong { font-size: 13px; color: var(--text-main); }
 .profile-details small { color: var(--text-muted); font-size: 11px; }
