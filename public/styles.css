@@ -100,22 +100,11 @@ html, body {
 .btn-icon:hover { color: var(--text-main); background: var(--bg-active); }
 .btn-sm { padding: 3px 8px; font-size: 11px; }
 
-/* Google Avatar Badge (Violettes L wie in Google AI Studio) */
+/* Google Avatar Badge */
 .btn-auth-header { display: flex; align-items: center; gap: 6px; }
-.avatar-google {
-  background-color: #7c3aed;
-  color: #fff;
-  font-weight: 700;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-}
+.avatar-google-large { background-color: #7c3aed; color: #fff; font-size: 22px; font-weight: 700; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-/* Main Workspace */
+/* Workspace */
 .workspace { display: flex; flex: 1; height: calc(100vh - 62px); position: relative; overflow: hidden; }
 .panel { display: flex; flex-direction: column; background-color: var(--bg-panel); overflow: hidden; height: 100%; }
 
@@ -124,7 +113,7 @@ html, body {
 .filetree-actions { display: flex; gap: 4px; }
 .filetree-body { flex: 1; overflow-y: auto; padding: 6px 4px; font-family: var(--font-mono); font-size: 11px; }
 
-.tree-item { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 3px; cursor: pointer; user-select: none; }
+.tree-item { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 3px; cursor: pointer; user-select: none; }
 .tree-item:hover { background: var(--bg-surface); color: #fff; }
 .tree-item.active { background: var(--bg-active); color: var(--border-focus); font-weight: 600; }
 .tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -198,15 +187,13 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 
 .vault-add-box { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 
-/* Auth Profile Card (Bild 173) */
+/* Auth Profile Card */
 .auth-modal-card { width: 380px; }
 .auth-profile-view { display: flex; flex-direction: column; gap: 14px; }
 .profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; }
-.avatar-google-large { background-color: #7c3aed; color: #fff; font-size: 22px; font-weight: 700; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .profile-details { display: flex; flex-direction: column; gap: 2px; }
 .profile-details strong { font-size: 14px; color: var(--text-main); }
 .profile-details small { color: var(--text-muted); font-size: 11px; font-family: var(--font-mono); }
-.account-actions-stack { display: flex; flex-direction: column; gap: 6px; }
 
 /* Modal Styles */
 .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }

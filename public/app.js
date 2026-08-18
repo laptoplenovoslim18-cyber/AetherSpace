@@ -1,12 +1,14 @@
-﻿// AetherSpace: Step A - Official Google Identity & Pure Engine Core
+﻿// AetherSpace: SOTA Master Engine v8.5
 (function () {
   'use strict';
 
+  // --- State & Session Store ---
   const state = {
     theme: localStorage.getItem('aether_theme') || 'dark',
     activeMode: localStorage.getItem('aether_mode') || 'pool',
-    userEmail: localStorage.getItem('aether_user_email') || 'lolqs5014@gmail.com',
-    userName: localStorage.getItem('aether_user_name') || 'lolqs5014',
+    userEmail: localStorage.getItem('aether_user_email') || '',
+    userName: localStorage.getItem('aether_user_name') || '',
+    history: JSON.parse(localStorage.getItem('aether_history') || '[]'),
     
     files: {
       'public/index.html': localStorage.getItem('aether_saved_code') || '',
@@ -18,7 +20,7 @@
     contextSelectedFiles: ['public/index.html'],
 
     keyPools: {
-      gemini: JSON.parse(localStorage.getItem('aether_keys_gemini') || '[{"key":"AIzaSyDefaultPlaceholder","label":"Default Gemini Project","created":"Aug 18, 2026","valid":true,"active":true}]'),
+      gemini: JSON.parse(localStorage.getItem('aether_keys_gemini') || '[]'),
       groq: JSON.parse(localStorage.getItem('aether_keys_groq') || '[]'),
       hf: JSON.parse(localStorage.getItem('aether_keys_hf') || '[]')
     },
@@ -38,26 +40,36 @@
   const btnOpenSettings = document.getElementById('btn-open-settings');
   const btnCloseSettings = document.getElementById('btn-close-settings');
 
-  function openNavDrawer() { navDrawer.classList.remove('hidden'); drawerBackdrop.classList.remove('hidden'); }
-  function closeNavDrawer() { navDrawer.classList.add('hidden'); drawerBackdrop.classList.add('hidden'); }
+  function openNavDrawer() {
+    if (navDrawer && drawerBackdrop) {
+      navDrawer.classList.remove('hidden');
+      drawerBackdrop.classList.remove('hidden');
+    }
+  }
+  function closeNavDrawer() {
+    if (navDrawer && drawerBackdrop) {
+      navDrawer.classList.add('hidden');
+      drawerBackdrop.classList.add('hidden');
+    }
+  }
 
-  btnHamburger.addEventListener('click', openNavDrawer);
-  btnCloseDrawer.addEventListener('click', closeNavDrawer);
-  drawerBackdrop.addEventListener('click', closeNavDrawer);
+  if (btnHamburger) btnHamburger.addEventListener('click', openNavDrawer);
+  if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeNavDrawer);
+  if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeNavDrawer);
 
-  btnOpenSettings.addEventListener('click', () => { runSettingsDrawer.classList.toggle('hidden'); });
-  btnCloseSettings.addEventListener('click', () => { runSettingsDrawer.classList.add('hidden'); });
+  if (btnOpenSettings && runSettingsDrawer) btnOpenSettings.addEventListener('click', () => { runSettingsDrawer.classList.toggle('hidden'); });
+  if (btnCloseSettings && runSettingsDrawer) btnCloseSettings.addEventListener('click', () => { runSettingsDrawer.classList.add('hidden'); });
 
-  navOpenVault.addEventListener('click', () => { closeNavDrawer(); btnVaultOpen.click(); });
-  navOpenAuth.addEventListener('click', () => { closeNavDrawer(); btnAuthOpen.click(); });
+  if (navOpenVault) navOpenVault.addEventListener('click', () => { closeNavDrawer(); btnVaultOpen.click(); });
+  if (navOpenAuth) navOpenAuth.addEventListener('click', () => { closeNavDrawer(); btnAuthOpen.click(); });
 
   const outputLengthSlider = document.getElementById('studio-output-length');
   const outputLengthVal = document.getElementById('output-length-val');
-  outputLengthSlider.addEventListener('input', (e) => { outputLengthVal.textContent = e.target.value; });
+  if (outputLengthSlider && outputLengthVal) outputLengthSlider.addEventListener('input', (e) => { outputLengthVal.textContent = e.target.value; });
 
   const tempSlider = document.getElementById('studio-temperature');
   const tempVal = document.getElementById('temp-val');
-  tempSlider.addEventListener('input', (e) => { tempVal.textContent = e.target.value; });
+  if (tempSlider && tempVal) tempSlider.addEventListener('input', (e) => { tempVal.textContent = e.target.value; });
 
   // --- Resizing ---
   const workspace = document.getElementById('workspace');
@@ -71,18 +83,19 @@
   let activeResizer = null;
 
   function initResizers() {
+    if (!resizer0 || !resizer1 || !resizer2) return;
     resizer0.addEventListener('mousedown', () => { activeResizer = 'tree'; });
     resizer1.addEventListener('mousedown', () => { activeResizer = 'ai'; });
     resizer2.addEventListener('mousedown', () => { activeResizer = 'preview'; });
 
     window.addEventListener('mousemove', (e) => {
-      if (!activeResizer) return;
+      if (!activeResizer || !workspace) return;
       const rect = workspace.getBoundingClientRect();
-      if (activeResizer === 'tree') {
+      if (activeResizer === 'tree' && panelFiletree) {
         panelFiletree.style.width = `${Math.max(140, Math.min(e.clientX - rect.left, 300))}px`;
-      } else if (activeResizer === 'ai') {
-        panelAi.style.width = `${Math.max(260, Math.min(e.clientX - rect.left - panelFiletree.offsetWidth, 560))}px`;
-      } else if (activeResizer === 'preview') {
+      } else if (activeResizer === 'ai' && panelAi) {
+        panelAi.style.width = `${Math.max(260, Math.min(e.clientX - rect.left - (panelFiletree ? panelFiletree.offsetWidth : 0), 560))}px`;
+      } else if (activeResizer === 'preview' && panelPreview) {
         panelPreview.style.width = `${Math.max(280, rect.right - e.clientX)}px`;
       }
     });
@@ -97,6 +110,7 @@
   const editorTabsContainer = document.getElementById('editor-tabs-container');
 
   function renderFileTree() {
+    if (!filetreeList) return;
     filetreeList.innerHTML = '';
     Object.keys(state.files).forEach(fileName => {
       const row = document.createElement('div');
@@ -112,12 +126,12 @@
       filetreeList.appendChild(row);
     });
 
-    editorTabsContainer.innerHTML = `<button class="tab-btn active">${state.activeFile.split('/').pop()}</button>`;
+    if (editorTabsContainer) editorTabsContainer.innerHTML = `<button class="tab-btn active">${state.activeFile.split('/').pop()}</button>`;
   }
 
-  btnToggleSidebar.addEventListener('click', () => { panelFiletree.classList.toggle('hidden'); });
-  btnNewFile.addEventListener('click', () => {
-    const fName = `public/app-module-${Date.now().toString().slice(-4)}.js`;
+  if (btnToggleSidebar && panelFiletree) btnToggleSidebar.addEventListener('click', () => { panelFiletree.classList.toggle('hidden'); });
+  if (btnNewFile) btnNewFile.addEventListener('click', () => {
+    const fName = `public/script-${Date.now().toString().slice(-4)}.js`;
     state.files[fName] = '// Neues Modul\n';
     renderFileTree();
   });
@@ -139,6 +153,7 @@
   const btnAddTunnel = document.getElementById('btn-add-tunnel');
 
   function renderTunnelList() {
+    if (!tunnelListEl) return;
     tunnelListEl.innerHTML = '';
     tunnelStages.forEach((stage, idx) => {
       const node = document.createElement('div');
@@ -182,7 +197,7 @@
 
   function saveTunnelConfig() { localStorage.setItem('aether_tunnels', JSON.stringify(tunnelStages)); }
 
-  btnAddTunnel.addEventListener('click', () => {
+  if (btnAddTunnel) btnAddTunnel.addEventListener('click', () => {
     tunnelStages.push({ modelId: 'gemini/gemini-2.0-flash', role: `Feinschliff ${tunnelStages.length + 1}` });
     renderTunnelList();
     saveTunnelConfig();
@@ -202,6 +217,7 @@
   const btnCancelNewKey = document.getElementById('btn-cancel-new-key');
 
   function renderVaultTable() {
+    if (!vaultKeysTbody) return;
     vaultKeysTbody.innerHTML = '';
     const pool = state.keyPools[state.activeVaultTab] || [];
 
@@ -240,10 +256,10 @@
     });
   });
 
-  btnVaultCreateKey.addEventListener('click', () => { vaultAddBox.classList.remove('hidden'); newKeyInput.focus(); });
-  btnCancelNewKey.addEventListener('click', () => { vaultAddBox.classList.add('hidden'); });
+  if (btnVaultCreateKey && vaultAddBox && newKeyInput) btnVaultCreateKey.addEventListener('click', () => { vaultAddBox.classList.remove('hidden'); newKeyInput.focus(); });
+  if (btnCancelNewKey && vaultAddBox) btnCancelNewKey.addEventListener('click', () => { vaultAddBox.classList.add('hidden'); });
 
-  btnSaveNewKey.addEventListener('click', async () => {
+  if (btnSaveNewKey && newKeyInput) btnSaveNewKey.addEventListener('click', async () => {
     const k = newKeyInput.value.trim();
     if (!k) return;
 
@@ -259,7 +275,7 @@
 
     state.keyPools[state.activeVaultTab].push({
       key: k,
-      label: newKeyLabel.value.trim() || 'My Key',
+      label: newKeyLabel.value.trim() || 'Default Gemini Project',
       created: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       valid: isValid,
       active: true
@@ -270,66 +286,64 @@
     renderVaultTable();
   });
 
-  btnVaultOpen.addEventListener('click', () => { renderVaultTable(); vaultModal.classList.remove('hidden'); });
-  btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
-  btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
+  if (btnVaultOpen && vaultModal) btnVaultOpen.addEventListener('click', () => { renderVaultTable(); vaultModal.classList.remove('hidden'); });
+  if (btnVaultClose && vaultModal) btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
+  if (btnModalDone && vaultModal) btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
 
-  // --- SCHRITT A: GOOGLE IDENTITY PROFILE MANAGEMENT (Bild 173) ---
+  // --- AUTH MANAGEMENT (SCHRITT A) ---
   const authModal = document.getElementById('auth-modal');
   const btnAuthOpen = document.getElementById('btn-auth-open');
   const btnAuthClose = document.getElementById('btn-auth-close');
   const userDisplayName = document.getElementById('user-display-name');
+  const userAvatarBadge = document.getElementById('user-avatar-badge');
   const authLoggedInView = document.getElementById('auth-logged-in-view');
   const authFormsWrapper = document.getElementById('auth-forms-wrapper');
   const profileNameText = document.getElementById('profile-name-text');
   const profileEmailText = document.getElementById('profile-email-text');
   const btnAuthSignout = document.getElementById('btn-auth-signout');
-  const btnSwitchGoogleAcc = document.getElementById('btn-switch-google-acc');
-  const gisEmailDirect = document.getElementById('gis-email-direct');
-  const btnVerifyGoogleDirect = document.getElementById('btn-verify-google-direct');
+  const authEmailInput = document.getElementById('auth-email-input');
+  const btnSubmitAuthDirect = document.getElementById('btn-submit-auth-direct');
 
   function updateAuthDisplay() {
-    if (state.userEmail) {
-      userDisplayName.textContent = state.userEmail.split('@')[0] + ' ✓';
-      authLoggedInView.classList.remove('hidden');
-      authFormsWrapper.classList.add('hidden');
-      profileNameText.textContent = state.userEmail.split('@')[0];
-      profileEmailText.textContent = state.userEmail;
+    if (state.userEmail && state.userEmail.length > 0) {
+      if (userDisplayName) userDisplayName.textContent = state.userEmail.split('@')[0] + ' ✓';
+      if (userAvatarBadge) userAvatarBadge.textContent = '👤';
+      if (authLoggedInView) authLoggedInView.classList.remove('hidden');
+      if (authFormsWrapper) authFormsWrapper.classList.add('hidden');
+      if (profileNameText) profileNameText.textContent = state.userEmail.split('@')[0];
+      if (profileEmailText) profileEmailText.textContent = state.userEmail;
     } else {
-      userDisplayName.textContent = 'Google Anmelden';
-      authLoggedInView.classList.add('hidden');
-      authFormsWrapper.classList.remove('hidden');
+      if (userDisplayName) userDisplayName.textContent = 'Anmelden';
+      if (userAvatarBadge) userAvatarBadge.textContent = '👤';
+      if (authLoggedInView) authLoggedInView.classList.add('hidden');
+      if (authFormsWrapper) authFormsWrapper.classList.remove('hidden');
     }
   }
 
-  btnAuthOpen.addEventListener('click', () => { updateAuthDisplay(); authModal.classList.remove('hidden'); });
-  btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
+  if (btnAuthOpen && authModal) btnAuthOpen.addEventListener('click', () => { updateAuthDisplay(); authModal.classList.remove('hidden'); });
+  if (btnAuthClose && authModal) btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
 
-  btnSwitchGoogleAcc.addEventListener('click', () => {
-    authLoggedInView.classList.add('hidden');
-    authFormsWrapper.classList.remove('hidden');
-    gisEmailDirect.focus();
-  });
-
-  btnVerifyGoogleDirect.addEventListener('click', () => {
-    const em = gisEmailDirect.value.trim();
+  if (btnSubmitAuthDirect && authEmailInput) btnSubmitAuthDirect.addEventListener('click', () => {
+    const em = authEmailInput.value.trim();
     if (em && em.includes('@')) {
       state.userEmail = em;
       state.userName = em.split('@')[0];
       localStorage.setItem('aether_user_email', state.userEmail);
       localStorage.setItem('aether_user_name', state.userName);
       updateAuthDisplay();
-      authModal.classList.add('hidden');
+      if (authModal) authModal.classList.add('hidden');
+    } else {
+      alert('Bitte eine gueltige E-Mail eingeben.');
     }
   });
 
-  btnAuthSignout.addEventListener('click', () => {
+  if (btnAuthSignout) btnAuthSignout.addEventListener('click', () => {
     state.userEmail = '';
     state.userName = '';
     localStorage.removeItem('aether_user_email');
     localStorage.removeItem('aether_user_name');
     updateAuthDisplay();
-    authModal.classList.add('hidden');
+    if (authModal) authModal.classList.add('hidden');
   });
 
   // --- Mode Toggle & Theme ---
@@ -338,6 +352,7 @@
   const btnTheme = document.getElementById('btn-theme');
 
   function updateModeUI() {
+    if (!modeToggle || !modePillText) return;
     if (state.activeMode === 'free') {
       modeToggle.classList.add('free-mode');
       modePillText.textContent = '$0 Gratis Mesh';
@@ -348,12 +363,12 @@
     localStorage.setItem('aether_mode', state.activeMode);
   }
 
-  modeToggle.addEventListener('click', () => {
+  if (modeToggle) modeToggle.addEventListener('click', () => {
     state.activeMode = (state.activeMode === 'pool') ? 'free' : 'pool';
     updateModeUI();
   });
 
-  btnTheme.addEventListener('click', () => {
+  if (btnTheme) btnTheme.addEventListener('click', () => {
     state.theme = (state.theme === 'dark') ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', state.theme);
     btnTheme.textContent = (state.theme === 'dark') ? '🌙' : '☀️';
@@ -370,9 +385,9 @@
   // --- Reale KI-Ausfuehrung ---
   async function callAI(modelConfig, prompt, systemPrompt) {
     const reg = DEFAULT_FALLBACK_MODELS.find(m => m.id === modelConfig.modelId) || DEFAULT_FALLBACK_MODELS[0];
-    const searchGrounding = document.getElementById('studio-search-toggle').checked;
+    const searchGrounding = document.getElementById('studio-search-toggle')?.checked || false;
 
-    // 1. Google AI Studio Key-Pool
+    // 1. Google AI Studio Key-Pool (Prioritaet)
     if (state.activeMode === 'pool') {
       const activeGeminiKey = getActiveKey('gemini');
       if (reg.provider === 'gemini' && activeGeminiKey && !activeGeminiKey.includes('Placeholder')) {
@@ -382,7 +397,7 @@
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${t}:generateContent?key=${activeGeminiKey}`;
             const bodyPayload = {
               contents: [{ role: 'user', parts: [{ text: `${systemPrompt ? `[SYSTEM: ${systemPrompt}]\n\n` : ''}${prompt}` }] }],
-              generationConfig: { temperature: parseFloat(tempSlider.value) || 0.2, maxOutputTokens: parseInt(outputLengthSlider.value) || 65536 }
+              generationConfig: { temperature: parseFloat(tempSlider?.value) || 0.2, maxOutputTokens: parseInt(outputLengthSlider?.value) || 65536 }
             };
             if (searchGrounding) bodyPayload.tools = [{ googleSearch: {} }];
 
@@ -511,61 +526,75 @@
   const exportFilenameInput = document.getElementById('export-filename');
 
   function updateLineNumbers() {
+    if (!editor || !lineNumbers) return;
     const lines = editor.value.split('\n').length;
     lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
   }
 
   function runCodeInSandbox() {
+    if (!editor || !sandboxFrame) return;
     const code = editor.value;
     const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
     sandboxFrame.src = URL.createObjectURL(blob);
   }
 
   async function executePipeline() {
+    if (!aiInput || !btnSend) return;
     const prompt = aiInput.value.trim();
     if (!prompt) return;
 
     aiInput.value = '';
     btnSend.disabled = true;
-    sendSpinner.classList.remove('hidden');
-    sendText.textContent = 'Generiere...';
+    if (sendSpinner) sendSpinner.classList.remove('hidden');
+    if (sendText) sendText.textContent = 'Generiere...';
 
-    const msg = document.createElement('div');
-    msg.className = 'message user-message';
-    msg.textContent = prompt;
-    chatHistory.appendChild(msg);
+    if (chatHistory) {
+      const msg = document.createElement('div');
+      msg.className = 'message user-message';
+      msg.textContent = prompt;
+      chatHistory.appendChild(msg);
+    }
 
     const activeStage = tunnelStages[0] || { modelId: 'gemini/gemini-2.0-flash', role: 'Architektur' };
     const res = await callAI(activeStage, prompt, 'Du bist ein Elite-Webentwickler.');
 
-    editor.value = res.code;
-    state.files[state.activeFile] = res.code;
-    localStorage.setItem('aether_saved_code', res.code);
-    updateLineNumbers();
-    runCodeInSandbox();
+    if (editor) {
+      editor.value = res.code;
+      state.files[state.activeFile] = res.code;
+      localStorage.setItem('aether_saved_code', res.code);
+      updateLineNumbers();
+      runCodeInSandbox();
+    }
 
-    const aiMsg = document.createElement('div');
-    aiMsg.className = 'message ai-message';
-    aiMsg.innerHTML = `Code generiert. <div class="attribution-badge">✓ ${res.modelUsed}</div>`;
-    chatHistory.appendChild(aiMsg);
-    modelAttribution.textContent = res.modelUsed;
+    if (chatHistory) {
+      const aiMsg = document.createElement('div');
+      aiMsg.className = 'message ai-message';
+      aiMsg.innerHTML = `Code generiert. <div class="attribution-badge">✓ ${res.modelUsed}</div>`;
+      chatHistory.appendChild(aiMsg);
+    }
+
+    if (modelAttribution) modelAttribution.textContent = res.modelUsed;
 
     btnSend.disabled = false;
-    sendSpinner.classList.add('hidden');
-    sendText.textContent = 'Pipeline starten';
+    if (sendSpinner) sendSpinner.classList.add('hidden');
+    if (sendText) sendText.textContent = 'Pipeline starten';
   }
 
-  btnSend.addEventListener('click', executePipeline);
-  aiInput.addEventListener('keydown', (e) => {
+  if (btnSend) btnSend.addEventListener('click', executePipeline);
+  if (aiInput) aiInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       executePipeline();
     }
   });
 
-  document.getElementById('btn-run').addEventListener('click', runCodeInSandbox);
-  document.getElementById('btn-copy').addEventListener('click', () => { navigator.clipboard.writeText(editor.value); });
-  document.getElementById('btn-clear').addEventListener('click', () => {
+  const btnRun = document.getElementById('btn-run');
+  const btnCopy = document.getElementById('btn-copy');
+  const btnClear = document.getElementById('btn-clear');
+
+  if (btnRun) btnRun.addEventListener('click', runCodeInSandbox);
+  if (btnCopy && editor) btnCopy.addEventListener('click', () => { navigator.clipboard.writeText(editor.value); });
+  if (btnClear && editor) btnClear.addEventListener('click', () => {
     editor.value = '';
     state.files[state.activeFile] = '';
     updateLineNumbers();
@@ -577,7 +606,9 @@
   updateAuthDisplay();
   renderFileTree();
   renderTunnelList();
-  editor.value = state.files['public/index.html'] || '';
-  updateLineNumbers();
-  if (editor.value.trim().length > 0) runCodeInSandbox();
+  if (editor) {
+    editor.value = state.files['public/index.html'] || '';
+    updateLineNumbers();
+    if (editor.value.trim().length > 0) runCodeInSandbox();
+  }
 })();

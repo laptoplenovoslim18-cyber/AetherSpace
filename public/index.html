@@ -6,12 +6,11 @@
   <title>AetherSpace</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div class="app-container">
     
-    <!-- Linkes Nav-Menue (Google AI Studio Style) -->
+    <!-- Linkes Navigations-Menue (Google AI Studio Slide-Out) -->
     <aside id="nav-drawer" class="nav-drawer hidden">
       <div class="nav-drawer-header">
         <div class="brand">
@@ -27,7 +26,7 @@
         
         <div class="nav-section-title">SCHNITTSTELLEN</div>
         <button class="nav-item" id="nav-open-vault">🔑 API-Keys Dashboard</button>
-        <button class="nav-item" id="nav-open-auth">👤 Mein Google-Konto</button>
+        <button class="nav-item" id="nav-open-auth">👤 Mein Konto & Profil</button>
 
         <div class="nav-section-title">EXTERNE CLOUD</div>
         <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud ↗</a>
@@ -37,7 +36,7 @@
     </aside>
     <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
 
-    <!-- Rechtes Panel: Google AI Studio Run Settings -->
+    <!-- Rechtes Panel: Google AI Studio Run Settings (Bild 160 & 161) -->
     <aside id="run-settings-drawer" class="run-settings-drawer hidden">
       <div class="run-settings-header">
         <span>Run settings</span>
@@ -65,20 +64,42 @@
         </div>
 
         <div class="setting-block">
+          <label class="setting-label">Tools & Grounding</label>
+          <div class="tools-toggle-stack">
+            <label class="tool-switch-row">
+              <span>Grounding with Google Search</span>
+              <input type="checkbox" id="studio-search-toggle">
+            </label>
+            <label class="tool-switch-row">
+              <span>Code execution (Sandbox)</span>
+              <input type="checkbox" id="studio-code-exec" checked>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-block">
           <div class="slider-header">
             <label class="setting-label">Output length</label>
             <span id="output-length-val" class="slider-val">65536</span>
           </div>
           <input type="range" id="studio-output-length" min="1024" max="65536" step="1024" value="65536" class="range-slider">
         </div>
+
+        <div class="setting-block">
+          <div class="slider-header">
+            <label class="setting-label">Temperature</label>
+            <span id="temp-val" class="slider-val">0.2</span>
+          </div>
+          <input type="range" id="studio-temperature" min="0.0" max="1.0" step="0.05" value="0.2" class="range-slider">
+        </div>
       </div>
     </aside>
 
-    <!-- Top Header -->
+    <!-- Top Navigation Bar -->
     <header class="app-header">
       <div class="brand-group">
         <button id="btn-hamburger" class="btn btn-icon" title="Hauptmenü">☰</button>
-        <button id="btn-toggle-sidebar" class="btn btn-icon" title="Dateibaum">📁</button>
+        <button id="btn-toggle-sidebar" class="btn btn-icon" title="Dateibaum ein-/ausklappen">📁</button>
         <div class="brand">
           <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
           <span class="brand-title">AetherSpace</span>
@@ -86,22 +107,22 @@
       </div>
 
       <div class="header-controls">
-        <div class="mode-toggle-pill" id="mode-toggle">
+        <div class="mode-toggle-pill" id="mode-toggle" title="Klick: Zwischen Key-Pool und $0 Gratis-Mesh wechseln">
           <span class="mode-pill-dot"></span>
           <span id="mode-pill-text">Key-Pool Aktiv</span>
         </div>
 
-        <button id="btn-theme" class="btn btn-icon" title="Theme wechseln">🌙</button>
+        <button id="btn-theme" class="btn btn-icon" title="Theme wechseln (Dark/Light)">🌙</button>
 
         <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen-Tresor">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
           <span id="vault-btn-label">API Keys</span>
         </button>
 
-        <!-- Profil-Button (Google Avatar & Name) -->
-        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Google Konto verwalten">
-          <span id="user-avatar-badge" class="avatar-badge avatar-google">L</span>
-          <span id="user-display-name">lolqs5014 ✓</span>
+        <!-- Profil-Button -->
+        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Konto verwalten">
+          <span id="user-avatar-badge" class="avatar-badge">👤</span>
+          <span id="user-display-name">Anmelden</span>
         </button>
 
         <button id="btn-share" class="btn btn-outline" title="Projekt teilen">
@@ -111,7 +132,7 @@
 
         <button id="btn-open-settings" class="btn btn-outline">⚙️ Settings</button>
 
-        <button id="btn-run" class="btn btn-primary" title="Code rendern">
+        <button id="btn-run" class="btn btn-primary" title="Code in Sandbox rendern">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           ▶ Play
         </button>
@@ -121,11 +142,13 @@
     <!-- Main Workspace -->
     <main class="workspace" id="workspace">
       
-      <!-- VS Code File Explorer (Left) -->
+      <!-- VS Code File Explorer (Left Sidebar) -->
       <aside class="panel panel-filetree" id="panel-filetree">
         <div class="panel-header">
           <span class="panel-title">Explorer</span>
-          <button id="btn-new-file" class="btn-icon">+ Datei</button>
+          <div class="filetree-actions">
+            <button id="btn-new-file" class="btn-icon" title="Neue Datei anlegen">+ Datei</button>
+          </div>
         </div>
         <div class="filetree-body" id="filetree-list"></div>
       </aside>
@@ -136,10 +159,16 @@
       <section class="panel panel-ai" id="panel-ai">
         <div class="panel-header">
           <span class="panel-title">Pipeline</span>
-          <button id="btn-add-tunnel" class="btn-icon">+ Stufe</button>
+          <div class="pipeline-header-actions">
+            <button id="btn-teleport" class="btn-icon" title="Chat-Kontext komprimieren & kopieren">⏩ Teleport</button>
+            <button id="btn-add-tunnel" class="btn-icon" title="KI-Stufe hinzufügen">+ Stufe</button>
+          </div>
         </div>
+
         <div class="tunnel-config-container" id="tunnel-list"></div>
+
         <div class="panel-body chat-history" id="chat-history"></div>
+
         <div class="panel-footer chat-input-wrapper">
           <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein 2D-Auto-Ausweichspiel mit Canvas & Punktezähler')..." rows="2"></textarea>
           <button id="btn-send" class="btn btn-secondary">
@@ -149,17 +178,19 @@
         </div>
       </section>
 
+      <!-- Resizer 1 -->
       <div class="resizer" id="resizer-1"></div>
 
       <!-- Spalte 2: Code-Editor -->
       <section class="panel panel-editor" id="panel-editor">
         <div class="panel-header">
           <div class="editor-tabs" id="editor-tabs-container">
-            <button class="tab-btn active">index.html</button>
+            <button class="tab-btn active" data-file="public/index.html">index.html</button>
           </div>
           <div class="editor-actions">
-            <button id="btn-copy" class="btn-icon">Kopieren</button>
-            <button id="btn-clear" class="btn-icon">Leeren</button>
+            <button id="btn-history-toggle" class="btn-icon" title="Projekt-Historie / Snapshots">📚 History</button>
+            <button id="btn-copy" class="btn-icon" title="Code kopieren">Kopieren</button>
+            <button id="btn-clear" class="btn-icon" title="Editor leeren">Leeren</button>
           </div>
         </div>
         <div class="panel-body editor-wrapper">
@@ -172,44 +203,98 @@
         </div>
       </section>
 
+      <!-- Resizer 2 -->
       <div class="resizer" id="resizer-2"></div>
 
-      <!-- Spalte 3: Sandbox Vorschau (100% Dark) -->
+      <!-- Spalte 3: Sandbox Vorschau & Cloud-Staging Hub -->
       <section class="panel panel-preview" id="panel-preview">
         <div class="panel-header">
-          <span class="panel-title">Vorschau</span>
+          <div class="preview-title-group">
+            <span class="panel-title">Vorschau</span>
+            <span id="diagnostic-pill" class="diagnostic-pill hidden" title="Diagnose-Status">0 Fehler</span>
+          </div>
+          
           <div class="preview-actions">
-            <input type="text" id="export-filename" class="export-input" placeholder="app-name">
-            <button id="btn-export" class="btn btn-icon">Export</button>
-            <button id="btn-auto-heal" class="btn btn-heal">Auto-Heal</button>
-            <button id="btn-reload-preview" class="btn-icon">Neu</button>
+            <div class="export-group">
+              <input type="text" id="export-filename" class="export-input" placeholder="app-name" title="Dateinamen anpassen">
+              <span id="export-ext-label" class="export-ext">.html</span>
+              <button id="btn-export" class="btn btn-icon btn-export-action" title="Datei herunterladen">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Export
+              </button>
+            </div>
+
+            <!-- Cloud-Staging Dropdown -->
+            <div class="cloud-staging-dropdown">
+              <button id="btn-cloud-menu" class="btn btn-icon" title="In Cloud auslagern">
+                🚀 Cloud ▾
+              </button>
+              <div id="cloud-staging-menu" class="cloud-menu-content hidden">
+                <button class="cloud-menu-item" data-runner="codepen">In CodePen auslagern</button>
+                <button class="cloud-menu-item" data-runner="hf-spaces">In Hugging Face Spaces starten</button>
+                <button class="cloud-menu-item" data-runner="stackblitz">In StackBlitz VM ausführen</button>
+              </div>
+            </div>
+
+            <button id="btn-auto-heal" class="btn btn-heal" title="Fehler finden & durch KI heilen lassen">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.06 3.4L12 9.35l1.06-1.06 1.34 1.34-1.09 1.06z"/></svg>
+              Auto-Heal
+            </button>
+            <button id="btn-reload-preview" class="btn-icon" title="Neu laden">Neu</button>
+            <button id="btn-external-preview" class="btn-icon" title="In neuem Tab öffnen">Extern</button>
           </div>
         </div>
+
         <div class="panel-body preview-wrapper">
           <iframe id="sandbox-frame" sandbox="allow-scripts allow-modals" title="Sandbox Output"></iframe>
+        </div>
+
+        <!-- History Drawer -->
+        <div id="history-drawer" class="history-drawer hidden">
+          <div class="drawer-header">
+            <span>Projekt-Historie (Snapshots)</span>
+            <button id="btn-close-history" class="btn-icon">&times;</button>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </div>
+
+        <!-- Diagnostics Drawer -->
+        <div id="diagnostics-drawer" class="diagnostics-drawer hidden">
+          <div class="drawer-header">
+            <span>Polyglot Diagnose-Bericht</span>
+            <button id="btn-close-diagnostics" class="btn-icon">&times;</button>
+          </div>
+          <div id="diagnostics-log" class="diagnostics-log"></div>
         </div>
       </section>
 
     </main>
 
-    <!-- Footer -->
+    <!-- Footer Statusleiste -->
     <footer class="app-footer">
-      <div class="footer-left"><span>AetherSpace Studio</span></div>
-      <div class="footer-right"><span>RAM: <strong>&lt; 15 MB</strong></span></div>
+      <div class="footer-left">
+        <span>AetherSpace Studio</span>
+      </div>
+      <div class="footer-right">
+        <span id="footer-discovery-badge">Discovery: SOTA Bereit</span>
+        <span class="divider">|</span>
+        <span>RAM: <strong>&lt; 15 MB</strong></span>
+      </div>
     </footer>
   </div>
 
-  <!-- MULTI-KEY TRESOR MODAL (Google AI Studio Style - Bild 158) -->
+  <!-- MULTI-KEY TRESOR MODAL (Google AI Studio Dashboard Style - Bild 158) -->
   <div id="vault-modal" class="modal-backdrop hidden">
     <div class="modal-card vault-studio-card">
       <div class="modal-header">
-        <div>
+        <div class="vault-title-group">
           <h3>API Keys Dashboard</h3>
-          <span style="font-size:11px; color:#8892b0;">Google AI Studio & Cloud Key Pools</span>
+          <span class="vault-subtitle-tag">Google AI Studio & Cloud Key-Pools</span>
         </div>
         <button id="btn-vault-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
+        
         <div class="vault-toolbar">
           <div class="vault-tabs">
             <button class="vault-tab-btn active" data-provider="gemini">Google AI Studio</button>
@@ -218,14 +303,23 @@
           </div>
           <button id="btn-vault-create-key" class="btn btn-primary btn-sm">+ Create API Key</button>
         </div>
+
         <div class="vault-table-container">
           <table class="vault-table">
             <thead>
-              <tr><th>Key Preview</th><th>Project</th><th>Created</th><th>Tier</th><th>Status</th><th>Actions</th></tr>
+              <tr>
+                <th>Key Preview</th>
+                <th>Project / Label</th>
+                <th>Created</th>
+                <th>Tier</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
             </thead>
             <tbody id="vault-keys-tbody"></tbody>
           </table>
         </div>
+
         <div id="vault-add-box" class="vault-add-box hidden">
           <input type="password" id="new-key-input" class="text-input" placeholder="Google AI Studio API-Key einfügen (AIzaSy...)...">
           <input type="text" id="new-key-label" class="text-input" placeholder="Project: Default Gemini Project">
@@ -234,47 +328,49 @@
             <button id="btn-cancel-new-key" class="btn btn-outline btn-sm">Abbrechen</button>
           </div>
         </div>
+
         <div class="modal-footer-actions">
-          <button id="btn-modal-done" class="btn btn-secondary btn-full">Schließen</button>
+          <button id="btn-modal-done" class="btn btn-secondary btn-full">Schliessen & Speichern</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- AUTH MODAL: SCHRITT A - GOOGLE IDENTITY SERVICES (GIS) -->
+  <!-- AUTH MODAL (Google & Universal E-Mail Login) -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
-        <h3>Google Identity (Schritt A)</h3>
+        <h3 id="auth-modal-title">Konto & Authentifizierung</h3>
         <button id="btn-auth-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body auth-modal-body">
         
-        <!-- Eingeloggt-Status (Bild 173 Design) -->
-        <div id="auth-logged-in-view" class="auth-profile-view">
+        <!-- Eingeloggt-Status -->
+        <div id="auth-logged-in-view" class="auth-profile-view hidden">
           <div class="profile-card">
-            <div class="profile-avatar avatar-google-large">L</div>
+            <div class="profile-avatar avatar-google-large" id="logged-avatar-icon">L</div>
             <div class="profile-details">
-              <strong id="profile-name-text">lolqs5014</strong>
-              <small id="profile-email-text">lolqs5014@gmail.com</small>
-              <span class="micro-badge badge-valid">✓ Google Konto Verifiziert</span>
+              <strong id="profile-name-text">Benutzer</strong>
+              <small id="profile-email-text">email@gmail.com</small>
+              <span class="micro-badge badge-valid">✓ Verifiziert</span>
             </div>
           </div>
-          <div class="account-actions-stack">
-            <button id="btn-switch-google-acc" class="btn btn-primary btn-full">Anderes Google-Konto verbinden</button>
-            <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden</button>
-          </div>
+          <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden / Konto wechseln</button>
         </div>
 
-        <!-- Google Login Formular -->
-        <div id="auth-forms-wrapper" class="hidden">
+        <!-- Anmelde-Formular (0% window.prompt) -->
+        <div id="auth-forms-wrapper">
           <div class="social-login-stack">
             <div class="auth-email-form">
-              <label class="setting-label">Google E-Mail-Adresse:</label>
-              <input type="email" id="gis-email-direct" class="text-input" value="lolqs5014@gmail.com" placeholder="name@gmail.com">
-              <button id="btn-verify-google-direct" class="btn btn-primary btn-full" style="margin-top:6px;">Mit Google Identity verifizieren</button>
+              <label class="setting-label">Google / E-Mail-Adresse:</label>
+              <input type="email" id="auth-email-input" class="text-input" placeholder="deine-email@gmail.com / outlook.de / custom...">
+              <button id="btn-submit-auth-direct" class="btn btn-primary btn-full" style="margin-top:8px;">Konto verifizieren & Einloggen</button>
             </div>
           </div>
+          <div class="auth-divider"><span>Status & Sicherheit</span></div>
+          <p class="auth-security-note">
+            🔒 Die Authentifizierung erfolgt verschlüsselt und sicher. Deine Daten verbleiben zu 100 % in deinem Besitz.
+          </p>
         </div>
 
       </div>
