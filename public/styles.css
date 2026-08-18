@@ -61,7 +61,6 @@ html, body {
 
 .header-controls { display: flex; align-items: center; gap: 8px; }
 
-/* Quick Mode Switcher Pill */
 .mode-toggle-pill {
   display: flex;
   align-items: center;
@@ -289,8 +288,9 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .editor-status { height: 24px; padding: 0 10px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
 .editor-attribution { color: #34d399; font-weight: 500; font-size: 11px; }
 
+/* Vorschau: Harmonischer Dark-Mode Augenschutz */
 .preview-wrapper { background-color: #0b0e14; height: 100%; }
-#sandbox-frame { width: 100%; height: 100%; border: none; background: #ffffff; }
+#sandbox-frame { width: 100%; height: 100%; border: none; background: #0b0e14; }
 
 /* History & Diagnostic Drawers */
 .history-drawer, .diagnostics-drawer {
@@ -344,6 +344,35 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .btn-text-action { background: transparent; border: none; color: #60a5fa; font-size: 10px; cursor: pointer; }
 .btn-text-action:hover { text-decoration: underline; }
 
+/* Social Login Stack (Referenz Bild 110) */
+.auth-modal-card { width: 400px; }
+.social-login-stack { display: flex; flex-direction: column; gap: 8px; }
+.btn-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--bg-root);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-social:hover { background: var(--bg-active); border-color: var(--border-focus); }
+.auth-divider { text-align: center; margin: 10px 0; position: relative; }
+.auth-divider span { font-size: 11px; color: var(--text-muted); background: var(--bg-surface); padding: 0 8px; }
+.auth-email-form { display: flex; flex-direction: column; gap: 8px; }
+.password-input-group { position: relative; display: flex; align-items: center; }
+.password-input-group .text-input { width: 100%; padding-right: 32px; }
+.btn-pwd-eye { position: absolute; right: 6px; background: transparent; border: none; cursor: pointer; font-size: 14px; color: var(--text-muted); }
+.auth-options-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); }
+.btn-auth-submit { background-color: #b91c1c; border-color: #991b1b; font-weight: 600; margin-top: 4px; }
+.btn-auth-submit:hover { background-color: #991b1b; }
+
 /* Modal Styles */
 .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
 .modal-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; width: 460px; max-width: 94vw; box-shadow: 0 16px 48px rgba(0,0,0,0.9); }
@@ -357,11 +386,6 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .field-label-group { display: flex; align-items: center; gap: 4px; }
 .vault-field label { font-size: 11px; font-weight: 600; color: var(--text-main); }
 .field-link { color: #60a5fa; text-decoration: none; font-size: 11px; }
-
-.input-with-clear { display: flex; align-items: center; position: relative; }
-.input-with-clear .text-input { width: 100%; padding-right: 28px; }
-.btn-clear-key { position: absolute; right: 6px; background: transparent; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 2px 6px; }
-.btn-clear-key:hover { color: var(--danger); }
 
 .text-input { background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px; padding: 6px 8px; font-size: 11px; outline: none; }
 .text-input:focus { border-color: var(--border-focus); }
