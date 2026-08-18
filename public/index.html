@@ -10,15 +10,15 @@
 <body>
   <div class="app-container">
     
-    <!-- Top Header -->
+    <!-- Top Navigation Bar -->
     <header class="app-header">
       <div class="brand">
+        <button id="btn-toggle-sidebar" class="btn btn-icon" title="Dateibaum ein-/ausklappen">📁</button>
         <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
         <span class="brand-title">AetherSpace</span>
       </div>
 
       <div class="header-controls">
-        <!-- Mode Switcher Pill -->
         <div class="mode-toggle-pill" id="mode-toggle" title="Klick: Zwischen Key-Pool und $0 Gratis-Mesh wechseln">
           <span class="mode-pill-dot"></span>
           <span id="mode-pill-text">Key-Pool Aktiv</span>
@@ -36,63 +36,105 @@
           <span id="user-display-name">Anmelden</span>
         </button>
 
-        <button id="btn-share" class="btn btn-outline" title="Projekt teilen (WhatsApp & Web-Link)">
+        <button id="btn-share" class="btn btn-outline" title="Projekt teilen">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
           Teilen
         </button>
 
         <button id="btn-run" class="btn btn-primary" title="Code in Sandbox rendern">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          Ausführen
+          ▶ Play
         </button>
       </div>
     </header>
 
-    <!-- 3-Zonen Workspace -->
+    <!-- Main Workspace Container -->
     <main class="workspace" id="workspace">
       
-      <!-- Spalte 1: Multi-Tunnel Pipeline -->
+      <!-- VS Code File Explorer (Left Sidebar) -->
+      <aside class="panel panel-filetree" id="panel-filetree">
+        <div class="panel-header">
+          <span class="panel-title">Explorer</span>
+          <div class="filetree-actions">
+            <button id="btn-new-file" class="btn-icon" title="Neue Datei anlegen">+ Datei</button>
+          </div>
+        </div>
+        <div class="filetree-body" id="filetree-list"></div>
+      </aside>
+
+      <div class="resizer" id="resizer-0"></div>
+
+      <!-- Spalte 1: Multi-Tunnel Pipeline & Hierarchische Toggles -->
       <section class="panel panel-ai" id="panel-ai">
         <div class="panel-header">
           <span class="panel-title">Pipeline</span>
           <div class="pipeline-header-actions">
-            <button id="btn-teleport" class="btn-icon" title="Chat-Kontext für neues Fenster komprimieren & kopieren">⏩ Teleport</button>
+            <button id="btn-teleport" class="btn-icon" title="Chat-Kontext komprimieren & kopieren">⏩ Teleport</button>
             <button id="btn-add-tunnel" class="btn-icon" title="KI-Stufe hinzufügen">+ Stufe</button>
           </div>
         </div>
 
-        <!-- Hierarchische Pro-Controls -->
-        <div class="pro-controls-bar">
-          <div class="pro-control-item" title="Denktiefe / Reasoning Level">
+        <!-- Hierarchische Two-Tier Toggles -->
+        <div class="nested-toggles-bar">
+          <div class="master-pill active" data-target="tier2-autopilot" title="Klick: Auto-Pilot Parameter ein-/ausblenden">
+            <span>⚡ Auto-Pilot</span>
+          </div>
+          <div class="master-pill" data-target="tier2-hardware" title="Klick: Hardware & Sandbox-Schutz">
+            <span>🛡️ Hardware</span>
+          </div>
+          <div class="master-pill" data-target="tier2-cloud" title="Klick: Externe Cloud-Runner">
+            <span>🌐 Cloud-Staging</span>
+          </div>
+        </div>
+
+        <!-- Tier 2 Ausklappbare Feineinstellungen -->
+        <div class="tier2-drawer" id="tier2-autopilot">
+          <div class="pro-control-item">
             <span class="pro-label">Thinking:</span>
             <select id="thinking-level" class="mini-select">
-              <option value="high">High</option>
+              <option value="high">High (Reasoning)</option>
               <option value="medium">Medium</option>
-              <option value="fast">Fast</option>
+              <option value="fast">Fast (Sub-Sec)</option>
             </select>
           </div>
-          <div class="pro-control-item" title="Google Search Grounding">
+          <div class="pro-control-item">
             <label class="toggle-switch-label">
               <input type="checkbox" id="search-grounding">
               <span class="toggle-slider"></span>
-              <span class="pro-label">Search</span>
+              <span class="pro-label">Live Search</span>
             </label>
           </div>
-          <div class="pro-control-item" title="Auto-Pilot Modell-Routing">
-            <label class="toggle-switch-label">
-              <input type="checkbox" id="autopilot-routing" checked>
-              <span class="toggle-slider"></span>
-              <span class="pro-label">Auto-Pilot</span>
-            </label>
+        </div>
+
+        <div class="tier2-drawer hidden" id="tier2-hardware">
+          <div class="pro-control-item">
+            <span class="pro-label">RAM-Limit:</span>
+            <span class="pro-badge">Max 500 MB</span>
+          </div>
+          <div class="pro-control-item">
+            <span class="pro-label">FPS:</span>
+            <span class="pro-badge">Native 144Hz+</span>
+          </div>
+        </div>
+
+        <div class="tier2-drawer hidden" id="tier2-cloud">
+          <div class="pro-control-item">
+            <span class="pro-label">Runner:</span>
+            <span class="pro-badge">CodePen / HF Spaces / StackBlitz</span>
           </div>
         </div>
 
         <div class="tunnel-config-container" id="tunnel-list"></div>
 
+        <!-- Aktive Kontext-Plakette für markierte Dateien -->
+        <div id="context-files-badge" class="context-files-badge hidden">
+          📎 Kontext aktiv: <strong id="context-files-names">index.html</strong>
+        </div>
+
         <div class="panel-body chat-history" id="chat-history"></div>
 
         <div class="panel-footer chat-input-wrapper">
-          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein Weltraum-Physik-Spiel')..." rows="2"></textarea>
+          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein 3D-Voxel-Physikspiel mit 60+ FPS')..." rows="2"></textarea>
           <button id="btn-send" class="btn btn-secondary">
             <span id="send-spinner" class="spinner hidden"></span>
             <span id="send-text">Pipeline starten</span>
@@ -106,11 +148,11 @@
       <!-- Spalte 2: Code-Editor -->
       <section class="panel panel-editor" id="panel-editor">
         <div class="panel-header">
-          <div class="editor-tabs">
-            <button class="tab-btn active" data-file="index.html">index.html</button>
+          <div class="editor-tabs" id="editor-tabs-container">
+            <button class="tab-btn active" data-file="public/index.html">index.html</button>
           </div>
           <div class="editor-actions">
-            <button id="btn-history-toggle" class="btn-icon" title="Projekt-Historie / Versionen">📚 History</button>
+            <button id="btn-history-toggle" class="btn-icon" title="Projekt-Historie / Snapshots">📚 History</button>
             <button id="btn-copy" class="btn-icon" title="Code kopieren">Kopieren</button>
             <button id="btn-clear" class="btn-icon" title="Editor leeren">Leeren</button>
           </div>
@@ -128,7 +170,7 @@
       <!-- Resizer 2 -->
       <div class="resizer" id="resizer-2"></div>
 
-      <!-- Spalte 3: Sandbox Vorschau & Smart Export Toolbar -->
+      <!-- Spalte 3: Sandbox Vorschau & Cloud-Staging Hub -->
       <section class="panel panel-preview" id="panel-preview">
         <div class="panel-header">
           <div class="preview-title-group">
@@ -147,12 +189,19 @@
               </button>
             </div>
 
-            <!-- Cloud-Staging Hub Button -->
-            <button id="btn-cloud-staging" class="btn btn-icon" title="In CodePen / Cloud auslagern">
-              🚀 Cloud
-            </button>
+            <!-- Cloud-Staging Hub Dropdown -->
+            <div class="cloud-staging-dropdown">
+              <button id="btn-cloud-menu" class="btn btn-icon" title="In externer Cloud auslagern">
+                🚀 Cloud ▾
+              </button>
+              <div id="cloud-staging-menu" class="cloud-menu-content hidden">
+                <button class="cloud-menu-item" data-runner="codepen">In CodePen auslagern</button>
+                <button class="cloud-menu-item" data-runner="hf-spaces">In Hugging Face Spaces starten</button>
+                <button class="cloud-menu-item" data-runner="stackblitz">In StackBlitz VM ausführen</button>
+              </div>
+            </div>
 
-            <!-- Autonomer Polyglot Healer Button -->
+            <!-- Autonomer Polyglot Healer -->
             <button id="btn-auto-heal" class="btn btn-heal" title="Fehler finden & durch KI heilen lassen">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.06 3.4L12 9.35l1.06-1.06 1.34 1.34-1.09 1.06z"/></svg>
               Auto-Heal
@@ -187,10 +236,10 @@
 
     </main>
 
-    <!-- Footer -->
+    <!-- Footer Statusleiste -->
     <footer class="app-footer">
       <div class="footer-left">
-        <span>AetherSpace</span>
+        <span>AetherSpace Studio</span>
       </div>
       <div class="footer-right">
         <span id="footer-discovery-badge">Discovery: SOTA Bereit</span>
@@ -200,16 +249,16 @@
     </footer>
   </div>
 
-  <!-- MULTI-KEY TRESOR MODAL -->
+  <!-- MULTI-KEY TRESOR MODAL (Exhaustiver Swarm für alle Provider) -->
   <div id="vault-modal" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>Schnittstellen-Tresor & Multi-Key Pool</h3>
+        <h3>Schnittstellen-Tresor & Multi-Key Swarm</h3>
         <button id="btn-vault-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
         
-        <!-- Google Gemini Multi-Key Pool -->
+        <!-- Google Gemini Pool -->
         <div class="vault-field">
           <div class="field-header">
             <div class="field-label-group">
@@ -233,12 +282,24 @@
           <div id="groq-key-pool-list" class="key-pool-list"></div>
         </div>
 
-        <!-- Hugging Face & OpenRouter Pool -->
+        <!-- Hugging Face Token Pool -->
         <div class="vault-field">
           <div class="field-header">
             <div class="field-label-group">
-              <label>Hugging Face / OpenRouter</label>
+              <label>Hugging Face Token-Pool</label>
               <a href="https://huggingface.co/settings/tokens" target="_blank" class="field-link" title="HF Token">↗</a>
+            </div>
+            <button id="btn-add-hf-key" class="btn-text-action">+ Token hinzufuegen</button>
+          </div>
+          <div id="hf-key-pool-list" class="key-pool-list"></div>
+        </div>
+
+        <!-- OpenRouter Key Pool -->
+        <div class="vault-field">
+          <div class="field-header">
+            <div class="field-label-group">
+              <label>OpenRouter Key-Pool</label>
+              <a href="https://openrouter.ai/keys" target="_blank" class="field-link" title="Key erstellen">↗</a>
             </div>
             <button id="btn-add-openrouter-key" class="btn-text-action">+ Key hinzufuegen</button>
           </div>
@@ -252,7 +313,7 @@
     </div>
   </div>
 
-  <!-- ENTERPRISE AUTH MODAL (Referenz-Design nach Bild 110) -->
+  <!-- ENTERPRISE AUTH MODAL (Referenz Bild 110) -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
@@ -278,14 +339,14 @@
         <div class="auth-divider"><span>Oder Anmelden per E-Mail</span></div>
 
         <div class="auth-email-form">
-          <input type="email" id="auth-email" class="text-input" placeholder="deine-email@domain.com">
+          <input type="email" id="auth-email" class="text-input" placeholder="deine-email@outlook.de / yahoo / custom...">
           <div class="password-input-group">
             <input type="password" id="auth-password" class="text-input" placeholder="Passwort">
             <button id="btn-toggle-pwd" class="btn-pwd-eye" type="button">👁️</button>
           </div>
           <div class="auth-options-row">
             <label class="checkbox-label"><input type="checkbox" id="auth-remember" checked> Angemeldet bleiben</label>
-            <a href="#" id="auth-forgot" class="field-link">Passwort vergessen?</a>
+            <a href="#" class="field-link">Passwort vergessen?</a>
           </div>
           <button id="btn-submit-auth" class="btn btn-primary btn-full btn-auth-submit">Anmelden</button>
         </div>
@@ -301,7 +362,7 @@
         <button id="btn-share-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-subtitle">Teile dein erstelltes Projekt per Web-Link oder direkt auf WhatsApp:</p>
+        <p class="modal-subtitle">Teile dein Projekt per Web-Link oder direkt auf WhatsApp:</p>
         <div class="share-actions-group">
           <button id="btn-share-whatsapp" class="btn btn-whatsapp btn-full">
             💬 Auf WhatsApp teilen
