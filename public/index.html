@@ -9,7 +9,8 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- Header -->
+    
+    <!-- Top Header -->
     <header class="app-header">
       <div class="brand">
         <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
@@ -20,42 +21,35 @@
           <span class="status-dot"></span>
           <span id="header-status-text" class="status-text">Gateway Aktiv</span>
         </div>
-        <button id="btn-vault-open" class="btn btn-outline">
+        <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen & Keys">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-          <span id="vault-btn-label">Schnittstellen-Tresor</span>
+          <span id="vault-btn-label">Tresor</span>
         </button>
-        <button id="btn-run" class="btn btn-primary" title="Code in Sandbox ausführen">
+        <button id="btn-run" class="btn btn-primary" title="Code in Sandbox rendern">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           Ausführen
         </button>
       </div>
     </header>
 
-    <!-- Workspace -->
+    <!-- 3-Zonen Workspace -->
     <main class="workspace" id="workspace">
       
       <!-- Spalte 1: Multi-Tunnel Pipeline -->
       <section class="panel panel-ai" id="panel-ai">
         <div class="panel-header">
-          <span class="panel-title">Multi-Tunnel Pipeline</span>
+          <span class="panel-title">Pipeline</span>
           <div class="tunnel-header-actions">
-            <button id="btn-add-tunnel" class="btn-icon" title="KI-Stufe zur Kette hinzufügen">+ KI Stufe</button>
+            <button id="btn-add-tunnel" class="btn-icon" title="KI-Stufe hinzufügen">+ Stufe</button>
           </div>
         </div>
 
-        <!-- Dynamische Tunnel-Knoten -->
         <div class="tunnel-config-container" id="tunnel-list"></div>
 
-        <!-- Chat / Stream Verlauf -->
-        <div class="panel-body chat-history" id="chat-history">
-          <div class="message system-message">
-            Bereit. Unterstützt Google Gemini 3.7 / Groq / OpenRouter und 100 % Zero-Key Direkt-Ausführung.
-          </div>
-        </div>
+        <div class="panel-body chat-history" id="chat-history"></div>
 
-        <!-- Input Box -->
         <div class="panel-footer chat-input-wrapper">
-          <textarea id="ai-input" placeholder="Anweisung eingeben (z. B. 'Erstelle ein Weltraum-Shooter Spiel mit Canvas')..." rows="2"></textarea>
+          <textarea id="ai-input" placeholder="Prompt eingeben..." rows="2"></textarea>
           <button id="btn-send" class="btn btn-secondary">
             <span id="send-spinner" class="spinner hidden"></span>
             <span id="send-text">Pipeline starten</span>
@@ -90,17 +84,45 @@
       <!-- Resizer 2 -->
       <div class="resizer" id="resizer-2"></div>
 
-      <!-- Spalte 3: Sandbox Vorschau -->
+      <!-- Spalte 3: Sandbox Vorschau & Smart Export Toolbar -->
       <section class="panel panel-preview" id="panel-preview">
         <div class="panel-header">
-          <span class="panel-title">Sandbox Vorschau</span>
+          <div class="preview-title-group">
+            <span class="panel-title">Vorschau</span>
+            <span id="diagnostic-pill" class="diagnostic-pill hidden" title="Diagnose-Status">0 Fehler</span>
+          </div>
+          
           <div class="preview-actions">
-            <button id="btn-reload-preview" class="btn-icon" title="Neu laden">Neu laden</button>
+            <!-- Smart Export Feld -->
+            <div class="export-group">
+              <input type="text" id="export-filename" class="export-input" placeholder="app-name" title="Dateinamen anpassen">
+              <span id="export-ext-label" class="export-ext">.html</span>
+              <button id="btn-export" class="btn btn-icon btn-export-action" title="Datei auf Laptop herunterladen">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Export
+              </button>
+            </div>
+
+            <button id="btn-auto-heal" class="btn btn-heal" title="Fehler finden & durch KI heilen lassen">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.06 3.4L12 9.35l1.06-1.06 1.34 1.34-1.09 1.06z"/></svg>
+              Auto-Heal
+            </button>
+            <button id="btn-reload-preview" class="btn-icon" title="Neu laden">Neu</button>
             <button id="btn-external-preview" class="btn-icon" title="In neuem Tab öffnen">Extern</button>
           </div>
         </div>
+
         <div class="panel-body preview-wrapper">
           <iframe id="sandbox-frame" sandbox="allow-scripts allow-modals" title="Sandbox Output"></iframe>
+        </div>
+
+        <!-- Collapsible Diagnostic Console -->
+        <div id="diagnostics-drawer" class="diagnostics-drawer hidden">
+          <div class="diagnostics-header">
+            <span>Diagnose & Linter-Bericht</span>
+            <button id="btn-close-diagnostics" class="btn-icon">&times;</button>
+          </div>
+          <div id="diagnostics-log" class="diagnostics-log"></div>
         </div>
       </section>
 
@@ -109,17 +131,17 @@
     <!-- Footer -->
     <footer class="app-footer">
       <div class="footer-left">
-        <span>AetherSpace Workspace</span>
+        <span>AetherSpace</span>
       </div>
       <div class="footer-right">
-        <span>Engine: <strong id="active-mode-label">Zero-Key Edge + SOTA Gateway ($0)</strong></span>
+        <span id="footer-model-badge">SOTA Edge</span>
         <span class="divider">|</span>
         <span>RAM: <strong>&lt; 15 MB</strong></span>
       </div>
     </footer>
   </div>
 
-  <!-- TRESOR MODAL -->
+  <!-- TRESOR MODAL (Bereinigt) -->
   <div id="vault-modal" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -131,50 +153,56 @@
         <!-- Google Gemini -->
         <div class="vault-field">
           <div class="field-header">
-            <label>Google Gemini API Key (Gemini 3.7 / 3.6 / 3.5 Lite):</label>
+            <div class="field-label-group">
+              <label>Google Gemini</label>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" class="field-link" title="Key holen">↗</a>
+            </div>
             <span id="badge-gemini" class="micro-badge badge-idle">○ Key eingeben</span>
           </div>
           <div class="input-with-clear">
             <input type="password" id="key-gemini" class="text-input" placeholder="AIzaSy...">
             <button class="btn-clear-key" data-provider="gemini" title="Schlüssel löschen">&times;</button>
           </div>
-          <small class="field-hint"><a href="https://aistudio.google.com/app/apikey" target="_blank">Kostenlosen Gemini Key im Google AI Studio holen &rarr;</a></small>
         </div>
 
         <!-- Groq API Key -->
         <div class="vault-field">
           <div class="field-header">
-            <label>Groq API Key (Llama 3.3 70B & DeepSeek R1 500+ tok/s):</label>
+            <div class="field-label-group">
+              <label>Groq Cloud</label>
+              <a href="https://console.groq.com/keys" target="_blank" class="field-link" title="Key holen">↗</a>
+            </div>
             <span id="badge-groq" class="micro-badge badge-idle">○ Key eingeben</span>
           </div>
           <div class="input-with-clear">
             <input type="password" id="key-groq" class="text-input" placeholder="gsk_...">
             <button class="btn-clear-key" data-provider="groq" title="Schlüssel löschen">&times;</button>
           </div>
-          <small class="field-hint"><a href="https://console.groq.com/keys" target="_blank">Kostenlosen Groq Key holen &rarr;</a></small>
         </div>
 
         <!-- OpenRouter API Key -->
         <div class="vault-field">
           <div class="field-header">
-            <label>OpenRouter API Key (Free-Tier & Qwen Coder):</label>
+            <div class="field-label-group">
+              <label>OpenRouter</label>
+              <a href="https://openrouter.ai/keys" target="_blank" class="field-link" title="Key holen">↗</a>
+            </div>
             <span id="badge-openrouter" class="micro-badge badge-idle">○ Key eingeben</span>
           </div>
           <div class="input-with-clear">
             <input type="password" id="key-openrouter" class="text-input" placeholder="sk-or-v1-...">
             <button class="btn-clear-key" data-provider="openrouter" title="Schlüssel löschen">&times;</button>
           </div>
-          <small class="field-hint"><a href="https://openrouter.ai/keys" target="_blank">Kostenlosen OpenRouter Key holen &rarr;</a></small>
         </div>
 
-        <!-- Profil Name -->
+        <!-- Profil -->
         <div class="vault-field">
-          <label>Entwickler-Profil / Identität:</label>
+          <label>Entwickler-Profil</label>
           <input type="text" id="profile-name-input" class="text-input" placeholder="Aether Entwickler">
         </div>
 
         <div class="modal-footer-actions">
-          <button id="btn-modal-done" class="btn btn-primary btn-full">Schließen</button>
+          <button id="btn-modal-done" class="btn btn-primary btn-full">Fertig</button>
         </div>
       </div>
     </div>

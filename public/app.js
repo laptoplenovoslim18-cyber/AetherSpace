@@ -1,4 +1,4 @@
-﻿// AetherSpace: Robust Zero-Key Engine & SOTA AI Gateway
+﻿// AetherSpace: Polyglot Autonomous Healer & Smart Exporter Engine
 (function () {
   'use strict';
 
@@ -12,7 +12,10 @@
     tunnelConfig: JSON.parse(localStorage.getItem('aether_tunnels') || 'null')
   };
 
-  // Workspace Splitter
+  // State & Diagnostic Tracker
+  let collectedDiagnostics = [];
+
+  // Resizing System
   const workspace = document.getElementById('workspace');
   const panelAi = document.getElementById('panel-ai');
   const panelPreview = document.getElementById('panel-preview');
@@ -28,10 +31,10 @@
       if (!activeResizer) return;
       const rect = workspace.getBoundingClientRect();
       if (activeResizer === 'ai') {
-        const w = Math.max(300, Math.min(e.clientX - rect.left, 620));
+        const w = Math.max(280, Math.min(e.clientX - rect.left, 600));
         panelAi.style.width = `${w}px`;
       } else if (activeResizer === 'preview') {
-        const w = Math.max(280, rect.right - e.clientX);
+        const w = Math.max(300, rect.right - e.clientX);
         panelPreview.style.width = `${w}px`;
       }
     });
@@ -41,19 +44,16 @@
 
   // --- SOTA Model Registry ---
   const MODEL_REGISTRY = [
-    { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash (SOTA Coding)', provider: 'gemini', modelTag: 'gemini-3.7-flash' },
-    { id: 'gemini/gemini-3.6-flash', name: '⚡ Gemini 3.6 Flash (Empfohlen)', provider: 'gemini', modelTag: 'gemini-3.6-flash' },
-    { id: 'gemini/gemini-3.5-flash-lite', name: '🚀 Gemini 3.5 Flash Lite (Schnell)', provider: 'gemini', modelTag: 'gemini-3.5-flash-lite' },
-    { id: 'gemini/gemini-3.1-pro-preview', name: '🧠 Gemini 3.1 Pro (Reasoning)', provider: 'gemini', modelTag: 'gemini-3.1-pro-preview' },
-    { id: 'gemini/gemini-2.0-flash', name: '🛡️ Gemini 2.0 Flash (Failsafe)', provider: 'gemini', modelTag: 'gemini-2.0-flash' },
-    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B (500+ tok/s)', provider: 'groq', modelTag: 'llama-3.3-70b-versatile' },
-    { id: 'openrouter/deepseek/deepseek-r1:free', name: '🧠 OpenRouter: DeepSeek R1 (Free)', provider: 'openrouter', modelTag: 'deepseek/deepseek-r1:free' }
+    { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash' },
+    { id: 'gemini/gemini-3.6-flash', name: '⚡ Gemini 3.6 Flash', provider: 'gemini', modelTag: 'gemini-3.6-flash' },
+    { id: 'gemini/gemini-3.5-flash-lite', name: '🚀 Gemini 3.5 Flash Lite', provider: 'gemini', modelTag: 'gemini-3.5-flash-lite' },
+    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile' },
+    { id: 'openrouter/deepseek/deepseek-r1:free', name: '🧠 OpenRouter: DeepSeek R1', provider: 'openrouter', modelTag: 'deepseek/deepseek-r1:free' }
   ];
 
   let tunnelStages = vault.tunnelConfig || [
-    { modelId: 'gemini/gemini-3.7-flash', role: 'Entwurf & Architektur' },
-    { modelId: 'gemini/gemini-3.6-flash', role: 'Code-Review & Fehleranalyse' },
-    { modelId: 'gemini/gemini-3.5-flash-lite', role: 'Finale Synthese & Polish' }
+    { modelId: 'gemini/gemini-3.7-flash', role: 'Architektur & Design' },
+    { modelId: 'gemini/gemini-3.6-flash', role: 'Qualitaet & Synthese' }
   ];
 
   const tunnelListEl = document.getElementById('tunnel-list');
@@ -72,7 +72,7 @@
       node.innerHTML = `
         <span class="tunnel-badge">KI ${idx + 1}</span>
         <select class="tunnel-select" data-idx="${idx}">${optionsHtml}</select>
-        <input type="text" class="tunnel-role" data-idx="${idx}" value="${stage.role}" placeholder="Rolle/Fokus">
+        <input type="text" class="tunnel-role" data-idx="${idx}" value="${stage.role}">
         ${tunnelStages.length > 1 ? `<button class="btn-remove-tunnel" data-idx="${idx}">&times;</button>` : ''}
       `;
       tunnelListEl.appendChild(node);
@@ -106,12 +106,12 @@
   }
 
   btnAddTunnel.addEventListener('click', () => {
-    tunnelStages.push({ modelId: 'gemini/gemini-3.6-flash', role: `Prüfstufe ${tunnelStages.length + 1}` });
+    tunnelStages.push({ modelId: 'gemini/gemini-3.6-flash', role: `Feinschliff ${tunnelStages.length + 1}` });
     renderTunnelList();
     saveTunnelConfig();
   });
 
-  // --- Tresor, Live-Verify & Löschung ---
+  // --- Tresor Modal & Auto-Verify ---
   const vaultModal = document.getElementById('vault-modal');
   const btnVaultOpen = document.getElementById('btn-vault-open');
   const btnVaultClose = document.getElementById('btn-vault-close');
@@ -249,89 +249,39 @@
     throw new Error('Gemini temporär ausgelastet.');
   }
 
-  // --- CORS-FREIER ZERO-KEY DIRECT ROUTER (100% Free & Unblockbar) ---
+  // --- CORS-Freier Zero-Key Router ---
   async function executeZeroKeyEdge(prompt, systemPrompt) {
     const fullInstruction = `${systemPrompt ? systemPrompt + ' ' : ''}Erstelle eine vollständige, fehlerfreie HTML/CSS/JS Web-Anwendung für: ${prompt}. Antworte ausschließlich mit dem Code.`;
-    
-    // Stufe 1: Reiner GET-Request (Keine CORS-Preflight-Sperre im Browser)
     try {
       const url = `https://text.pollinations.ai/${encodeURIComponent(fullInstruction)}?model=mistral`;
       const res = await fetch(url);
       if (res.ok) {
         const text = await res.text();
         if (text && text.length > 20) {
-          return { code: text, modelUsed: '🌐 Direct Edge No-Key Router ($0)' };
+          return { code: text, modelUsed: '🌐 Direct Edge Router ($0)' };
         }
       }
     } catch (e) {
-      console.warn('Zero-Key GET fehlgeschlagen, teste POST-Fallback...', e);
+      console.warn('Zero-Key GET Fallback:', e);
     }
-
-    // Stufe 2: POST JSON Fallback
-    try {
-      const res = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'Du bist ein Elite Web-Entwickler. Gib nur ausführbaren HTML/CSS/JS-Code aus.' },
-            { role: 'user', content: prompt }
-          ],
-          model: 'mistral'
-        })
-      });
-      if (res.ok) {
-        const text = await res.text();
-        return { code: text, modelUsed: '🌐 Edge JSON Gateway ($0)' };
-      }
-    } catch (e) {
-      console.warn('Zero-Key POST fehlgeschlagen:', e);
-    }
-
-    // Stufe 3: Autarker Instant-Synthesizer Fallback (Offline-Resilienz)
-    const cleanPrompt = prompt.replace(/"/g, '&quot;');
-    const offlineTemplate = `<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${cleanPrompt}</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #0b0e14; color: #fff; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .card { background: #131720; border: 1px solid #262c38; padding: 32px; border-radius: 12px; text-align: center; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
-    h2 { color: #38bdf8; margin-bottom: 12px; font-size: 20px; }
-    p { color: #9ca3af; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
-    button { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }
-    button:hover { background: #1d4ed8; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>⚡ AetherSpace Web-App</h2>
-    <p>Anforderung: <strong>"${cleanPrompt}"</strong></p>
-    <button onclick="alert('AetherSpace Engine läuft fehlerfrei!')">Interaktion testen</button>
-  </div>
-</body>
-</html>`;
-
-    return { code: offlineTemplate, modelUsed: '🛡️ Autarker Edge Synthesizer ($0 Failsafe)' };
+    throw new Error('Edge-Router temporär ausgelastet.');
   }
 
-  // --- Universeller Multi-Provider Gateway Router ---
+  // --- Multi-Provider Router ---
   async function callAI(modelConfig, prompt, systemPrompt) {
     let reg = MODEL_REGISTRY.find(m => m.id === modelConfig.modelId) || MODEL_REGISTRY[0];
 
-    // 1. Google Gemini (wenn Key im Tresor)
+    // 1. Gemini
     if (reg.provider === 'gemini' && (vault.geminiKey || keyGeminiInput.value.trim())) {
       try {
         const key = vault.geminiKey || keyGeminiInput.value.trim();
         return await executeGeminiWithHealing(reg.modelTag, prompt, systemPrompt, key);
       } catch (e) {
-        console.warn('Gemini Fehler -> Wechsle zu Zero-Key Router:', e);
+        console.warn('Gemini Fehler -> Fallback:', e);
       }
     }
 
-    // 2. Groq Ultra-Fast (wenn Key im Tresor)
+    // 2. Groq
     if (reg.provider === 'groq' && (vault.groqKey || keyGroqInput.value.trim())) {
       try {
         const key = vault.groqKey || keyGroqInput.value.trim();
@@ -352,11 +302,11 @@
           return { code: data.choices[0].message.content, modelUsed: `⚡ Groq ${reg.modelTag}` };
         }
       } catch (e) {
-        console.warn('Groq Fehler -> Wechsle zu Zero-Key Router:', e);
+        console.warn('Groq Fehler -> Fallback:', e);
       }
     }
 
-    // 3. OpenRouter (wenn Key im Tresor)
+    // 3. OpenRouter
     if (reg.provider === 'openrouter' && (vault.openRouterKey || keyOpenRouterInput.value.trim())) {
       try {
         const key = vault.openRouterKey || keyOpenRouterInput.value.trim();
@@ -376,11 +326,11 @@
           return { code: data.choices[0].message.content, modelUsed: `🧠 OpenRouter ${reg.modelTag}` };
         }
       } catch (e) {
-        console.warn('OpenRouter Fehler -> Wechsle zu Zero-Key Router:', e);
+        console.warn('OpenRouter Fehler -> Fallback:', e);
       }
     }
 
-    // 4. AUTOMATISCHER ZERO-KEY FALLBACK (Absolut Failsafe, bricht NIE ab)
+    // 4. Zero-Key Fallback
     return await executeZeroKeyEdge(prompt, systemPrompt);
   }
 
@@ -395,16 +345,78 @@
   const sendSpinner = document.getElementById('send-spinner');
   const sendText = document.getElementById('send-text');
   const modelAttribution = document.getElementById('model-attribution');
+  const exportFilenameInput = document.getElementById('export-filename');
+  const btnExport = document.getElementById('btn-export');
+  const btnAutoHeal = document.getElementById('btn-auto-heal');
+  const diagnosticPill = document.getElementById('diagnostic-pill');
+  const diagnosticsDrawer = document.getElementById('diagnostics-drawer');
+  const diagnosticsLog = document.getElementById('diagnostics-log');
+  const btnCloseDiagnostics = document.getElementById('btn-close-diagnostics');
 
   function updateLineNumbers() {
     const lines = editor.value.split('\n').length;
     lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
   }
 
+  function autoUpdateFilename(code, promptText) {
+    let name = 'aetherspace-app';
+    const titleMatch = code.match(/<title>([^<]+)<\/title>/i);
+    if (titleMatch && titleMatch[1]) {
+      name = titleMatch[1].toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    } else if (promptText) {
+      name = promptText.slice(0, 24).toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    }
+    if (name.length < 3) name = 'aetherspace-app';
+    exportFilenameInput.value = name;
+  }
+
+  // Error-Bridge: Fängt Fehler aus allen Sprachen im Iframe ab
   function runCodeInSandbox() {
-    const blob = new Blob([editor.value], { type: 'text/html;charset=utf-8' });
+    collectedDiagnostics = [];
+    diagnosticPill.classList.add('hidden');
+
+    const code = editor.value;
+    
+    // Inject Error Bridge Listener in Iframe
+    const errorInterceptor = `
+      <script>
+        window.onerror = function(msg, url, line, col, error) {
+          window.parent.postMessage({ type: 'AETHER_ERROR', lang: 'JavaScript/Runtime', msg: msg + ' (Zeile: ' + line + ')' }, '*');
+          return false;
+        };
+        window.addEventListener('unhandledrejection', function(event) {
+          window.parent.postMessage({ type: 'AETHER_ERROR', lang: 'Async/Promise', msg: event.reason ? (event.reason.message || event.reason) : 'Promise Error' }, '*');
+        });
+      </script>
+    `;
+
+    let injectedCode = code;
+    if (injectedCode.includes('<head>')) {
+      injectedCode = injectedCode.replace('<head>', '<head>' + errorInterceptor);
+    } else {
+      injectedCode = errorInterceptor + injectedCode;
+    }
+
+    const blob = new Blob([injectedCode], { type: 'text/html;charset=utf-8' });
     sandboxFrame.src = URL.createObjectURL(blob);
   }
+
+  // Empfange Diagnosedaten aus Sandbox
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'AETHER_ERROR') {
+      collectedDiagnostics.push(`[${e.data.lang}] ${e.data.msg}`);
+      diagnosticPill.textContent = `${collectedDiagnostics.length} Fehler`;
+      diagnosticPill.classList.remove('hidden');
+      diagnosticsLog.textContent = collectedDiagnostics.join('\n');
+    }
+  });
+
+  diagnosticPill.addEventListener('click', () => {
+    diagnosticsDrawer.classList.toggle('hidden');
+  });
+  btnCloseDiagnostics.addEventListener('click', () => {
+    diagnosticsDrawer.classList.add('hidden');
+  });
 
   function extractCleanCode(rawText) {
     const htmlMatch = rawText.match(/```html([\s\S]*?)```/i);
@@ -438,7 +450,81 @@
     localStorage.setItem('aether_saved_code', editor.value);
   });
 
-  // Multi-Tunnel Ausführung
+  // --- Smart Export Engine (Herunterladen als Datei) ---
+  btnExport.addEventListener('click', () => {
+    let filename = exportFilenameInput.value.trim();
+    if (!filename) filename = 'aetherspace-app';
+    if (!filename.endsWith('.html')) filename += '.html';
+
+    const blob = new Blob([editor.value], { type: 'text/html;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    appendMessage('system', `Datei erfolgreich exportiert als: ${filename}`);
+  });
+
+  // --- Autonome Polyglot Selbstheilungs-Engine (Auto-Heal) ---
+  btnAutoHeal.addEventListener('click', async () => {
+    const currentCode = editor.value.trim();
+    if (!currentCode) return;
+
+    btnAutoHeal.disabled = true;
+    btnAutoHeal.textContent = 'Heilung läuft...';
+
+    const errorReport = collectedDiagnostics.length > 0 
+      ? collectedDiagnostics.join('\n') 
+      : 'Keine kritischen Laufzeitfehler, führe Design-Veredelung und Code-Audit durch.';
+
+    appendMessage('user', `[Auto-Heal & Veredelung angefordert]`);
+    appendDebateStep('Polyglot Code-Audit', `Prüfe HTML5, CSS3, JS, WebGL & Design-Ebene...`);
+
+    const healPrompt = `
+Hier ist der aktuelle Code:
+${currentCode}
+
+Fehlerbericht / Diagnose:
+${errorReport}
+
+Aufgabe:
+1. Behebe alle Syntax-, Logik-, Canvas/WebGL- und CSS-Fehler.
+2. Veredele das Design: SOTA Dark-Mode Ästhetik, flüssige Animationen, perfekte Typografie und Responsive-Layout.
+3. Gib ausschließlich den vollständigen, bereinigten HTML-Code zurück (ohne Erklärtexte).
+    `.trim();
+
+    try {
+      const activeStage = tunnelStages[0] || { modelId: 'gemini/gemini-3.7-flash', role: 'Auto-Healer' };
+      const res = await callAI(activeStage, healPrompt, 'Du bist Lead Software Architect & UI Designer.');
+      const healedCode = extractCleanCode(res.code);
+
+      editor.value = healedCode;
+      localStorage.setItem('aether_saved_code', healedCode);
+      updateLineNumbers();
+      runCodeInSandbox();
+      autoUpdateFilename(healedCode);
+
+      collectedDiagnostics = [];
+      diagnosticPill.classList.add('hidden');
+      diagnosticsDrawer.classList.add('hidden');
+
+      const aiMsg = appendMessage('ai', `Code erfolgreich von KI geheilt & veredelt.`);
+      const badge = document.createElement('div');
+      badge.className = 'attribution-badge';
+      badge.innerHTML = `✓ Geheilt durch: <strong>${res.modelUsed}</strong>`;
+      aiMsg.appendChild(badge);
+
+    } catch (err) {
+      appendMessage('system', `Heilungs-Hinweis: ${err.message}`);
+    } finally {
+      btnAutoHeal.disabled = false;
+      btnAutoHeal.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.06 3.4L12 9.35l1.06-1.06 1.34 1.34-1.09 1.06z"/></svg> Auto-Heal`;
+    }
+  });
+
+  // --- Pipeline Ausführung ---
   async function executeMultiTunnelPipeline() {
     const userPrompt = aiInput.value.trim();
     if (!userPrompt) return;
@@ -448,7 +534,7 @@
 
     btnSend.disabled = true;
     sendSpinner.classList.remove('hidden');
-    sendText.textContent = 'Tunnel verarbeitet...';
+    sendText.textContent = 'Arbeitet...';
 
     let currentPayload = userPrompt;
     let finalModelAttribution = 'Direct Edge Engine';
@@ -466,7 +552,7 @@
         let inputForModel = '';
 
         if (isFirst) {
-          sysPrompt = `Du bist Stufe 1 in der Pipeline. Rolle: ${stage.role}. Generiere eine vollständige, moderne HTML/CSS/JS-Lösung für die Anforderung.`;
+          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollständige, fehlerfreie HTML/CSS/JS-Anwendung mit modernster Ästhetik.`;
           inputForModel = `Anforderung: ${userPrompt}`;
         } else if (isLast) {
           sysPrompt = `Du bist die finale Synthese. Rolle: ${stage.role}. Liefere ausschließlich den finalen, perfekten HTML/CSS/JS-Code (in einem Dokument) ohne Erklärungen.`;
@@ -486,14 +572,15 @@
       localStorage.setItem('aether_saved_code', cleanCode);
       updateLineNumbers();
       runCodeInSandbox();
+      autoUpdateFilename(cleanCode, userPrompt);
 
-      const aiMsg = appendMessage('ai', `Tunnel erfolgreich abgeschlossen. Code in Sandbox gerendert.`);
+      const aiMsg = appendMessage('ai', `Code erfolgreich generiert.`);
       const badge = document.createElement('div');
       badge.className = 'attribution-badge';
       badge.innerHTML = `✓ Erzeugt durch: <strong>${finalModelAttribution}</strong>`;
       aiMsg.appendChild(badge);
 
-      modelAttribution.textContent = `Generiert mit: ${finalModelAttribution}`;
+      modelAttribution.textContent = finalModelAttribution;
 
     } catch (err) {
       appendMessage('system', `Hinweis: ${err.message}`);
@@ -534,19 +621,21 @@
   if (vault.profile) vaultBtnLabel.textContent = vault.profile;
 
   const defaultTemplate = `<!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
+  <meta charset="UTF-8">
+  <title>cyber-drive</title>
   <style>
     body { font-family: system-ui; background: #0b0e14; color: #fff; display: flex; height: 100vh; margin: 0; align-items: center; justify-content: center; }
-    .box { background: #131720; border: 1px solid #262c38; padding: 24px; border-radius: 8px; text-align: center; }
-    h2 { color: #3b82f6; margin-bottom: 8px; }
-    p { color: #9ca3af; font-size: 13px; margin: 0; }
+    .box { background: #141822; border: 1px solid #232a38; padding: 28px; border-radius: 10px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    h2 { color: #38bdf8; margin-bottom: 8px; font-size: 18px; }
+    p { color: #8892b0; font-size: 13px; margin: 0; }
   </style>
 </head>
 <body>
   <div class="box">
-    <h2>AetherSpace Master Gateway</h2>
-    <p>Zero-Key Edge & SOTA Multi-Tunnel aktiv ($0).</p>
+    <h2>AetherSpace Studio</h2>
+    <p>Bereit für autonome Code-Generierung & Polyglot-Heilung.</p>
   </div>
 </body>
 </html>`;
@@ -554,4 +643,5 @@
   editor.value = vault.savedCode || defaultTemplate;
   updateLineNumbers();
   runCodeInSandbox();
+  autoUpdateFilename(editor.value);
 })();
