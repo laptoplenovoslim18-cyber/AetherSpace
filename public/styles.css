@@ -44,26 +44,10 @@ html, body {
 
 .app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
 
-/* Left Nav Drawer (Google AI Studio) */
-.nav-drawer {
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 240px;
-  background: var(--bg-panel);
-  border-right: 1px solid var(--border-color);
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 4px 0 24px rgba(0,0,0,0.8);
-}
+/* Left Nav Drawer */
+.nav-drawer { position: absolute; top: 0; left: 0; bottom: 0; width: 240px; background: var(--bg-panel); border-right: 1px solid var(--border-color); z-index: 100; display: flex; flex-direction: column; box-shadow: 4px 0 24px rgba(0,0,0,0.8); }
 .nav-drawer.hidden { display: none !important; }
-.drawer-backdrop {
-  position: absolute;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.6);
-  z-index: 90;
-  backdrop-filter: blur(2px);
-}
+.drawer-backdrop { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 90; backdrop-filter: blur(2px); }
 .drawer-backdrop.hidden { display: none !important; }
 .nav-drawer-header { height: 42px; border-bottom: 1px solid var(--border-color); padding: 0 12px; display: flex; align-items: center; justify-content: space-between; }
 .nav-drawer-body { padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; }
@@ -73,17 +57,7 @@ html, body {
 .nav-item.active { background: rgba(37, 99, 235, 0.15); color: #60a5fa; font-weight: 600; }
 
 /* Right Run Settings Drawer */
-.run-settings-drawer {
-  position: absolute;
-  top: 38px; right: 0; bottom: 24px;
-  width: 290px;
-  background: var(--bg-panel);
-  border-left: 1px solid var(--border-color);
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.7);
-}
+.run-settings-drawer { position: absolute; top: 38px; right: 0; bottom: 24px; width: 290px; background: var(--bg-panel); border-left: 1px solid var(--border-color); z-index: 80; display: flex; flex-direction: column; box-shadow: -4px 0 24px rgba(0,0,0,0.7); }
 .run-settings-drawer.hidden { display: none !important; }
 .run-settings-header { height: 36px; border-bottom: 1px solid var(--border-color); padding: 0 12px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 12px; color: var(--text-main); }
 .run-settings-body { padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
@@ -126,8 +100,20 @@ html, body {
 .btn-icon:hover { color: var(--text-main); background: var(--bg-active); }
 .btn-sm { padding: 3px 8px; font-size: 11px; }
 
+/* Google Avatar Badge (Violettes L wie in Google AI Studio) */
 .btn-auth-header { display: flex; align-items: center; gap: 6px; }
-.avatar-badge { font-size: 12px; }
+.avatar-google {
+  background-color: #7c3aed;
+  color: #fff;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
 
 /* Main Workspace */
 .workspace { display: flex; flex: 1; height: calc(100vh - 62px); position: relative; overflow: hidden; }
@@ -141,7 +127,6 @@ html, body {
 .tree-item { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 3px; cursor: pointer; user-select: none; }
 .tree-item:hover { background: var(--bg-surface); color: #fff; }
 .tree-item.active { background: var(--bg-active); color: var(--border-focus); font-weight: 600; }
-.tree-checkbox { cursor: pointer; accent-color: var(--accent); }
 .tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .panel-ai { width: 360px; min-width: 280px; max-width: 580px; }
@@ -153,25 +138,10 @@ html, body {
 
 .panel-header { height: 34px; background-color: var(--bg-surface); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; user-select: none; }
 .panel-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; }
-.pipeline-header-actions { display: flex; gap: 4px; }
 
-.context-files-badge { background: rgba(37, 99, 235, 0.1); border-bottom: 1px solid rgba(37, 99, 235, 0.2); padding: 3px 10px; font-size: 10px; color: #60a5fa; }
-.preview-title-group { display: flex; align-items: center; gap: 8px; }
-.diagnostic-pill { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 3px; background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); cursor: pointer; }
-
-/* Smart Export */
+/* Smart Export Toolbar */
 .preview-actions { display: flex; align-items: center; gap: 5px; }
-.export-group { display: flex; align-items: center; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 4px; padding: 1px 4px; }
-.export-input { background: transparent; border: none; color: var(--text-main); font-family: var(--font-mono); font-size: 11px; width: 85px; outline: none; }
-.export-ext { font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); margin-right: 3px; }
-.btn-export-action { border: none; padding: 2px 5px; color: #93c5fd; }
-.btn-export-action:hover { color: #fff; background: rgba(59, 130, 246, 0.2); }
-
-/* Cloud Staging */
-.cloud-staging-dropdown { position: relative; }
-.cloud-menu-content { position: absolute; top: 100%; right: 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 30; display: flex; flex-direction: column; min-width: 170px; margin-top: 4px; }
-.cloud-menu-item { background: transparent; border: none; color: var(--text-main); text-align: left; padding: 6px 10px; font-size: 11px; cursor: pointer; }
-.cloud-menu-item:hover { background: var(--bg-active); color: #60a5fa; }
+.export-input { background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); font-family: var(--font-mono); font-size: 11px; width: 85px; padding: 2px 5px; border-radius: 3px; outline: none; }
 
 /* Tunnel Nodes */
 .tunnel-config-container { background-color: var(--tunnel-bg); border-bottom: 1px solid var(--border-color); padding: 6px; display: flex; flex-direction: column; gap: 5px; max-height: 180px; overflow-y: auto; }
@@ -179,7 +149,6 @@ html, body {
 .tunnel-badge { background: var(--accent); color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 10px; font-weight: 700; }
 .tunnel-select { flex: 1.6; background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 11px; padding: 3px; outline: none; }
 .tunnel-role { flex: 1; background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 11px; padding: 3px 5px; outline: none; }
-.btn-remove-tunnel { background: transparent; border: none; color: var(--danger); font-weight: bold; cursor: pointer; padding: 0 4px; }
 
 .panel-body { flex: 1; overflow: auto; position: relative; }
 .panel-footer { padding: 8px; background-color: var(--bg-surface); border-top: 1px solid var(--border-color); }
@@ -190,9 +159,6 @@ html, body {
 .user-message { background-color: var(--bg-active); border: 1px solid var(--border-color); color: var(--text-main); align-self: flex-end; max-width: 90%; }
 .ai-message { background-color: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-main); }
 .attribution-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; color: #34d399; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(16, 185, 129, 0.25); margin-top: 4px; }
-
-.debate-card { background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: 6px; padding: 6px 8px; font-size: 11px; display: flex; flex-direction: column; gap: 2px; }
-.debate-step-title { font-weight: 600; color: #60a5fa; }
 
 .chat-input-wrapper { display: flex; flex-direction: column; gap: 6px; }
 textarea#ai-input { width: 100%; resize: none; background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px; padding: 6px; font-family: inherit; font-size: 12px; outline: none; }
@@ -208,25 +174,17 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .editor-status { height: 24px; padding: 0 10px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
 .editor-attribution { color: #34d399; font-weight: 500; font-size: 11px; }
 
-/* Vorschau: 100% Dark-Mode */
+/* Vorschau: 100% Dark */
 .preview-wrapper { background-color: #0b0e14; height: 100%; }
 #sandbox-frame { width: 100%; height: 100%; border: none; background: #0b0e14; }
-
-/* Drawers */
-.history-drawer, .diagnostics-drawer { position: absolute; bottom: 0; left: 0; right: 0; height: 160px; background: var(--bg-panel); border-top: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 20; }
-.drawer-header { height: 26px; background: var(--bg-surface); padding: 0 10px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--text-muted); }
-.history-list, .diagnostics-log { flex: 1; padding: 8px 10px; overflow-y: auto; font-family: var(--font-mono); font-size: 11px; }
-.history-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-radius: 4px; background: var(--bg-surface); margin-bottom: 4px; cursor: pointer; }
-.history-item:hover { background: var(--bg-active); color: #fff; }
 
 .app-footer { height: 24px; background-color: var(--bg-surface); border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 11px; color: var(--text-muted); user-select: none; }
 .footer-right { display: flex; gap: 8px; }
 .divider { color: var(--border-color); }
 
-/* Google AI Studio API Keys Table Dashboard */
+/* Google AI Studio API Keys Table (Bild 158) */
 .vault-studio-card { width: 620px; max-width: 95vw; }
 .vault-title-group { display: flex; flex-direction: column; gap: 2px; }
-.vault-subtitle-tag { font-size: 10px; color: var(--text-muted); font-weight: normal; }
 .vault-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .vault-tabs { display: flex; gap: 4px; }
 .vault-tab-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
@@ -239,27 +197,16 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .vault-table tr:hover td { background: var(--bg-active); }
 
 .vault-add-box { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.add-box-actions { display: flex; gap: 6px; }
 
-/* Auth Modal: Google Identity Services (GIS) Schritt A */
-.auth-modal-card { width: 400px; }
-.auth-tabs-header { display: flex; gap: 8px; }
-.auth-header-tab { background: transparent; border: none; font-size: 14px; font-weight: 700; color: var(--text-muted); cursor: pointer; padding-bottom: 4px; border-bottom: 2px solid transparent; }
-.auth-header-tab.active { color: #fff; border-bottom-color: var(--accent); }
-
-.gis-form-group { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
-.btn-google-gis { width: 100%; background: #ffffff; color: #1f2937; font-weight: 600; padding: 10px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: none; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; font-size: 12px; }
-.btn-google-gis:hover { background: #f3f4f6; }
-
-.auth-security-note { font-size: 11px; color: var(--text-muted); line-height: 1.4; text-align: center; }
-
-/* Auth Profile Card */
-.auth-profile-view { display: flex; flex-direction: column; gap: 12px; }
-.profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; }
-.profile-avatar { font-size: 24px; background: var(--bg-surface); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
+/* Auth Profile Card (Bild 173) */
+.auth-modal-card { width: 380px; }
+.auth-profile-view { display: flex; flex-direction: column; gap: 14px; }
+.profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; }
+.avatar-google-large { background-color: #7c3aed; color: #fff; font-size: 22px; font-weight: 700; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .profile-details { display: flex; flex-direction: column; gap: 2px; }
-.profile-details strong { font-size: 13px; color: var(--text-main); }
-.profile-details small { color: var(--text-muted); font-size: 11px; }
+.profile-details strong { font-size: 14px; color: var(--text-main); }
+.profile-details small { color: var(--text-muted); font-size: 11px; font-family: var(--font-mono); }
+.account-actions-stack { display: flex; flex-direction: column; gap: 6px; }
 
 /* Modal Styles */
 .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
@@ -273,11 +220,9 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .text-input:focus { border-color: var(--border-focus); }
 
 /* Micro-Badges */
-.micro-badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 3px; transition: all 0.2s ease; }
+.micro-badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 3px; }
 .badge-idle { background: #1f2937; color: #6b7280; }
-.badge-checking { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 .badge-valid { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
-.badge-invalid { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35); }
 
 .spinner { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s ease-in-out infinite; display: inline-block; }
 .hidden { display: none !important; }

@@ -6,6 +6,7 @@
   <title>AetherSpace</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div class="app-container">
@@ -26,7 +27,7 @@
         
         <div class="nav-section-title">SCHNITTSTELLEN</div>
         <button class="nav-item" id="nav-open-vault">🔑 API-Keys Dashboard</button>
-        <button class="nav-item" id="nav-open-auth">👤 Mein Konto & Profil</button>
+        <button class="nav-item" id="nav-open-auth">👤 Mein Google-Konto</button>
 
         <div class="nav-section-title">EXTERNE CLOUD</div>
         <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud ↗</a>
@@ -49,6 +50,7 @@
             <option value="gemini/gemini-2.0-flash">Gemini 2.0 Flash (Free Tier)</option>
             <option value="gemini/gemini-1.5-flash">Gemini 1.5 Flash</option>
             <option value="gemini/gemini-3.7-flash">Gemini 3.7 Flash</option>
+            <option value="gemini/gemini-3.6-flash">Gemini 3.6 Flash</option>
             <option value="groq/llama-3.3-70b-versatile">Groq Llama 3.3 70B</option>
           </select>
         </div>
@@ -58,7 +60,7 @@
           <select id="studio-thinking-select" class="text-input select-styled">
             <option value="high">High (Deep Reasoning)</option>
             <option value="medium">Medium</option>
-            <option value="fast">Fast</option>
+            <option value="fast">Fast (Sub-Sec)</option>
           </select>
         </div>
 
@@ -93,12 +95,18 @@
 
         <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen-Tresor">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-          <span>API Keys</span>
+          <span id="vault-btn-label">API Keys</span>
         </button>
 
-        <button id="btn-auth-open" class="btn btn-outline btn-auth-header">
-          <span id="user-avatar-badge" class="avatar-badge">👤</span>
-          <span id="user-display-name">Anmelden</span>
+        <!-- Profil-Button (Google Avatar & Name) -->
+        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Google Konto verwalten">
+          <span id="user-avatar-badge" class="avatar-badge avatar-google">L</span>
+          <span id="user-display-name">lolqs5014 ✓</span>
+        </button>
+
+        <button id="btn-share" class="btn btn-outline" title="Projekt teilen">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
+          Teilen
         </button>
 
         <button id="btn-open-settings" class="btn btn-outline">⚙️ Settings</button>
@@ -133,7 +141,7 @@
         <div class="tunnel-config-container" id="tunnel-list"></div>
         <div class="panel-body chat-history" id="chat-history"></div>
         <div class="panel-footer chat-input-wrapper">
-          <textarea id="ai-input" placeholder="Prompt eingeben..." rows="2"></textarea>
+          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein 2D-Auto-Ausweichspiel mit Canvas & Punktezähler')..." rows="2"></textarea>
           <button id="btn-send" class="btn btn-secondary">
             <span id="send-spinner" class="spinner hidden"></span>
             <span id="send-text">Pipeline starten</span>
@@ -219,10 +227,10 @@
           </table>
         </div>
         <div id="vault-add-box" class="vault-add-box hidden">
-          <input type="password" id="new-key-input" class="text-input" placeholder="API-Key hier einfügen...">
-          <input type="text" id="new-key-label" class="text-input" placeholder="Projektname (z. B. Default Gemini Project)">
+          <input type="password" id="new-key-input" class="text-input" placeholder="Google AI Studio API-Key einfügen (AIzaSy...)...">
+          <input type="text" id="new-key-label" class="text-input" placeholder="Project: Default Gemini Project">
           <div style="display:flex; gap:6px;">
-            <button id="btn-save-new-key" class="btn btn-primary btn-sm">Speichern</button>
+            <button id="btn-save-new-key" class="btn btn-primary btn-sm">Speichern & Verifizieren</button>
             <button id="btn-cancel-new-key" class="btn btn-outline btn-sm">Abbrechen</button>
           </div>
         </div>
@@ -233,46 +241,58 @@
     </div>
   </div>
 
-  <!-- ECHTES OAUTH & IDENTITY MODAL (Google & GitHub Redirects) -->
+  <!-- AUTH MODAL: SCHRITT A - GOOGLE IDENTITY SERVICES (GIS) -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
-        <h3>Konto & Authentifizierung</h3>
+        <h3>Google Identity (Schritt A)</h3>
         <button id="btn-auth-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body auth-modal-body">
         
-        <div id="auth-logged-in-view" class="auth-profile-view hidden">
+        <!-- Eingeloggt-Status (Bild 173 Design) -->
+        <div id="auth-logged-in-view" class="auth-profile-view">
           <div class="profile-card">
-            <div class="profile-avatar">👤</div>
+            <div class="profile-avatar avatar-google-large">L</div>
             <div class="profile-details">
-              <strong id="profile-name-text">Benutzer</strong>
-              <small id="profile-email-text">user@gmail.com</small>
-              <span class="micro-badge badge-valid">✓ Verifiziert</span>
+              <strong id="profile-name-text">lolqs5014</strong>
+              <small id="profile-email-text">lolqs5014@gmail.com</small>
+              <span class="micro-badge badge-valid">✓ Google Konto Verifiziert</span>
             </div>
           </div>
-          <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden</button>
+          <div class="account-actions-stack">
+            <button id="btn-switch-google-acc" class="btn btn-primary btn-full">Anderes Google-Konto verbinden</button>
+            <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden</button>
+          </div>
         </div>
 
-        <div id="auth-forms-wrapper">
+        <!-- Google Login Formular -->
+        <div id="auth-forms-wrapper" class="hidden">
           <div class="social-login-stack">
-            <!-- Echter Google OAuth Aufruf -->
-            <button id="btn-real-google-oauth" class="btn-social">
-              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-              Mit Google Konto anmelden
-            </button>
-            <!-- Echter GitHub OAuth Aufruf -->
-            <button id="btn-real-github-oauth" class="btn-social">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-              Mit GitHub Konto anmelden
-            </button>
+            <div class="auth-email-form">
+              <label class="setting-label">Google E-Mail-Adresse:</label>
+              <input type="email" id="gis-email-direct" class="text-input" value="lolqs5014@gmail.com" placeholder="name@gmail.com">
+              <button id="btn-verify-google-direct" class="btn btn-primary btn-full" style="margin-top:6px;">Mit Google Identity verifizieren</button>
+            </div>
           </div>
+        </div>
 
-          <div class="auth-divider"><span>Oder mit E-Mail</span></div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <input type="email" id="auth-email-direct" class="text-input" placeholder="deine-email@gmail.com / outlook / yahoo...">
-            <button id="btn-save-auth-direct" class="btn btn-primary btn-full">Profil verknüpfen</button>
-          </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE MODAL -->
+  <div id="share-modal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Projekt teilen</h3>
+        <button id="btn-share-close" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Teile dein Projekt per Web-Link oder direkt auf WhatsApp:</p>
+        <div class="share-actions-group">
+          <button id="btn-share-whatsapp" class="btn btn-whatsapp btn-full">💬 Auf WhatsApp teilen</button>
+          <button id="btn-copy-share-url" class="btn btn-outline btn-full">📋 Link kopieren</button>
         </div>
       </div>
     </div>
