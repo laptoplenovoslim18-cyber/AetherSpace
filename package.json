@@ -1,0 +1,16 @@
+﻿{
+  "name": "aetherspace",
+  "version": "2026.8.17",
+  "description": "AetherSpace Modern Platform",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node --max-old-space-size=24 server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "ws": "^8.18.0"
+  }
+}

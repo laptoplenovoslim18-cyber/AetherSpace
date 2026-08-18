@@ -1,0 +1,6 @@
+﻿/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  Access-Control-Allow-Headers: *
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer-when-downgrade
