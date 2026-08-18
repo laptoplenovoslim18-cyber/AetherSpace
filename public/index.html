@@ -6,14 +6,11 @@
   <title>AetherSpace</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
-  
-  <!-- Offizielles Google Identity Services (GIS) Web SDK -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div class="app-container">
     
-    <!-- Linkes Navigations-Menue (Google AI Studio Slide-Out) -->
+    <!-- Linkes Nav-Menue (Google AI Studio Style) -->
     <aside id="nav-drawer" class="nav-drawer hidden">
       <div class="nav-drawer-header">
         <div class="brand">
@@ -29,12 +26,12 @@
         
         <div class="nav-section-title">SCHNITTSTELLEN</div>
         <button class="nav-item" id="nav-open-vault">🔑 API-Keys Dashboard</button>
-        <button class="nav-item" id="nav-open-auth">👤 Mein Google-Konto</button>
+        <button class="nav-item" id="nav-open-auth">👤 Mein Konto & Profil</button>
 
         <div class="nav-section-title">EXTERNE CLOUD</div>
-        <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud Runner ↗</a>
+        <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud ↗</a>
         <a href="https://huggingface.co/spaces" target="_blank" class="nav-item-link">🤗 Hugging Face Spaces ↗</a>
-        <a href="https://stackblitz.com" target="_blank" class="nav-item-link">⚡ StackBlitz Cloud VM ↗</a>
+        <a href="https://stackblitz.com" target="_blank" class="nav-item-link">⚡ StackBlitz VM ↗</a>
       </div>
     </aside>
     <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
@@ -52,37 +49,17 @@
             <option value="gemini/gemini-2.0-flash">Gemini 2.0 Flash (Free Tier)</option>
             <option value="gemini/gemini-1.5-flash">Gemini 1.5 Flash</option>
             <option value="gemini/gemini-3.7-flash">Gemini 3.7 Flash</option>
-            <option value="gemini/gemini-3.6-flash">Gemini 3.6 Flash</option>
             <option value="groq/llama-3.3-70b-versatile">Groq Llama 3.3 70B</option>
           </select>
         </div>
 
         <div class="setting-block">
-          <label class="setting-label">System instructions</label>
-          <textarea id="studio-system-prompt" class="text-input" rows="4" placeholder="Optionale System-Anweisungen definieren..."></textarea>
-        </div>
-
-        <div class="setting-block">
           <label class="setting-label">Thinking level</label>
           <select id="studio-thinking-select" class="text-input select-styled">
-            <option value="high">High (Reasoning)</option>
+            <option value="high">High (Deep Reasoning)</option>
             <option value="medium">Medium</option>
-            <option value="fast">Fast (Sub-Sec)</option>
+            <option value="fast">Fast</option>
           </select>
-        </div>
-
-        <div class="setting-block">
-          <label class="setting-label">Tools & Grounding</label>
-          <div class="tools-toggle-stack">
-            <label class="tool-switch-row">
-              <span>Grounding with Google Search</span>
-              <input type="checkbox" id="studio-search-toggle">
-            </label>
-            <label class="tool-switch-row">
-              <span>Code execution (Sandbox)</span>
-              <input type="checkbox" id="studio-code-exec" checked>
-            </label>
-          </div>
         </div>
 
         <div class="setting-block">
@@ -92,22 +69,14 @@
           </div>
           <input type="range" id="studio-output-length" min="1024" max="65536" step="1024" value="65536" class="range-slider">
         </div>
-
-        <div class="setting-block">
-          <div class="slider-header">
-            <label class="setting-label">Temperature</label>
-            <span id="temp-val" class="slider-val">0.2</span>
-          </div>
-          <input type="range" id="studio-temperature" min="0.0" max="1.0" step="0.05" value="0.2" class="range-slider">
-        </div>
       </div>
     </aside>
 
-    <!-- Top Navigation Bar -->
+    <!-- Top Header -->
     <header class="app-header">
       <div class="brand-group">
         <button id="btn-hamburger" class="btn btn-icon" title="Hauptmenü">☰</button>
-        <button id="btn-toggle-sidebar" class="btn btn-icon" title="Dateibaum ein-/ausklappen">📁</button>
+        <button id="btn-toggle-sidebar" class="btn btn-icon" title="Dateibaum">📁</button>
         <div class="brand">
           <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
           <span class="brand-title">AetherSpace</span>
@@ -115,34 +84,26 @@
       </div>
 
       <div class="header-controls">
-        <div class="mode-toggle-pill" id="mode-toggle" title="Klick: Zwischen Key-Pool und $0 Gratis-Mesh wechseln">
+        <div class="mode-toggle-pill" id="mode-toggle">
           <span class="mode-pill-dot"></span>
           <span id="mode-pill-text">Key-Pool Aktiv</span>
         </div>
 
-        <button id="btn-theme" class="btn btn-icon" title="Theme wechseln (Dark/Light)">🌙</button>
+        <button id="btn-theme" class="btn btn-icon" title="Theme wechseln">🌙</button>
 
         <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen-Tresor">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-          <span id="vault-btn-label">API Keys</span>
+          <span>API Keys</span>
         </button>
 
-        <!-- Profil-Button mit Google-Status -->
-        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Google Konto verwalten">
+        <button id="btn-auth-open" class="btn btn-outline btn-auth-header">
           <span id="user-avatar-badge" class="avatar-badge">👤</span>
-          <span id="user-display-name">Google Anmelden</span>
+          <span id="user-display-name">Anmelden</span>
         </button>
 
-        <button id="btn-share" class="btn btn-outline" title="Projekt teilen">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
-          Teilen
-        </button>
+        <button id="btn-open-settings" class="btn btn-outline">⚙️ Settings</button>
 
-        <button id="btn-open-settings" class="btn btn-outline" title="Google AI Studio Run Settings">
-          ⚙️ Settings
-        </button>
-
-        <button id="btn-run" class="btn btn-primary" title="Code in Sandbox rendern">
+        <button id="btn-run" class="btn btn-primary" title="Code rendern">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           ▶ Play
         </button>
@@ -152,13 +113,11 @@
     <!-- Main Workspace -->
     <main class="workspace" id="workspace">
       
-      <!-- VS Code File Explorer (Left Sidebar) -->
+      <!-- VS Code File Explorer (Left) -->
       <aside class="panel panel-filetree" id="panel-filetree">
         <div class="panel-header">
           <span class="panel-title">Explorer</span>
-          <div class="filetree-actions">
-            <button id="btn-new-file" class="btn-icon" title="Neue Datei anlegen">+ Datei</button>
-          </div>
+          <button id="btn-new-file" class="btn-icon">+ Datei</button>
         </div>
         <div class="filetree-body" id="filetree-list"></div>
       </aside>
@@ -169,22 +128,12 @@
       <section class="panel panel-ai" id="panel-ai">
         <div class="panel-header">
           <span class="panel-title">Pipeline</span>
-          <div class="pipeline-header-actions">
-            <button id="btn-teleport" class="btn-icon" title="Chat-Kontext komprimieren & kopieren">⏩ Teleport</button>
-            <button id="btn-add-tunnel" class="btn-icon" title="KI-Stufe hinzufügen">+ Stufe</button>
-          </div>
+          <button id="btn-add-tunnel" class="btn-icon">+ Stufe</button>
         </div>
-
         <div class="tunnel-config-container" id="tunnel-list"></div>
-
-        <div id="context-files-badge" class="context-files-badge hidden">
-          📎 Kontext aktiv: <strong id="context-files-names">index.html</strong>
-        </div>
-
         <div class="panel-body chat-history" id="chat-history"></div>
-
         <div class="panel-footer chat-input-wrapper">
-          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein 2D-Auto-Ausweichspiel mit Canvas')..." rows="2"></textarea>
+          <textarea id="ai-input" placeholder="Prompt eingeben..." rows="2"></textarea>
           <button id="btn-send" class="btn btn-secondary">
             <span id="send-spinner" class="spinner hidden"></span>
             <span id="send-text">Pipeline starten</span>
@@ -192,19 +141,17 @@
         </div>
       </section>
 
-      <!-- Resizer 1 -->
       <div class="resizer" id="resizer-1"></div>
 
       <!-- Spalte 2: Code-Editor -->
       <section class="panel panel-editor" id="panel-editor">
         <div class="panel-header">
           <div class="editor-tabs" id="editor-tabs-container">
-            <button class="tab-btn active" data-file="public/index.html">index.html</button>
+            <button class="tab-btn active">index.html</button>
           </div>
           <div class="editor-actions">
-            <button id="btn-history-toggle" class="btn-icon" title="Projekt-Historie / Snapshots">📚 History</button>
-            <button id="btn-copy" class="btn-icon" title="Code kopieren">Kopieren</button>
-            <button id="btn-clear" class="btn-icon" title="Editor leeren">Leeren</button>
+            <button id="btn-copy" class="btn-icon">Kopieren</button>
+            <button id="btn-clear" class="btn-icon">Leeren</button>
           </div>
         </div>
         <div class="panel-body editor-wrapper">
@@ -217,204 +164,115 @@
         </div>
       </section>
 
-      <!-- Resizer 2 -->
       <div class="resizer" id="resizer-2"></div>
 
-      <!-- Spalte 3: Sandbox Vorschau & Cloud-Staging Hub -->
+      <!-- Spalte 3: Sandbox Vorschau (100% Dark) -->
       <section class="panel panel-preview" id="panel-preview">
         <div class="panel-header">
-          <div class="preview-title-group">
-            <span class="panel-title">Vorschau</span>
-            <span id="diagnostic-pill" class="diagnostic-pill hidden" title="Diagnose-Status">0 Fehler</span>
-          </div>
-          
+          <span class="panel-title">Vorschau</span>
           <div class="preview-actions">
-            <div class="export-group">
-              <input type="text" id="export-filename" class="export-input" placeholder="app-name" title="Dateinamen anpassen">
-              <span id="export-ext-label" class="export-ext">.html</span>
-              <button id="btn-export" class="btn btn-icon btn-export-action" title="Datei herunterladen">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Export
-              </button>
-            </div>
-
-            <div class="cloud-staging-dropdown">
-              <button id="btn-cloud-menu" class="btn btn-icon" title="In Cloud auslagern">
-                🚀 Cloud ▾
-              </button>
-              <div id="cloud-staging-menu" class="cloud-menu-content hidden">
-                <button class="cloud-menu-item" data-runner="codepen">In CodePen auslagern</button>
-                <button class="cloud-menu-item" data-runner="hf-spaces">In Hugging Face Spaces starten</button>
-                <button class="cloud-menu-item" data-runner="stackblitz">In StackBlitz VM ausführen</button>
-              </div>
-            </div>
-
-            <button id="btn-auto-heal" class="btn btn-heal" title="Fehler finden & durch KI heilen lassen">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.06 3.4L12 9.35l1.06-1.06 1.34 1.34-1.09 1.06z"/></svg>
-              Auto-Heal
-            </button>
-            <button id="btn-reload-preview" class="btn-icon" title="Neu laden">Neu</button>
-            <button id="btn-external-preview" class="btn-icon" title="In neuem Tab öffnen">Extern</button>
+            <input type="text" id="export-filename" class="export-input" placeholder="app-name">
+            <button id="btn-export" class="btn btn-icon">Export</button>
+            <button id="btn-auto-heal" class="btn btn-heal">Auto-Heal</button>
+            <button id="btn-reload-preview" class="btn-icon">Neu</button>
           </div>
         </div>
-
         <div class="panel-body preview-wrapper">
           <iframe id="sandbox-frame" sandbox="allow-scripts allow-modals" title="Sandbox Output"></iframe>
-        </div>
-
-        <!-- History Drawer -->
-        <div id="history-drawer" class="history-drawer hidden">
-          <div class="drawer-header">
-            <span>Projekt-Historie (Snapshots)</span>
-            <button id="btn-close-history" class="btn-icon">&times;</button>
-          </div>
-          <div id="history-list" class="history-list"></div>
-        </div>
-
-        <!-- Diagnostics Drawer -->
-        <div id="diagnostics-drawer" class="diagnostics-drawer hidden">
-          <div class="drawer-header">
-            <span>Polyglot Diagnose-Bericht</span>
-            <button id="btn-close-diagnostics" class="btn-icon">&times;</button>
-          </div>
-          <div id="diagnostics-log" class="diagnostics-log"></div>
         </div>
       </section>
 
     </main>
 
-    <!-- Footer Statusleiste -->
+    <!-- Footer -->
     <footer class="app-footer">
-      <div class="footer-left">
-        <span>AetherSpace Studio</span>
-      </div>
-      <div class="footer-right">
-        <span id="footer-discovery-badge">Discovery: SOTA Bereit</span>
-        <span class="divider">|</span>
-        <span>RAM: <strong>&lt; 15 MB</strong></span>
-      </div>
+      <div class="footer-left"><span>AetherSpace Studio</span></div>
+      <div class="footer-right"><span>RAM: <strong>&lt; 15 MB</strong></span></div>
     </footer>
   </div>
 
-  <!-- MULTI-KEY TRESOR MODAL -->
+  <!-- MULTI-KEY TRESOR MODAL (Google AI Studio Style - Bild 158) -->
   <div id="vault-modal" class="modal-backdrop hidden">
     <div class="modal-card vault-studio-card">
       <div class="modal-header">
-        <div class="vault-title-group">
+        <div>
           <h3>API Keys Dashboard</h3>
-          <span class="vault-subtitle-tag">Google AI Studio & Cloud Key-Pools</span>
+          <span style="font-size:11px; color:#8892b0;">Google AI Studio & Cloud Key Pools</span>
         </div>
         <button id="btn-vault-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
-        
         <div class="vault-toolbar">
           <div class="vault-tabs">
             <button class="vault-tab-btn active" data-provider="gemini">Google AI Studio</button>
             <button class="vault-tab-btn" data-provider="groq">Groq Cloud</button>
             <button class="vault-tab-btn" data-provider="hf">Hugging Face</button>
-            <button class="vault-tab-btn" data-provider="openrouter">OpenRouter</button>
           </div>
           <button id="btn-vault-create-key" class="btn btn-primary btn-sm">+ Create API Key</button>
         </div>
-
         <div class="vault-table-container">
           <table class="vault-table">
             <thead>
-              <tr>
-                <th>Key Preview</th>
-                <th>Project / Label</th>
-                <th>Created</th>
-                <th>Tier</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
+              <tr><th>Key Preview</th><th>Project</th><th>Created</th><th>Tier</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody id="vault-keys-tbody"></tbody>
           </table>
         </div>
-
-        <!-- Inline Key Add Box -->
         <div id="vault-add-box" class="vault-add-box hidden">
-          <input type="password" id="new-key-input" class="text-input" placeholder="API-Key hier einfügen (z. B. AIzaSy... oder gsk_...)...">
+          <input type="password" id="new-key-input" class="text-input" placeholder="API-Key hier einfügen...">
           <input type="text" id="new-key-label" class="text-input" placeholder="Projektname (z. B. Default Gemini Project)">
-          <div class="add-box-actions">
-            <button id="btn-save-new-key" class="btn btn-primary btn-sm">Key speichern & verifizieren</button>
+          <div style="display:flex; gap:6px;">
+            <button id="btn-save-new-key" class="btn btn-primary btn-sm">Speichern</button>
             <button id="btn-cancel-new-key" class="btn btn-outline btn-sm">Abbrechen</button>
           </div>
         </div>
-
         <div class="modal-footer-actions">
-          <button id="btn-modal-done" class="btn btn-secondary btn-full">Schliessen & Speichern</button>
+          <button id="btn-modal-done" class="btn btn-secondary btn-full">Schließen</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- AUTH MODAL: ECHTES GOOGLE IDENTITY SERVICES (GIS) SCHRITT A -->
+  <!-- ECHTES OAUTH & IDENTITY MODAL (Google & GitHub Redirects) -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
-        <div class="auth-tabs-header">
-          <button id="tab-btn-signin" class="auth-header-tab active">Google Anmelden</button>
-          <button id="tab-btn-signup" class="auth-header-tab">Google Registrieren</button>
-        </div>
+        <h3>Konto & Authentifizierung</h3>
         <button id="btn-auth-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body auth-modal-body">
         
-        <!-- Eingeloggt-Statusansicht -->
         <div id="auth-logged-in-view" class="auth-profile-view hidden">
           <div class="profile-card">
-            <div class="profile-avatar">🌐</div>
+            <div class="profile-avatar">👤</div>
             <div class="profile-details">
-              <strong id="profile-name-text">Google Benutzer</strong>
+              <strong id="profile-name-text">Benutzer</strong>
               <small id="profile-email-text">user@gmail.com</small>
-              <span class="micro-badge badge-valid">✓ Google Verifiziert</span>
+              <span class="micro-badge badge-valid">✓ Verifiziert</span>
             </div>
           </div>
-          <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden / Konto wechseln</button>
+          <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden</button>
         </div>
 
-        <!-- Google Identity Services (GIS) Anmelde-Formular (KEIN WINDOW.PROMPT MEHR!) -->
         <div id="auth-forms-wrapper">
-          <p class="modal-subtitle" id="gis-instruction-text">
-            Melde dich mit deinem Google-Konto an, um deine Projekte und API-Schlüssel zu synchronisieren:
-          </p>
-
-          <div class="gis-form-group">
-            <input type="email" id="gis-email-input" class="text-input" placeholder="dein-name@gmail.com">
-            <button id="btn-trigger-google-auth" class="btn-social btn-google-gis">
-              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-              <span id="gis-btn-label">Google Konto verifizieren</span>
+          <div class="social-login-stack">
+            <!-- Echter Google OAuth Aufruf -->
+            <button id="btn-real-google-oauth" class="btn-social">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+              Mit Google Konto anmelden
+            </button>
+            <!-- Echter GitHub OAuth Aufruf -->
+            <button id="btn-real-github-oauth" class="btn-social">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              Mit GitHub Konto anmelden
             </button>
           </div>
 
-          <div class="auth-divider"><span>Status & Sicherheit</span></div>
-          <p class="auth-security-note">
-            🔒 Deine Authentifizierung läuft verschlüsselt über Google Identity Services (GIS). Deine Daten verbleiben zu 100 % in deinem Besitz.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SHARE MODAL -->
-  <div id="share-modal" class="modal-backdrop hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>Projekt teilen</h3>
-        <button id="btn-share-close" class="modal-close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p class="modal-subtitle">Teile dein Projekt per Web-Link oder direkt auf WhatsApp:</p>
-        <div class="share-actions-group">
-          <button id="btn-share-whatsapp" class="btn btn-whatsapp btn-full">
-            💬 Auf WhatsApp teilen
-          </button>
-          <button id="btn-copy-share-url" class="btn btn-outline btn-full">
-            📋 Vorschau-Link kopieren
-          </button>
+          <div class="auth-divider"><span>Oder mit E-Mail</span></div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <input type="email" id="auth-email-direct" class="text-input" placeholder="deine-email@gmail.com / outlook / yahoo...">
+            <button id="btn-save-auth-direct" class="btn btn-primary btn-full">Profil verknüpfen</button>
+          </div>
         </div>
       </div>
     </div>
