@@ -102,6 +102,19 @@ html, body {
 
 /* Avatar Badge */
 .btn-auth-header { display: flex; align-items: center; gap: 6px; }
+.avatar-google {
+  background-color: #7c3aed;
+  color: #fff;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+.avatar-google-large { background-color: #7c3aed; color: #fff; font-size: 22px; font-weight: 700; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
 /* Workspace */
 .workspace { display: flex; flex: 1; height: calc(100vh - 62px); position: relative; overflow: hidden; }
@@ -170,7 +183,7 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .footer-right { display: flex; gap: 8px; }
 .divider { color: var(--border-color); }
 
-/* Google AI Studio API Keys Table (Bild 158) */
+/* Google AI Studio API Keys Table */
 .vault-studio-card { width: 620px; max-width: 95vw; }
 .vault-title-group { display: flex; flex-direction: column; gap: 2px; }
 .vault-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -186,11 +199,17 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 
 .vault-add-box { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 
-/* Auth Modal Styles */
+/* Multi-Account Manager Modal */
 .auth-modal-card { width: 400px; }
-.auth-tabs-header { display: flex; gap: 8px; }
-.auth-header-tab { background: transparent; border: none; font-size: 14px; font-weight: 700; color: var(--text-muted); cursor: pointer; padding-bottom: 4px; border-bottom: 2px solid transparent; }
-.auth-header-tab.active { color: #fff; border-bottom-color: var(--accent); }
+.auth-profile-view { display: flex; flex-direction: column; gap: 10px; }
+.profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; }
+.profile-details { display: flex; flex-direction: column; gap: 2px; }
+.profile-details strong { font-size: 14px; color: var(--text-main); }
+.profile-details small { color: var(--text-muted); font-size: 11px; font-family: var(--font-mono); }
+
+.linked-accounts-stack { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.linked-account-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-root); border: 1px solid var(--border-color); padding: 6px 8px; border-radius: 4px; font-size: 11px; }
+.linked-account-item.active { border-color: var(--success); }
 
 .social-login-stack { display: flex; flex-direction: column; gap: 8px; }
 .btn-social { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 9px 12px; border-radius: 6px; background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
@@ -198,15 +217,6 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .auth-divider { text-align: center; margin: 10px 0; position: relative; }
 .auth-divider span { font-size: 11px; color: var(--text-muted); background: var(--bg-surface); padding: 0 8px; }
 .auth-email-form { display: flex; flex-direction: column; gap: 8px; }
-.auth-security-note { font-size: 11px; color: var(--text-muted); line-height: 1.4; text-align: center; }
-
-/* Profile Card */
-.auth-profile-view { display: flex; flex-direction: column; gap: 12px; }
-.profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; }
-.profile-avatar { font-size: 22px; width: 40px; height: 40px; border-radius: 50%; background: var(--bg-surface); display: flex; align-items: center; justify-content: center; }
-.profile-details { display: flex; flex-direction: column; gap: 2px; }
-.profile-details strong { font-size: 14px; color: var(--text-main); }
-.profile-details small { color: var(--text-muted); font-size: 11px; font-family: var(--font-mono); }
 
 /* Modal Styles */
 .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }

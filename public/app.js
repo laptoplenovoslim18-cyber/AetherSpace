@@ -1,12 +1,16 @@
-﻿// AetherSpace: SOTA Master Engine v10.0
+﻿// AetherSpace: SOTA Multi-Account Switcher & Gemini 3.7 Master Engine
 (function () {
   'use strict';
 
+  // --- State & Multi-Account Store ---
   const state = {
     theme: localStorage.getItem('aether_theme') || 'dark',
     activeMode: localStorage.getItem('aether_mode') || 'pool',
-    userEmail: localStorage.getItem('aether_user_email') || '',
-    authModeTab: 'signin',
+    
+    // Multi-Account Registry
+    linkedAccounts: JSON.parse(localStorage.getItem('aether_linked_accounts') || '[]'),
+    activeAccountEmail: localStorage.getItem('aether_active_email') || '',
+    
     history: JSON.parse(localStorage.getItem('aether_history') || '[]'),
     
     files: {
@@ -21,7 +25,8 @@
     keyPools: {
       gemini: JSON.parse(localStorage.getItem('aether_keys_gemini') || '[]'),
       groq: JSON.parse(localStorage.getItem('aether_keys_groq') || '[]'),
-      hf: JSON.parse(localStorage.getItem('aether_keys_hf') || '[]')
+      hf: JSON.parse(localStorage.getItem('aether_keys_hf') || '[]'),
+      openrouter: JSON.parse(localStorage.getItem('aether_keys_openrouter') || '[]')
     },
     activeVaultTab: 'gemini',
     keyRotatorIndex: 0
@@ -70,7 +75,7 @@
   const tempVal = document.getElementById('temp-val');
   if (tempSlider && tempVal) tempSlider.addEventListener('input', (e) => { tempVal.textContent = e.target.value; });
 
-  // --- Resizing ---
+  // --- Resizing System ---
   const workspace = document.getElementById('workspace');
   const panelFiletree = document.getElementById('panel-filetree');
   const panelAi = document.getElementById('panel-ai');
@@ -135,16 +140,19 @@
     renderFileTree();
   });
 
-  // --- SOTA Dynamic Models ---
+  // --- SOTA 2026 Model Registry (Gemini 3.7 als Standard!) ---
   const DEFAULT_FALLBACK_MODELS = [
-    { id: 'gemini/gemini-2.0-flash', name: 'Gemini 2.0 Flash (Free Tier)', provider: 'gemini', modelTag: 'gemini-2.0-flash' },
-    { id: 'gemini/gemini-1.5-flash', name: 'Gemini 1.5 Flash (Failsafe)', provider: 'gemini', modelTag: 'gemini-1.5-flash' },
-    { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash' },
-    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile' }
+    { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash (SOTA / Default)', provider: 'gemini', modelTag: 'gemini-3.7-flash' },
+    { id: 'gemini/gemini-3.6-flash', name: '⚡ Gemini 3.6 Flash (Empfohlen)', provider: 'gemini', modelTag: 'gemini-3.6-flash' },
+    { id: 'gemini/gemini-2.0-flash', name: '🚀 Gemini 2.0 Flash (Free Tier)', provider: 'gemini', modelTag: 'gemini-2.0-flash' },
+    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B (500+ tok/s)', provider: 'groq', modelTag: 'llama-3.3-70b-versatile' },
+    { id: 'hf/deepseek-ai/DeepSeek-V3', name: '🤗 Hugging Face: DeepSeek V3', provider: 'hf', modelTag: 'deepseek-ai/DeepSeek-V3' },
+    { id: 'openrouter/deepseek/deepseek-r1:free', name: '🧠 OpenRouter: DeepSeek R1', provider: 'openrouter', modelTag: 'deepseek/deepseek-r1:free' },
+    { id: 'openrouter/qwen/qwen-2.5-coder-32b-instruct:free', name: '💻 OpenRouter: Qwen 2.5 Coder', provider: 'openrouter', modelTag: 'qwen/qwen-2.5-coder-32b-instruct:free' }
   ];
 
   let tunnelStages = JSON.parse(localStorage.getItem('aether_tunnels') || 'null') || [
-    { modelId: 'gemini/gemini-2.0-flash', role: 'Architektur & Design' },
+    { modelId: 'gemini/gemini-3.7-flash', role: 'Architektur & Design' },
     { modelId: 'groq/llama-3.3-70b-versatile', role: 'Qualitaet & Synthese' }
   ];
 
@@ -197,7 +205,7 @@
   function saveTunnelConfig() { localStorage.setItem('aether_tunnels', JSON.stringify(tunnelStages)); }
 
   if (btnAddTunnel) btnAddTunnel.addEventListener('click', () => {
-    tunnelStages.push({ modelId: 'gemini/gemini-2.0-flash', role: `Feinschliff ${tunnelStages.length + 1}` });
+    tunnelStages.push({ modelId: 'gemini/gemini-3.6-flash', role: `Feinschliff ${tunnelStages.length + 1}` });
     renderTunnelList();
     saveTunnelConfig();
   });
@@ -274,7 +282,7 @@
 
     state.keyPools[state.activeVaultTab].push({
       key: k,
-      label: newKeyLabel.value.trim() || 'Default Gemini Project',
+      label: newKeyLabel.value.trim() || 'Default Project',
       created: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       valid: isValid,
       active: true
@@ -289,110 +297,101 @@
   if (btnVaultClose && vaultModal) btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
   if (btnModalDone && vaultModal) btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
 
-  // --- ECHTES OAUTH & ACCOUNT MANAGEMENT (GOOGLE BILD 182 FLOW) ---
+  // --- MULTI-ACCOUNT MANAGER & UMSCHALTER ---
   const authModal = document.getElementById('auth-modal');
   const btnAuthOpen = document.getElementById('btn-auth-open');
   const btnAuthClose = document.getElementById('btn-auth-close');
   const userDisplayName = document.getElementById('user-display-name');
   const userAvatarBadge = document.getElementById('user-avatar-badge');
-
-  const tabBtnSignin = document.getElementById('tab-btn-signin');
-  const tabBtnSignup = document.getElementById('tab-btn-signup');
-  const googleActionLabel = document.getElementById('google-action-label');
-  const msActionLabel = document.getElementById('ms-action-label');
-  const btnGoogleRealAction = document.getElementById('btn-google-real-action');
-  const btnMsRealAction = document.getElementById('btn-ms-real-action');
-
-  const authLoggedInView = document.getElementById('auth-logged-in-view');
-  const authFormsWrapper = document.getElementById('auth-forms-wrapper');
   const profileNameText = document.getElementById('profile-name-text');
   const profileEmailText = document.getElementById('profile-email-text');
-  const btnAuthSignout = document.getElementById('btn-auth-signout');
+  const profileStatusBadge = document.getElementById('profile-status-badge');
+  const linkedAccountsList = document.getElementById('linked-accounts-list');
+  const btnGoogleRealAction = document.getElementById('btn-google-real-action');
+  const btnMsRealAction = document.getElementById('btn-ms-real-action');
   const userEmailInputField = document.getElementById('user-email-input-field');
   const btnBindVerifiedProfile = document.getElementById('btn-bind-verified-profile');
 
-  function updateAuthDisplay() {
-    if (state.userEmail && state.userEmail.length > 0) {
-      if (userDisplayName) userDisplayName.textContent = state.userEmail.split('@')[0] + ' ✓';
-      if (userAvatarBadge) userAvatarBadge.textContent = '👤';
-      if (authLoggedInView) authLoggedInView.classList.remove('hidden');
-      if (authFormsWrapper) authFormsWrapper.classList.add('hidden');
-      if (profileNameText) profileNameText.textContent = state.userEmail.split('@')[0];
-      if (profileEmailText) profileEmailText.textContent = state.userEmail;
+  function renderMultiAccounts() {
+    if (state.activeAccountEmail) {
+      const active = state.linkedAccounts.find(a => a.email === state.activeAccountEmail) || { email: state.activeAccountEmail, provider: 'google' };
+      if (userDisplayName) userDisplayName.textContent = active.email.split('@')[0] + ' ✓';
+      if (userAvatarBadge) userAvatarBadge.textContent = active.provider === 'google' ? 'G' : (active.provider === 'ms' ? 'M' : '👤');
+      if (profileNameText) profileNameText.textContent = active.email.split('@')[0];
+      if (profileEmailText) profileEmailText.textContent = active.email;
+      if (profileStatusBadge) { profileStatusBadge.textContent = '✓ Aktiv & Verifiziert'; profileStatusBadge.className = 'micro-badge badge-valid'; }
     } else {
       if (userDisplayName) userDisplayName.textContent = 'Anmelden';
       if (userAvatarBadge) userAvatarBadge.textContent = '👤';
-      if (authLoggedInView) authLoggedInView.classList.add('hidden');
-      if (authFormsWrapper) authFormsWrapper.classList.remove('hidden');
+      if (profileNameText) profileNameText.textContent = 'Nicht angemeldet';
+      if (profileEmailText) profileEmailText.textContent = 'Kein Konto aktiv';
+      if (profileStatusBadge) { profileStatusBadge.textContent = '○ Inaktiv'; profileStatusBadge.className = 'micro-badge badge-idle'; }
+    }
+
+    if (linkedAccountsList) {
+      linkedAccountsList.innerHTML = '';
+      if (state.linkedAccounts.length === 0) {
+        linkedAccountsList.innerHTML = '<small style="color:#8892b0;">Keine weiteren Konten gespeichert.</small>';
+      } else {
+        state.linkedAccounts.forEach((acc, idx) => {
+          const item = document.createElement('div');
+          item.className = `linked-account-item ${acc.email === state.activeAccountEmail ? 'active' : ''}`;
+          item.innerHTML = `
+            <span><strong>${acc.provider.toUpperCase()}</strong>: ${acc.email}</span>
+            <div style="display:flex; gap:6px;">
+              ${acc.email !== state.activeAccountEmail ? `<button class="btn-text-action" onclick="switchAccount('${acc.email}')">Wechseln</button>` : '<span style="color:#10b981; font-weight:600;">Aktiv</span>'}
+              <button class="btn-text-action" onclick="removeAccount(${idx})" style="color:#f43f5e;">✕</button>
+            </div>
+          `;
+          linkedAccountsList.appendChild(item);
+        });
+      }
     }
   }
 
-  if (tabBtnSignin) {
-    tabBtnSignin.addEventListener('click', () => {
-      state.authModeTab = 'signin';
-      tabBtnSignin.classList.add('active');
-      tabBtnSignup.classList.remove('active');
-      if (googleActionLabel) googleActionLabel.textContent = 'Mit Google-Konto anmelden';
-      if (msActionLabel) msActionLabel.textContent = 'Mit Microsoft / Outlook anmelden';
-    });
-  }
+  window.switchAccount = function(email) {
+    state.activeAccountEmail = email;
+    localStorage.setItem('aether_active_email', email);
+    renderMultiAccounts();
+  };
 
-  if (tabBtnSignup) {
-    tabBtnSignup.addEventListener('click', () => {
-      state.authModeTab = 'signup';
-      tabBtnSignup.classList.add('active');
-      tabBtnSignin.classList.remove('active');
-      if (googleActionLabel) googleActionLabel.textContent = 'Neues Google-Konto erstellen';
-      if (msActionLabel) msActionLabel.textContent = 'Neues Microsoft-Konto erstellen';
-    });
-  }
+  window.removeAccount = function(idx) {
+    const removed = state.linkedAccounts.splice(idx, 1)[0];
+    if (removed && removed.email === state.activeAccountEmail) {
+      state.activeAccountEmail = state.linkedAccounts.length > 0 ? state.linkedAccounts[0].email : '';
+      localStorage.setItem('aether_active_email', state.activeAccountEmail);
+    }
+    localStorage.setItem('aether_linked_accounts', JSON.stringify(state.linkedAccounts));
+    renderMultiAccounts();
+  };
 
-  if (btnAuthOpen && authModal) btnAuthOpen.addEventListener('click', () => { updateAuthDisplay(); authModal.classList.remove('hidden'); });
+  if (btnAuthOpen && authModal) btnAuthOpen.addEventListener('click', () => { renderMultiAccounts(); authModal.classList.remove('hidden'); });
   if (btnAuthClose && authModal) btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
 
-  // Echter Google Redirect (Öffnet Bild 182)
   if (btnGoogleRealAction) {
-    btnGoogleRealAction.addEventListener('click', () => {
-      if (state.authModeTab === 'signup') {
-        window.open('https://accounts.google.com/signup', '_blank');
-      } else {
-        window.open('https://accounts.google.com/signin', '_blank');
-      }
-    });
+    btnGoogleRealAction.addEventListener('click', () => { window.open('https://accounts.google.com/signin', '_blank'); });
   }
-
-  // Echter Microsoft Redirect
   if (btnMsRealAction) {
-    btnMsRealAction.addEventListener('click', () => {
-      if (state.authModeTab === 'signup') {
-        window.open('https://signup.live.com', '_blank');
-      } else {
-        window.open('https://login.live.com', '_blank');
-      }
-    });
+    btnMsRealAction.addEventListener('click', () => { window.open('https://login.live.com', '_blank'); });
   }
 
-  // Profil verknüpfen
   if (btnBindVerifiedProfile && userEmailInputField) {
     btnBindVerifiedProfile.addEventListener('click', () => {
       const em = userEmailInputField.value.trim();
       if (em && em.includes('@')) {
-        state.userEmail = em;
-        localStorage.setItem('aether_user_email', state.userEmail);
-        updateAuthDisplay();
-        if (authModal) authModal.classList.add('hidden');
+        const prov = em.includes('gmail') ? 'google' : (em.includes('outlook') || em.includes('hotmail') ? 'ms' : 'email');
+        if (!state.linkedAccounts.find(a => a.email === em)) {
+          state.linkedAccounts.push({ email: em, provider: prov });
+          localStorage.setItem('aether_linked_accounts', JSON.stringify(state.linkedAccounts));
+        }
+        state.activeAccountEmail = em;
+        localStorage.setItem('aether_active_email', em);
+        userEmailInputField.value = '';
+        renderMultiAccounts();
+        alert(`Konto '${em}' erfolgreich verknuepft und aktiviert!`);
       } else {
-        alert('Bitte deine verifizierte E-Mail-Adresse eingeben.');
+        alert('Bitte eine gueltige E-Mail eingeben.');
       }
-    });
-  }
-
-  if (btnAuthSignout) {
-    btnAuthSignout.addEventListener('click', () => {
-      state.userEmail = '';
-      localStorage.removeItem('aether_user_email');
-      updateAuthDisplay();
-      if (authModal) authModal.classList.add('hidden');
     });
   }
 
@@ -432,7 +431,7 @@
     return list[state.keyRotatorIndex].key.trim();
   }
 
-  // --- Reale KI-Ausfuehrung ---
+  // --- Reale KI-Ausfuehrung & Generierung ---
   async function callAI(modelConfig, prompt, systemPrompt) {
     const reg = DEFAULT_FALLBACK_MODELS.find(m => m.id === modelConfig.modelId) || DEFAULT_FALLBACK_MODELS[0];
     const searchGrounding = document.getElementById('studio-search-toggle')?.checked || false;
@@ -441,7 +440,7 @@
     if (state.activeMode === 'pool') {
       const activeGeminiKey = getActiveKey('gemini');
       if (reg.provider === 'gemini' && activeGeminiKey && !activeGeminiKey.includes('Placeholder')) {
-        const tagChain = [reg.modelTag, 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.7-flash'];
+        const tagChain = [reg.modelTag, 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-2.0-flash'];
         for (const t of tagChain) {
           try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${t}:generateContent?key=${activeGeminiKey}`;
@@ -462,11 +461,32 @@
           }
         }
       }
+
+      const activeGroqKey = getActiveKey('groq');
+      if (reg.provider === 'groq' && activeGroqKey) {
+        try {
+          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${activeGroqKey}` },
+            body: JSON.stringify({
+              model: reg.modelTag,
+              messages: [{ role: 'system', content: systemPrompt || 'Elite Web-Entwickler' }, { role: 'user', content: prompt }],
+              temperature: 0.2
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return { code: data.choices[0].message.content, modelUsed: `Groq ${reg.modelTag}` };
+          }
+        } catch (e) {
+          console.warn('Groq Pool Fallback:', e);
+        }
+      }
     }
 
     // 2. Pollinations JSON Router ($0 Free Mesh)
     try {
-      const cleanSystem = 'Du bist ein Elite-Webentwickler. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung fuer die Anforderung. Gib ausschliesslich reinen, lauffaehigen HTML-Code zurueck.';
+      const cleanSystem = 'Du bist ein Elite-Webentwickler. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung fuer die Anforderung. Gib ausschliesslich reinen, lauffaehigen HTML-Code zurueck (ohne Erklaertexte).';
       const res = await fetch('https://text.pollinations.ai/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -479,7 +499,7 @@
         const text = await res.text();
         if (text && text.length > 30) return { code: text, modelUsed: '🌐 Edge Mesh Router ($0)' };
       }
-    } catch (e) { console.warn('Pollinations Error:', e); }
+    } catch (e) { console.warn('Pollinations Router Fallback:', e); }
 
     // 3. Autarker Polyglot 2D Canvas Synthesizer
     const isGame = prompt.toLowerCase().includes('auto') || prompt.toLowerCase().includes('spiel') || prompt.toLowerCase().includes('game');
@@ -605,7 +625,7 @@
       chatHistory.appendChild(msg);
     }
 
-    const activeStage = tunnelStages[0] || { modelId: 'gemini/gemini-2.0-flash', role: 'Architektur' };
+    const activeStage = tunnelStages[0] || { modelId: 'gemini/gemini-3.7-flash', role: 'Architektur' };
     const res = await callAI(activeStage, prompt, 'Du bist ein Elite-Webentwickler.');
 
     if (editor) {
@@ -653,7 +673,7 @@
   // Init
   initResizers();
   updateModeUI();
-  updateAuthDisplay();
+  renderMultiAccounts();
   renderFileTree();
   renderTunnelList();
   if (editor) {
