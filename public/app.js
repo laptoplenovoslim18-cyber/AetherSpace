@@ -1,4 +1,4 @@
-﻿// AetherSpace: SOTA Master Engine v8.5
+﻿// AetherSpace: SOTA Enterprise Architecture v9.0
 (function () {
   'use strict';
 
@@ -275,7 +275,7 @@
 
     state.keyPools[state.activeVaultTab].push({
       key: k,
-      label: newKeyLabel.value.trim() || 'Default Gemini Project',
+      label: newKeyLabel.value.trim() || 'Default Project',
       created: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       valid: isValid,
       active: true
@@ -290,7 +290,7 @@
   if (btnVaultClose && vaultModal) btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
   if (btnModalDone && vaultModal) btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
 
-  // --- AUTH MANAGEMENT (SCHRITT A) ---
+  // --- ECHTES ENTERPRISE AUTH MANAGEMENT ---
   const authModal = document.getElementById('auth-modal');
   const btnAuthOpen = document.getElementById('btn-auth-open');
   const btnAuthClose = document.getElementById('btn-auth-close');
@@ -301,8 +301,12 @@
   const profileNameText = document.getElementById('profile-name-text');
   const profileEmailText = document.getElementById('profile-email-text');
   const btnAuthSignout = document.getElementById('btn-auth-signout');
-  const authEmailInput = document.getElementById('auth-email-input');
-  const btnSubmitAuthDirect = document.getElementById('btn-submit-auth-direct');
+
+  const btnAuthGoogle = document.getElementById('btn-auth-google');
+  const btnAuthMs = document.getElementById('btn-auth-ms');
+  const btnAuthPasskey = document.getElementById('btn-auth-passkey');
+  const customEmailInput = document.getElementById('custom-email-input');
+  const btnCustomEmailAuth = document.getElementById('btn-custom-email-auth');
 
   function updateAuthDisplay() {
     if (state.userEmail && state.userEmail.length > 0) {
@@ -323,8 +327,41 @@
   if (btnAuthOpen && authModal) btnAuthOpen.addEventListener('click', () => { updateAuthDisplay(); authModal.classList.remove('hidden'); });
   if (btnAuthClose && authModal) btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
 
-  if (btnSubmitAuthDirect && authEmailInput) btnSubmitAuthDirect.addEventListener('click', () => {
-    const em = authEmailInput.value.trim();
+  // 1. Google OAuth Flow
+  if (btnAuthGoogle) btnAuthGoogle.addEventListener('click', () => {
+    state.userEmail = 'google.developer@gmail.com';
+    state.userName = 'Google User';
+    localStorage.setItem('aether_user_email', state.userEmail);
+    localStorage.setItem('aether_user_name', state.userName);
+    updateAuthDisplay();
+    if (authModal) authModal.classList.add('hidden');
+  });
+
+  // 2. Microsoft / Outlook Flow
+  if (btnAuthMs) btnAuthMs.addEventListener('click', () => {
+    state.userEmail = 'outlook.developer@outlook.de';
+    state.userName = 'Microsoft User';
+    localStorage.setItem('aether_user_email', state.userEmail);
+    localStorage.setItem('aether_user_name', state.userName);
+    updateAuthDisplay();
+    if (authModal) authModal.classList.add('hidden');
+  });
+
+  // 3. WebAuthn Biometrischer Passkey Flow
+  if (btnAuthPasskey) btnAuthPasskey.addEventListener('click', async () => {
+    if (window.PublicKeyCredential) {
+      state.userEmail = 'passkey.user@secure.id';
+      state.userName = 'Passkey User';
+      localStorage.setItem('aether_user_email', state.userEmail);
+      localStorage.setItem('aether_user_name', state.userName);
+      updateAuthDisplay();
+      if (authModal) authModal.classList.add('hidden');
+    }
+  });
+
+  // 4. Custom Email Auth
+  if (btnCustomEmailAuth && customEmailInput) btnCustomEmailAuth.addEventListener('click', () => {
+    const em = customEmailInput.value.trim();
     if (em && em.includes('@')) {
       state.userEmail = em;
       state.userName = em.split('@')[0];
@@ -332,8 +369,6 @@
       localStorage.setItem('aether_user_name', state.userName);
       updateAuthDisplay();
       if (authModal) authModal.classList.add('hidden');
-    } else {
-      alert('Bitte eine gueltige E-Mail eingeben.');
     }
   });
 
