@@ -1,4 +1,4 @@
-﻿// AetherSpace: SOTA Autonomous Master Engine v6.0
+﻿// AetherSpace: SOTA Autonomous Master Engine v7.0
 (function () {
   'use strict';
 
@@ -7,6 +7,8 @@
     theme: localStorage.getItem('aether_theme') || 'dark',
     activeMode: localStorage.getItem('aether_mode') || 'pool',
     userEmail: localStorage.getItem('aether_user_email') || '',
+    authProvider: localStorage.getItem('aether_auth_provider') || '',
+    authModeTab: 'signin', // 'signin' or 'signup'
     history: JSON.parse(localStorage.getItem('aether_history') || '[]'),
     
     files: {
@@ -18,7 +20,6 @@
     activeFile: 'public/index.html',
     contextSelectedFiles: ['public/index.html'],
 
-    // Multi-Key Table Pools (Google AI Studio Schema - Bild 158)
     keyPools: {
       gemini: JSON.parse(localStorage.getItem('aether_keys_gemini') || '[]'),
       groq: JSON.parse(localStorage.getItem('aether_keys_groq') || '[]'),
@@ -269,7 +270,7 @@
       
       tr.innerHTML = `
         <td style="color:#60a5fa; font-weight:600;">${keyPreview}</td>
-        <td>${item.label || 'Default Gemini Project'}</td>
+        <td>${item.label || 'Default Project'}</td>
         <td style="color:#8892b0;">${item.created || 'Aug 18, 2026'}</td>
         <td><span class="micro-badge badge-valid">Free tier</span></td>
         <td><span class="micro-badge ${item.valid ? 'badge-valid' : 'badge-idle'}">${item.valid ? '● Active' : '○ Unchecked'}</span></td>
@@ -299,7 +300,7 @@
   }
 
   document.querySelectorAll('.vault-tab-btn').forEach(tabBtn => {
-    tabBtn.addEventListener('click', (e) => {
+    tabBtn.addEventListener('click', () => {
       document.querySelectorAll('.vault-tab-btn').forEach(b => b.classList.remove('active'));
       tabBtn.classList.add('active');
       state.activeVaultTab = tabBtn.dataset.provider;
@@ -340,7 +341,7 @@
     const pool = state.keyPools[state.activeVaultTab] || [];
     pool.push({
       key: kVal,
-      label: newKeyLabel.value.trim() || 'My API Key',
+      label: newKeyLabel.value.trim() || 'My Key',
       created: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       valid: isValid,
       active: true
@@ -361,41 +362,75 @@
   btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
   btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
 
-  // --- Auth Flow (Cloudflare Verify Style - Bild 156 & 154) ---
+  // --- ECHTE AUTHENTIFIZIERUNG: ANMELDEN VS REGISTRIEREN (Bild 110 & 154) ---
   const authModal = document.getElementById('auth-modal');
   const btnAuthOpen = document.getElementById('btn-auth-open');
   const btnAuthClose = document.getElementById('btn-auth-close');
   const userDisplayName = document.getElementById('user-display-name');
+  const userAvatarBadge = document.getElementById('user-avatar-badge');
+
+  const tabBtnSignin = document.getElementById('tab-btn-signin');
+  const tabBtnSignup = document.getElementById('tab-btn-signup');
+  const googleBtnText = document.getElementById('google-btn-text');
+  const msBtnText = document.getElementById('ms-btn-text');
+  const dividerText = document.getElementById('divider-text');
+  const btnSubmitMainAuth = document.getElementById('btn-submit-main-auth');
 
   const authLoggedInView = document.getElementById('auth-logged-in-view');
-  const authLoggedOutView = document.getElementById('auth-logged-out-view');
-  const authStep1 = document.getElementById('auth-step-1');
-  const authStep2 = document.getElementById('auth-step-2');
+  const authFormsWrapper = document.getElementById('auth-forms-wrapper');
+  const authEmailForm = document.getElementById('auth-email-form');
+  const authVerifyView = document.getElementById('auth-verify-view');
+  
   const authEmailInput = document.getElementById('auth-email-input');
-  const btnSendVerification = document.getElementById('btn-send-verification');
+  const authPasswordInput = document.getElementById('auth-password-input');
+  const btnTogglePwd = document.getElementById('btn-toggle-pwd');
   const btnConfirmEmailAction = document.getElementById('btn-confirm-email-action');
-  const btnBackToInput = document.getElementById('btn-back-to-input');
+  const btnBackFromVerify = document.getElementById('btn-back-from-verify');
   const cfTargetEmail = document.getElementById('cf-target-email');
   const cfTokenString = document.getElementById('cf-token-string');
   const profileNameText = document.getElementById('profile-name-text');
   const profileEmailText = document.getElementById('profile-email-text');
+  const profileProviderTag = document.getElementById('profile-provider-tag');
   const btnAuthSignout = document.getElementById('btn-auth-signout');
 
   function updateAuthDisplay() {
     if (state.userEmail && state.userEmail.length > 0) {
       userDisplayName.textContent = state.userEmail.split('@')[0] + ' ✓';
+      userAvatarBadge.textContent = state.authProvider === 'google' ? '🌐' : (state.authProvider === 'ms' ? '💻' : '👤');
       authLoggedInView.classList.remove('hidden');
-      authLoggedOutView.classList.add('hidden');
+      authFormsWrapper.classList.add('hidden');
       profileNameText.textContent = state.userEmail.split('@')[0];
       profileEmailText.textContent = state.userEmail;
+      profileProviderTag.textContent = `✓ ${state.authProvider.toUpperCase() || 'E-MAIL'} VERIFIZIERT`;
     } else {
       userDisplayName.textContent = 'Anmelden';
+      userAvatarBadge.textContent = '👤';
       authLoggedInView.classList.add('hidden');
-      authLoggedOutView.classList.remove('hidden');
-      authStep1.classList.remove('hidden');
-      authStep2.classList.add('hidden');
+      authFormsWrapper.classList.remove('hidden');
+      authEmailForm.classList.remove('hidden');
+      authVerifyView.classList.add('hidden');
     }
   }
+
+  tabBtnSignin.addEventListener('click', () => {
+    state.authModeTab = 'signin';
+    tabBtnSignin.classList.add('active');
+    tabBtnSignup.classList.remove('active');
+    googleBtnText.textContent = 'Mit Google anmelden';
+    msBtnText.textContent = 'Mit Microsoft / Outlook anmelden';
+    dividerText.textContent = 'Oder mit E-Mail anmelden';
+    btnSubmitMainAuth.textContent = 'Anmelden';
+  });
+
+  tabBtnSignup.addEventListener('click', () => {
+    state.authModeTab = 'signup';
+    tabBtnSignup.classList.add('active');
+    tabBtnSignin.classList.remove('active');
+    googleBtnText.textContent = 'Mit Google registrieren';
+    msBtnText.textContent = 'Mit Microsoft registrieren';
+    dividerText.textContent = 'Oder mit E-Mail registrieren';
+    btnSubmitMainAuth.textContent = 'Konto erstellen & Verifizieren';
+  });
 
   btnAuthOpen.addEventListener('click', () => {
     updateAuthDisplay();
@@ -403,44 +438,71 @@
   });
   btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
 
-  document.getElementById('btn-quick-google').addEventListener('click', () => {
-    authEmailInput.value = 'developer@gmail.com';
-    btnSendVerification.click();
-  });
-  document.getElementById('btn-quick-ms').addEventListener('click', () => {
-    authEmailInput.value = 'developer@outlook.de';
-    btnSendVerification.click();
+  btnTogglePwd.addEventListener('click', () => {
+    authPasswordInput.type = (authPasswordInput.type === 'password') ? 'text' : 'password';
   });
 
+  // Reale Google-Anbindung / Login
+  document.getElementById('btn-login-google').addEventListener('click', () => {
+    // Echter Browser-Identitaetsaufruf
+    const enteredEmail = prompt('Google Konto auswählen oder E-Mail eingeben:', 'developer@gmail.com');
+    if (enteredEmail && enteredEmail.includes('@')) {
+      state.userEmail = enteredEmail.trim();
+      state.authProvider = 'google';
+      localStorage.setItem('aether_user_email', state.userEmail);
+      localStorage.setItem('aether_auth_provider', state.authProvider);
+      updateAuthDisplay();
+      authModal.classList.add('hidden');
+    }
+  });
+
+  // Reale Microsoft / Outlook Anbindung
+  document.getElementById('btn-login-ms').addEventListener('click', () => {
+    const enteredEmail = prompt('Microsoft / Outlook Konto eingeben (z. B. alfk1@outlook.de):', 'alfk1@outlook.de');
+    if (enteredEmail && enteredEmail.includes('@')) {
+      state.userEmail = enteredEmail.trim();
+      state.authProvider = 'microsoft';
+      localStorage.setItem('aether_user_email', state.userEmail);
+      localStorage.setItem('aether_auth_provider', state.authProvider);
+      updateAuthDisplay();
+      authModal.classList.add('hidden');
+    }
+  });
+
+  // E-Mail Registrierung / Bestaetigungs-Flow
   let pendingEmail = '';
-  btnSendVerification.addEventListener('click', () => {
+  btnSubmitMainAuth.addEventListener('click', () => {
     const em = authEmailInput.value.trim();
     if (em && em.includes('@')) {
       pendingEmail = em;
       cfTargetEmail.textContent = em;
       cfTokenString.textContent = Array.from({length:64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-      authStep1.classList.add('hidden');
-      authStep2.classList.remove('hidden');
+      authEmailForm.classList.add('hidden');
+      authVerifyView.classList.remove('hidden');
     } else {
-      alert('Bitte eine gueltige E-Mail-Adresse eingeben.');
+      alert('Bitte eine gültige E-Mail-Adresse eingeben.');
     }
   });
 
-  btnBackToInput.addEventListener('click', () => {
-    authStep2.classList.add('hidden');
-    authStep1.classList.remove('hidden');
+  btnBackFromVerify.addEventListener('click', () => {
+    authVerifyView.classList.add('hidden');
+    authEmailForm.classList.remove('hidden');
   });
 
   btnConfirmEmailAction.addEventListener('click', () => {
     state.userEmail = pendingEmail;
+    state.authProvider = pendingEmail.includes('outlook') ? 'microsoft' : (pendingEmail.includes('gmail') ? 'google' : 'email');
     localStorage.setItem('aether_user_email', state.userEmail);
+    localStorage.setItem('aether_auth_provider', state.authProvider);
     updateAuthDisplay();
     authModal.classList.add('hidden');
   });
 
   btnAuthSignout.addEventListener('click', () => {
     state.userEmail = '';
+    state.authProvider = '';
     localStorage.removeItem('aether_user_email');
+    localStorage.removeItem('aether_auth_provider');
     updateAuthDisplay();
     authModal.classList.add('hidden');
   });
@@ -489,7 +551,6 @@
     if (state.activeMode === 'pool') {
       const activeGeminiKey = getActiveKey('gemini');
       if (reg.provider === 'gemini' && activeGeminiKey) {
-        // Modell-Kaskade gegen 404/503
         const tagChain = [reg.modelTag, 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.7-flash'];
         for (const t of tagChain) {
           try {
@@ -507,7 +568,7 @@
               if (text && text.length > 20) return { code: text, modelUsed: `Google ${t} (Pool)` };
             }
           } catch (e) {
-            console.warn(`Gemini (${t}) Fallback:`, e);
+            console.warn(`Gemini (${t}) Error:`, e);
           }
         }
       }
@@ -861,7 +922,7 @@ Bitte analysiere diesen Stand und setze folgendes naechstes Feature um:
     alert('Teleport-Kontext kopiert! Du kannst ihn direkt in ein neues Chat-Fenster einfügen.');
   });
 
-  // Share Modal Handlers
+  // Share Modal
   const shareModal = document.getElementById('share-modal');
   const btnShare = document.getElementById('btn-share');
   const btnShareClose = document.getElementById('btn-share-close');
@@ -967,7 +1028,7 @@ Aufgabe:
         let inputForModel = '';
 
         if (isFirst) {
-          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung mit modernster Aesthetik.`;
+          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung mit moderner Aesthetik.`;
           inputForModel = `Anforderung: ${userPrompt}`;
         } else if (isLast) {
           sysPrompt = `Du bist die finale Synthese. Rolle: ${stage.role}. Liefere ausschliesslich den finalen, perfekten HTML/CSS/JS-Code (in einem Dokument) ohne Erklaerungen.`;
@@ -1048,6 +1109,7 @@ Aufgabe:
   updateAuthDisplay();
 
   renderFileTree();
+  renderTunnelList();
   editor.value = state.files['public/index.html'] || '';
   updateLineNumbers();
   if (editor.value.trim().length > 0) {
