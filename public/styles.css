@@ -179,7 +179,7 @@ html, body {
 .panel-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; }
 .pipeline-header-actions { display: flex; gap: 4px; }
 
-/* Hierarchische Nested Toggles (Two-Tier Controls) */
+/* Hierarchische Nested Toggles */
 .nested-toggles-bar {
   display: flex;
   align-items: center;
@@ -412,7 +412,15 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .btn-text-action { background: transparent; border: none; color: #60a5fa; font-size: 10px; cursor: pointer; }
 .btn-text-action:hover { text-decoration: underline; }
 
-/* Social Login Stack (Referenz Bild 110) */
+/* Auth Profile Card */
+.auth-profile-view { display: flex; flex-direction: column; gap: 12px; }
+.profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; }
+.profile-avatar { font-size: 24px; background: var(--bg-surface); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
+.profile-details { display: flex; flex-direction: column; gap: 2px; }
+.profile-details strong { font-size: 13px; color: var(--text-main); }
+.profile-details small { color: var(--text-muted); font-size: 11px; }
+
+/* Social Login Stack */
 .auth-modal-card { width: 390px; }
 .social-login-stack { display: flex; flex-direction: column; gap: 8px; }
 .btn-social {
@@ -438,8 +446,8 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .password-input-group .text-input { width: 100%; padding-right: 32px; }
 .btn-pwd-eye { position: absolute; right: 6px; background: transparent; border: none; cursor: pointer; font-size: 14px; color: var(--text-muted); }
 .auth-options-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); }
-.btn-auth-submit { background-color: #b91c1c; border-color: #991b1b; font-weight: 600; margin-top: 4px; }
-.btn-auth-submit:hover { background-color: #991b1b; }
+.btn-auth-submit { background-color: #059669; border-color: #047857; font-weight: 600; margin-top: 4px; }
+.btn-auth-submit:hover { background-color: #047857; }
 
 /* Modal Styles */
 .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
