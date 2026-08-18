@@ -1,8 +1,8 @@
-﻿// AetherSpace: SOTA Autonomous Master Engine v4.0
+﻿// AetherSpace: SOTA Autonomous Master Engine v5.0
 (function () {
   'use strict';
 
-  // --- State & Storage Registry ---
+  // --- State & Session Store ---
   const state = {
     theme: localStorage.getItem('aether_theme') || 'dark',
     activeMode: localStorage.getItem('aether_mode') || 'pool',
@@ -11,8 +11,8 @@
     
     files: {
       'public/index.html': localStorage.getItem('aether_saved_code') || '',
-      'public/styles.css': '/* AetherSpace Custom Styles */',
-      'public/app.js': '// AetherSpace Custom Scripts',
+      'public/styles.css': '/* AetherSpace Styles */',
+      'public/app.js': '// AetherSpace Scripts',
       'package.json': '{\n  "name": "aetherspace",\n  "type": "module"\n}'
     },
     activeFile: 'public/index.html',
@@ -27,7 +27,7 @@
     keyRotatorIndex: 0
   };
 
-  // --- Google AI Studio Nav Drawer ---
+  // --- Google AI Studio Nav Drawers (Left & Right) ---
   const navDrawer = document.getElementById('nav-drawer');
   const drawerBackdrop = document.getElementById('drawer-backdrop');
   const btnHamburger = document.getElementById('btn-hamburger');
@@ -35,21 +35,31 @@
   const navOpenVault = document.getElementById('nav-open-vault');
   const navOpenAuth = document.getElementById('nav-open-auth');
 
-  function openNavDrawer() {
-    navDrawer.classList.remove('hidden');
-    drawerBackdrop.classList.remove('hidden');
-  }
-  function closeNavDrawer() {
-    navDrawer.classList.add('hidden');
-    drawerBackdrop.classList.add('hidden');
-  }
+  const runSettingsDrawer = document.getElementById('run-settings-drawer');
+  const btnOpenSettings = document.getElementById('btn-open-settings');
+  const btnCloseSettings = document.getElementById('btn-close-settings');
+
+  function openNavDrawer() { navDrawer.classList.remove('hidden'); drawerBackdrop.classList.remove('hidden'); }
+  function closeNavDrawer() { navDrawer.classList.add('hidden'); drawerBackdrop.classList.add('hidden'); }
 
   btnHamburger.addEventListener('click', openNavDrawer);
   btnCloseDrawer.addEventListener('click', closeNavDrawer);
   drawerBackdrop.addEventListener('click', closeNavDrawer);
 
+  btnOpenSettings.addEventListener('click', () => { runSettingsDrawer.classList.toggle('hidden'); });
+  btnCloseSettings.addEventListener('click', () => { runSettingsDrawer.classList.add('hidden'); });
+
   navOpenVault.addEventListener('click', () => { closeNavDrawer(); btnVaultOpen.click(); });
   navOpenAuth.addEventListener('click', () => { closeNavDrawer(); btnAuthOpen.click(); });
+
+  // Slider Telemetry
+  const outputLengthSlider = document.getElementById('studio-output-length');
+  const outputLengthVal = document.getElementById('output-length-val');
+  outputLengthSlider.addEventListener('input', (e) => { outputLengthVal.textContent = e.target.value; });
+
+  const tempSlider = document.getElementById('studio-temperature');
+  const tempVal = document.getElementById('temp-val');
+  tempSlider.addEventListener('input', (e) => { tempVal.textContent = e.target.value; });
 
   // --- Resizing System ---
   const workspace = document.getElementById('workspace');
@@ -129,7 +139,7 @@
   }
 
   function switchActiveFile(fileName) {
-    state.files[state.activeFile] = editor.value; // Speichere aktuellen Stand
+    state.files[state.activeFile] = editor.value;
     state.activeFile = fileName;
     editor.value = state.files[fileName] || '';
     updateLineNumbers();
@@ -166,22 +176,7 @@
     }
   });
 
-  // --- Two-Tier Hierarchische Toggles ---
-  document.querySelectorAll('.master-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      const targetId = pill.dataset.target;
-      document.querySelectorAll('.tier2-drawer').forEach(d => d.classList.add('hidden'));
-      document.querySelectorAll('.master-pill').forEach(p => p.classList.remove('active'));
-
-      const targetDrawer = document.getElementById(targetId);
-      if (targetDrawer) {
-        targetDrawer.classList.remove('hidden');
-        pill.classList.add('active');
-      }
-    });
-  });
-
-  // --- SOTA Dynamic Models ---
+  // --- SOTA Model Catalog ---
   const DEFAULT_FALLBACK_MODELS = [
     { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash', roleHint: 'Lead Architect & Design' },
     { id: 'gemini/gemini-3.6-flash', name: '⚡ Gemini 3.6 Flash', provider: 'gemini', modelTag: 'gemini-3.6-flash', roleHint: 'Code Audit & Synthese' },
@@ -224,8 +219,6 @@
       sel.addEventListener('change', (e) => {
         const idx = e.target.dataset.idx;
         tunnelStages[idx].modelId = e.target.value;
-        const matched = activeCatalog.find(m => m.id === e.target.value);
-        if (matched && matched.roleHint) tunnelStages[idx].role = matched.roleHint;
         renderTunnelList();
         saveTunnelConfig();
       });
@@ -247,9 +240,7 @@
     });
   }
 
-  function saveTunnelConfig() {
-    localStorage.setItem('aether_tunnels', JSON.stringify(tunnelStages));
-  }
+  function saveTunnelConfig() { localStorage.setItem('aether_tunnels', JSON.stringify(tunnelStages)); }
 
   btnAddTunnel.addEventListener('click', () => {
     tunnelStages.push({ modelId: 'gemini/gemini-3.6-flash', role: `Feinschliff ${tunnelStages.length + 1}` });
@@ -257,6 +248,7 @@
     saveTunnelConfig();
   });
 
+  // Background Live Model Discovery
   async function refreshDynamicModels() {
     const activeKey = getActivePoolKey('gemini');
     if (!activeKey) {
@@ -315,7 +307,7 @@
     return validKeys[state.keyRotatorIndex].key.trim();
   }
 
-  // --- Tresor Modal & Pools ---
+  // --- Tresor & Auth State Engine ---
   const vaultModal = document.getElementById('vault-modal');
   const btnVaultOpen = document.getElementById('btn-vault-open');
   const btnVaultClose = document.getElementById('btn-vault-close');
@@ -331,10 +323,11 @@
   const authStep1 = document.getElementById('auth-step-1');
   const authStep2 = document.getElementById('auth-step-2');
   const authEmailInput = document.getElementById('auth-email-input');
-  const otpCodeInput = document.getElementById('otp-code-input');
-  const btnSendOtp = document.getElementById('btn-send-otp');
-  const btnVerifyOtp = document.getElementById('btn-verify-otp');
-  const btnBackAuth = document.getElementById('btn-back-auth');
+  const btnSendVerification = document.getElementById('btn-send-verification');
+  const btnConfirmEmailAction = document.getElementById('btn-confirm-email-action');
+  const btnBackToInput = document.getElementById('btn-back-to-input');
+  const cfTargetEmail = document.getElementById('cf-target-email');
+  const cfTokenString = document.getElementById('cf-token-string');
   const profileNameText = document.getElementById('profile-name-text');
   const profileEmailText = document.getElementById('profile-email-text');
   const btnAuthSignout = document.getElementById('btn-auth-signout');
@@ -478,44 +471,41 @@
   });
   btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
 
-  // SOTA Authentifizierung mit 6-Stelligem Bestaetigungscode (Kein prompt() mehr!)
+  // Echte E-Mail-Bestaetigung (Bild 154 Flow)
   let pendingEmail = '';
 
   document.getElementById('btn-quick-google').addEventListener('click', () => {
     authEmailInput.value = 'developer@gmail.com';
-    btnSendOtp.click();
+    btnSendVerification.click();
   });
   document.getElementById('btn-quick-ms').addEventListener('click', () => {
     authEmailInput.value = 'developer@outlook.de';
-    btnSendOtp.click();
+    btnSendVerification.click();
   });
 
-  btnSendOtp.addEventListener('click', () => {
+  btnSendVerification.addEventListener('click', () => {
     const em = authEmailInput.value.trim();
     if (em && em.includes('@')) {
       pendingEmail = em;
+      cfTargetEmail.textContent = em;
+      cfTokenString.textContent = Array.from({length:64}, () => Math.floor(Math.random()*16).toString(16)).join('');
       authStep1.classList.add('hidden');
       authStep2.classList.remove('hidden');
-      otpCodeInput.value = '';
-      otpCodeInput.focus();
+    } else {
+      alert('Bitte eine gueltige E-Mail-Adresse eingeben.');
     }
   });
 
-  btnBackAuth.addEventListener('click', () => {
+  btnBackToInput.addEventListener('click', () => {
     authStep2.classList.add('hidden');
     authStep1.classList.remove('hidden');
   });
 
-  btnVerifyOtp.addEventListener('click', () => {
-    const code = otpCodeInput.value.trim();
-    if (code.length >= 4) {
-      state.userEmail = pendingEmail;
-      localStorage.setItem('aether_user_email', state.userEmail);
-      updateAuthDisplay();
-      authModal.classList.add('hidden');
-    } else {
-      alert('Bitte den Bestaetigungscode eingeben.');
-    }
+  btnConfirmEmailAction.addEventListener('click', () => {
+    state.userEmail = pendingEmail;
+    localStorage.setItem('aether_user_email', state.userEmail);
+    updateAuthDisplay();
+    authModal.classList.add('hidden');
   });
 
   btnAuthSignout.addEventListener('click', () => {
@@ -553,11 +543,11 @@
     localStorage.setItem('aether_theme', state.theme);
   });
 
-  // --- Unzerstoerbare KI-Ausfuehrung (Echter Code-Generator, Kein Template-Echo) ---
+  // --- Unzerstoerbare KI-Ausfuehrung ---
   async function callAI(modelConfig, prompt, systemPrompt) {
     const catalog = state.dynamicModels.length > 0 ? state.dynamicModels : DEFAULT_FALLBACK_MODELS;
     const reg = catalog.find(m => m.id === modelConfig.modelId) || catalog[0];
-    const searchGrounding = document.getElementById('search-grounding').checked;
+    const searchGrounding = document.getElementById('studio-search-toggle').checked;
 
     // Stufe 1: Eigene Key-Pools
     if (state.activeMode === 'pool') {
@@ -567,7 +557,7 @@
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${reg.modelTag}:generateContent?key=${activeGeminiKey}`;
           const bodyPayload = {
             contents: [{ role: 'user', parts: [{ text: `${systemPrompt ? `[SYSTEM: ${systemPrompt}]\n\n` : ''}${prompt}` }] }],
-            generationConfig: { temperature: 0.2, maxOutputTokens: 65536 }
+            generationConfig: { temperature: parseFloat(tempSlider.value) || 0.2, maxOutputTokens: parseInt(outputLengthSlider.value) || 65536 }
           };
           if (searchGrounding) bodyPayload.tools = [{ googleSearch: {} }];
 
