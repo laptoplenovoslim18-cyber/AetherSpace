@@ -1,6 +1,7 @@
 ﻿const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 
 const PORT = 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -13,6 +14,7 @@ const MIME_TYPES = {
   '.json': 'application/json'
 };
 
+// Lokaler Webserver
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -25,13 +27,8 @@ const server = http.createServer((req, res) => {
     if (err) {
       if (err.code === 'ENOENT') {
         fs.readFile(path.join(PUBLIC_DIR, 'index.html'), (e, fallback) => {
-          if (e) {
-            res.writeHead(404);
-            res.end('404 Not Found');
-          } else {
-            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-            res.end(fallback, 'utf-8');
-          }
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(fallback || '404', 'utf-8');
         });
       } else {
         res.writeHead(500);
@@ -46,6 +43,22 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[AKTIV] AetherSpace Webserver laeuft auf Port ${PORT}`);
-  console.log(`[LOKAL] http://127.0.0.1:${PORT}`);
-  console.log(`[INFO]  Schliesse dieses Fenster, um den Port wieder zu sperren.`);
+  console.log(`[AUTO-SYNC] Datei-Waechter fuer GitHub & Cloudflare ist SCHARF.`);
+});
+
+// Automatischer Datei-Waechter fuer C:\Test\public
+let syncTimer = null;
+fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
+  if (!filename) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    console.log(`[AENDERUNG ERKANNT] ${filename} wurde geaendert -> Lade automatisch zu GitHub & Cloudflare hoch...`);
+    exec('git add . && git commit -m "Auto-Sync: AetherSpace Update" && git push origin main', { cwd: __dirname }, (error, stdout) => {
+      if (error) {
+        console.warn(`[SYNC-HINWEIS] Keine neuen Änderungen zum Hochladen.`);
+      } else {
+        console.log(`[ERFOLG] Automatisch mit GitHub & Cloudflare synchronisiert!`);
+      }
+    });
+  }, 2500); // 2.5 Sekunden warten, damit alle Dateien fertig geschrieben sind
 });
