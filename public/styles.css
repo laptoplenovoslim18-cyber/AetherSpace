@@ -72,7 +72,7 @@ html, body {
 .nav-item:hover, .nav-item-link:hover { background: var(--bg-active); color: #60a5fa; }
 .nav-item.active { background: rgba(37, 99, 235, 0.15); color: #60a5fa; font-weight: 600; }
 
-/* Right Run Settings Drawer (Google AI Studio) */
+/* Right Run Settings Drawer */
 .run-settings-drawer {
   position: absolute;
   top: 38px; right: 0; bottom: 24px;
@@ -223,7 +223,7 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .footer-right { display: flex; gap: 8px; }
 .divider { color: var(--border-color); }
 
-/* Google AI Studio API Keys Table Dashboard (Bild 158) */
+/* Google AI Studio API Keys Table Dashboard */
 .vault-studio-card { width: 620px; max-width: 95vw; }
 .vault-title-group { display: flex; flex-direction: column; gap: 2px; }
 .vault-subtitle-tag { font-size: 10px; color: var(--text-muted); font-weight: normal; }
@@ -241,47 +241,23 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .vault-add-box { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .add-box-actions { display: flex; gap: 6px; }
 
-/* Auth Modal: Tab Header (Anmelden vs Registrieren) */
-.auth-modal-card { width: 420px; }
+/* Auth Modal: Google Identity Services (GIS) Flow */
+.auth-modal-card { width: 400px; }
 .auth-tabs-header { display: flex; gap: 8px; }
-.auth-header-tab {
-  background: transparent;
-  border: none;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding-bottom: 4px;
-  border-bottom: 2px solid transparent;
-}
+.auth-header-tab { background: transparent; border: none; font-size: 14px; font-weight: 700; color: var(--text-muted); cursor: pointer; padding-bottom: 4px; border-bottom: 2px solid transparent; }
 .auth-header-tab.active { color: #fff; border-bottom-color: var(--accent); }
 
-.social-login-stack { display: flex; flex-direction: column; gap: 8px; }
-.btn-social { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 12px; border-radius: 6px; background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-.btn-social:hover { background: var(--bg-active); border-color: var(--border-focus); }
-.auth-divider { text-align: center; margin: 10px 0; position: relative; }
-.auth-divider span { font-size: 11px; color: var(--text-muted); background: var(--bg-surface); padding: 0 8px; }
-.auth-email-form { display: flex; flex-direction: column; gap: 8px; }
-.password-input-group { position: relative; display: flex; align-items: center; }
-.password-input-group .text-input { width: 100%; padding-right: 32px; }
-.btn-pwd-eye { position: absolute; right: 6px; background: transparent; border: none; cursor: pointer; font-size: 14px; color: var(--text-muted); }
-.auth-options-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); }
-.btn-auth-submit { background-color: #059669; border-color: #047857; font-weight: 600; margin-top: 4px; }
-.btn-auth-submit:hover { background-color: #047857; }
+.google-gis-container { margin: 16px 0; display: flex; justify-content: center; width: 100%; }
+.btn-google-gis { width: 100%; background: #ffffff; color: #1f2937; font-weight: 600; padding: 10px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: none; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+.btn-google-gis:hover { background: #f3f4f6; }
 
-/* Cloudflare E-Mail Verification Template (Bild 154) */
-.cloudflare-verify-card { background: #1c1815; border: 1px solid #d97706; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
-.cf-email-banner h4 { font-size: 14px; color: #fff; margin-top: 6px; margin-bottom: 4px; }
-.cf-logo { font-size: 13px; font-weight: 700; color: #f59e0b; }
-.cf-desc { font-size: 11px; color: #d1d5db; line-height: 1.4; }
-.btn-verify-action { background-color: #ea580c; color: #fff; font-weight: 700; padding: 8px 14px; border-radius: 4px; margin-top: 8px; border: none; cursor: pointer; font-size: 12px; }
-.btn-verify-action:hover { background-color: #c2410c; }
-.cf-token-box { margin-top: 10px; padding: 8px; background: #0d0b09; border-radius: 4px; font-size: 10px; color: #9ca3af; word-break: break-all; }
+.auth-security-note { font-size: 11px; color: var(--text-muted); line-height: 1.4; text-align: center; }
 
 /* Auth Profile Card */
 .auth-profile-view { display: flex; flex-direction: column; gap: 12px; }
 .profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; }
 .profile-avatar { font-size: 24px; background: var(--bg-surface); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
+.profile-avatar-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
 .profile-details { display: flex; flex-direction: column; gap: 2px; }
 .profile-details strong { font-size: 13px; color: var(--text-main); }
 .profile-details small { color: var(--text-muted); font-size: 11px; }

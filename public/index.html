@@ -7,9 +7,8 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
   
-  <!-- Offizielle Google & Microsoft Web SDKs -->
+  <!-- Offizielles Google Identity Services (GIS) Web SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -130,8 +129,8 @@
           <span id="vault-btn-label">API Keys</span>
         </button>
 
-        <!-- Profil / Login Button mit Provider-Icon -->
-        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Konto verwalten">
+        <!-- Profil-Button mit echtem Google-Avatar / Status -->
+        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Google Konto verwalten">
           <span id="user-avatar-badge" class="avatar-badge">👤</span>
           <span id="user-display-name">Anmelden</span>
         </button>
@@ -175,55 +174,6 @@
           <div class="pipeline-header-actions">
             <button id="btn-teleport" class="btn-icon" title="Chat-Kontext komprimieren & kopieren">⏩ Teleport</button>
             <button id="btn-add-tunnel" class="btn-icon" title="KI-Stufe hinzufügen">+ Stufe</button>
-          </div>
-        </div>
-
-        <!-- Hierarchische Two-Tier Toggles -->
-        <div class="nested-toggles-bar">
-          <div class="master-pill active" data-target="tier2-autopilot">
-            <span>⚡ Auto-Pilot</span>
-          </div>
-          <div class="master-pill" data-target="tier2-hardware">
-            <span>🛡️ Hardware</span>
-          </div>
-          <div class="master-pill" data-target="tier2-cloud">
-            <span>🌐 Cloud-Staging</span>
-          </div>
-        </div>
-
-        <div class="tier2-drawer" id="tier2-autopilot">
-          <div class="pro-control-item">
-            <span class="pro-label">Thinking:</span>
-            <select id="thinking-level" class="mini-select">
-              <option value="high">High (Reasoning)</option>
-              <option value="medium">Medium</option>
-              <option value="fast">Fast (Sub-Sec)</option>
-            </select>
-          </div>
-          <div class="pro-control-item">
-            <label class="toggle-switch-label">
-              <input type="checkbox" id="search-grounding">
-              <span class="toggle-slider"></span>
-              <span class="pro-label">Live Search</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="tier2-drawer hidden" id="tier2-hardware">
-          <div class="pro-control-item">
-            <span class="pro-label">RAM:</span>
-            <span class="pro-badge">Max 500 MB</span>
-          </div>
-          <div class="pro-control-item">
-            <span class="pro-label">FPS:</span>
-            <span class="pro-badge">Native 144Hz+</span>
-          </div>
-        </div>
-
-        <div class="tier2-drawer hidden" id="tier2-cloud">
-          <div class="pro-control-item">
-            <span class="pro-label">Runner:</span>
-            <span class="pro-badge">CodePen / HF Spaces / StackBlitz</span>
           </div>
         </div>
 
@@ -349,7 +299,7 @@
     </footer>
   </div>
 
-  <!-- MULTI-KEY TRESOR MODAL (Google AI Studio API Keys Dashboard) -->
+  <!-- MULTI-KEY TRESOR MODAL (Google AI Studio Dashboard Style) -->
   <div id="vault-modal" class="modal-backdrop hidden">
     <div class="modal-card vault-studio-card">
       <div class="modal-header">
@@ -405,13 +355,13 @@
     </div>
   </div>
 
-  <!-- AUTH MODAL: KLARE TRENNUNG ZWISCHEN ANMELDEN & REGISTRIEREN (Bild 110 & 154) -->
+  <!-- AUTH MODAL (Google Identity Services GIS - Schritt A) -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
         <div class="auth-tabs-header">
-          <button id="tab-btn-signin" class="auth-header-tab active">Anmelden</button>
-          <button id="tab-btn-signup" class="auth-header-tab">Registrieren</button>
+          <button id="tab-btn-signin" class="auth-header-tab active">Google Anmelden</button>
+          <button id="tab-btn-signup" class="auth-header-tab">Google Registrieren</button>
         </div>
         <button id="btn-auth-close" class="modal-close">&times;</button>
       </div>
@@ -420,66 +370,35 @@
         <!-- Eingeloggt-Statusansicht -->
         <div id="auth-logged-in-view" class="auth-profile-view hidden">
           <div class="profile-card">
-            <div class="profile-avatar" id="logged-avatar-icon">👤</div>
+            <img id="logged-avatar-img" class="profile-avatar-img" src="" alt="Avatar" style="display:none;">
+            <div id="logged-avatar-fallback" class="profile-avatar">👤</div>
             <div class="profile-details">
-              <strong id="profile-name-text">Benutzer</strong>
-              <small id="profile-email-text">email@domain.com</small>
-              <span id="profile-provider-tag" class="micro-badge badge-valid">✓ Verifiziert</span>
+              <strong id="profile-name-text">Google Benutzer</strong>
+              <small id="profile-email-text">user@gmail.com</small>
+              <span class="micro-badge badge-valid">✓ Google Verifiziert</span>
             </div>
           </div>
           <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden / Konto wechseln</button>
         </div>
 
-        <!-- Formular-Bereich -->
+        <!-- Google Identity Services (GIS) Anmelde-Bereich -->
         <div id="auth-forms-wrapper">
-          
-          <!-- Social Login Stack (Google GIS, Microsoft MSAL, Apple) -->
-          <div class="social-login-stack">
-            <button id="btn-login-google" class="btn-social">
-              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-              <span id="google-btn-text">Mit Google fortfahren</span>
+          <p class="modal-subtitle" id="gis-instruction-text">
+            Melde dich mit deinem verifizierten Google-Konto an, um deine Projekte und API-Schlüssel geräteübergreifend zu sichern:
+          </p>
+
+          <!-- Offizieller Google GIS Container (Kein window.prompt!) -->
+          <div class="google-gis-container">
+            <button id="btn-trigger-google-auth" class="btn-social btn-google-gis">
+              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+              <span id="gis-btn-label">Mit Google-Konto fortfahren</span>
             </button>
-            <button id="btn-login-ms" class="btn-social">
-              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M13 1h10v10H13z"/><path fill="#00A4EF" d="M1 13h10v10H1z"/><path fill="#FFB900" d="M13 13h10v10H13z"/></svg>
-              <span id="ms-btn-text">Mit Microsoft / Outlook fortfahren</span>
-            </button>
           </div>
 
-          <div class="auth-divider"><span id="divider-text">Oder mit E-Mail fortfahren</span></div>
-
-          <!-- E-Mail Formular -->
-          <div id="auth-email-form" class="auth-email-form">
-            <input type="email" id="auth-email-input" class="text-input" placeholder="deine-email@outlook.de / gmail / yahoo / custom...">
-            <div class="password-input-group">
-              <input type="password" id="auth-password-input" class="text-input" placeholder="Passwort">
-              <button id="btn-toggle-pwd" class="btn-pwd-eye" type="button">👁️</button>
-            </div>
-            
-            <div class="auth-options-row">
-              <label class="checkbox-label"><input type="checkbox" id="auth-remember" checked> Angemeldet bleiben</label>
-              <a href="#" id="link-forgot-pwd" class="field-link">Passwort vergessen?</a>
-            </div>
-            
-            <button id="btn-submit-main-auth" class="btn btn-primary btn-full btn-auth-submit">Anmelden</button>
-          </div>
-
-          <!-- Bestaetigungs-Ansicht (Cloudflare-Style Bild 154) -->
-          <div id="auth-verify-view" class="cloudflare-verify-card hidden">
-            <div class="cf-email-banner">
-              <div class="cf-logo">☁️ AetherSpace Identity</div>
-              <h4>Your account needs a confirmed email address</h4>
-              <p class="cf-desc">Bestätigungs-Anforderung für <strong id="cf-target-email">deine-email</strong> gesendet.</p>
-              
-              <button id="btn-confirm-email-action" class="btn btn-verify-action">Verify your email</button>
-              
-              <div class="cf-token-box">
-                <small>Authentic Token:</small>
-                <code id="cf-token-string">74fc01f1ba2ae74d3dd94bef498cfb6039d71ffb4827fc2c05910dd41ca57b20</code>
-              </div>
-            </div>
-            <button id="btn-back-from-verify" class="btn-text-action" style="margin-top:10px; display:block; text-align:center; width:100%;">Zurück zur Eingabe</button>
-          </div>
-
+          <div class="auth-divider"><span>Status & Sicherheit</span></div>
+          <p class="auth-security-note">
+            🔒 Deine Authentifizierung läuft verschlüsselt über Google Identity Services (GIS). Deine Daten verbleiben zu 100 % in deinem Besitz.
+          </p>
         </div>
       </div>
     </div>

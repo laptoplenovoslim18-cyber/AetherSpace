@@ -50,7 +50,7 @@ fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
   if (!filename) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(() => {
-    exec('git add . && git commit -m "Auto-Sync: AetherSpace SOTA v7.0 Update" && git push origin main', { cwd: __dirname }, (error) => {
+    exec('git add . && git commit -m "Auto-Sync: AetherSpace GIS Step A Upgrade" && git push origin main', { cwd: __dirname }, (error) => {
       if (!error) console.log(`[ERFOLG] Automatisch mit GitHub & Cloudflare synchronisiert!`);
     });
   }, 2500);
