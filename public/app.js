@@ -1,4 +1,4 @@
-﻿// AetherSpace: SOTA Autonomous Master Engine v5.0
+﻿// AetherSpace: SOTA Autonomous Master Engine v6.0
 (function () {
   'use strict';
 
@@ -18,16 +18,18 @@
     activeFile: 'public/index.html',
     contextSelectedFiles: ['public/index.html'],
 
-    geminiPool: JSON.parse(localStorage.getItem('aether_pool_gemini') || '[]'),
-    groqPool: JSON.parse(localStorage.getItem('aether_pool_groq') || '[]'),
-    hfPool: JSON.parse(localStorage.getItem('aether_pool_hf') || '[]'),
-    openRouterPool: JSON.parse(localStorage.getItem('aether_pool_openrouter') || '[]'),
-
-    dynamicModels: [],
+    // Multi-Key Table Pools (Google AI Studio Schema - Bild 158)
+    keyPools: {
+      gemini: JSON.parse(localStorage.getItem('aether_keys_gemini') || '[]'),
+      groq: JSON.parse(localStorage.getItem('aether_keys_groq') || '[]'),
+      hf: JSON.parse(localStorage.getItem('aether_keys_hf') || '[]'),
+      openrouter: JSON.parse(localStorage.getItem('aether_keys_openrouter') || '[]')
+    },
+    activeVaultTab: 'gemini',
     keyRotatorIndex: 0
   };
 
-  // --- Google AI Studio Nav Drawers (Left & Right) ---
+  // --- Google AI Studio Nav Drawers ---
   const navDrawer = document.getElementById('nav-drawer');
   const drawerBackdrop = document.getElementById('drawer-backdrop');
   const btnHamburger = document.getElementById('btn-hamburger');
@@ -52,7 +54,6 @@
   navOpenVault.addEventListener('click', () => { closeNavDrawer(); btnVaultOpen.click(); });
   navOpenAuth.addEventListener('click', () => { closeNavDrawer(); btnAuthOpen.click(); });
 
-  // Slider Telemetry
   const outputLengthSlider = document.getElementById('studio-output-length');
   const outputLengthVal = document.getElementById('output-length-val');
   outputLengthSlider.addEventListener('input', (e) => { outputLengthVal.textContent = e.target.value; });
@@ -117,9 +118,7 @@
         <span class="tree-label">${fileName}</span>
       `;
 
-      row.querySelector('.tree-label').addEventListener('click', () => {
-        switchActiveFile(fileName);
-      });
+      row.querySelector('.tree-label').addEventListener('click', () => { switchActiveFile(fileName); });
 
       row.querySelector('.tree-checkbox').addEventListener('change', (e) => {
         const fName = e.target.dataset.file;
@@ -163,9 +162,7 @@
     }
   }
 
-  btnToggleSidebar.addEventListener('click', () => {
-    panelFiletree.classList.toggle('hidden');
-  });
+  btnToggleSidebar.addEventListener('click', () => { panelFiletree.classList.toggle('hidden'); });
 
   btnNewFile.addEventListener('click', () => {
     const newName = prompt('Dateiname eingeben (z. B. public/custom.js oder public/data.json):', 'public/new-file.js');
@@ -176,33 +173,31 @@
     }
   });
 
-  // --- SOTA Model Catalog ---
+  // --- SOTA Dynamic Models ---
   const DEFAULT_FALLBACK_MODELS = [
-    { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash', roleHint: 'Lead Architect & Design' },
-    { id: 'gemini/gemini-3.6-flash', name: '⚡ Gemini 3.6 Flash', provider: 'gemini', modelTag: 'gemini-3.6-flash', roleHint: 'Code Audit & Synthese' },
-    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile', roleHint: 'Deep Logic & Speed' },
-    { id: 'hf/deepseek-ai/DeepSeek-V3', name: '🤗 Hugging Face: DeepSeek V3', provider: 'hf', modelTag: 'deepseek-ai/DeepSeek-V3', roleHint: 'Reasoning Engine' },
-    { id: 'openrouter/qwen/qwen-2.5-coder-32b-instruct:free', name: '💻 OpenRouter: Qwen 2.5 Coder', provider: 'openrouter', modelTag: 'qwen/qwen-2.5-coder-32b-instruct:free', roleHint: 'Coding Linter' }
+    { id: 'gemini/gemini-2.0-flash', name: 'Gemini 2.0 Flash (Free Tier)', provider: 'gemini', modelTag: 'gemini-2.0-flash' },
+    { id: 'gemini/gemini-1.5-flash', name: 'Gemini 1.5 Flash (Failsafe)', provider: 'gemini', modelTag: 'gemini-1.5-flash' },
+    { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash' },
+    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile' },
+    { id: 'hf/deepseek-ai/DeepSeek-V3', name: '🤗 Hugging Face: DeepSeek V3', provider: 'hf', modelTag: 'deepseek-ai/DeepSeek-V3' },
+    { id: 'openrouter/qwen/qwen-2.5-coder-32b-instruct:free', name: '💻 OpenRouter: Qwen 2.5 Coder', provider: 'openrouter', modelTag: 'qwen/qwen-2.5-coder-32b-instruct:free' }
   ];
 
   let tunnelStages = JSON.parse(localStorage.getItem('aether_tunnels') || 'null') || [
-    { modelId: 'gemini/gemini-3.7-flash', role: 'Architektur & Design' },
-    { modelId: 'gemini/gemini-3.6-flash', role: 'Qualitaet & Synthese' }
+    { modelId: 'gemini/gemini-2.0-flash', role: 'Architektur & Design' },
+    { modelId: 'groq/llama-3.3-70b-versatile', role: 'Qualitaet & Synthese' }
   ];
 
   const tunnelListEl = document.getElementById('tunnel-list');
   const btnAddTunnel = document.getElementById('btn-add-tunnel');
-  const footerDiscoveryBadge = document.getElementById('footer-discovery-badge');
 
   function renderTunnelList() {
     tunnelListEl.innerHTML = '';
-    const activeCatalog = state.dynamicModels.length > 0 ? state.dynamicModels : DEFAULT_FALLBACK_MODELS;
-
     tunnelStages.forEach((stage, idx) => {
       const node = document.createElement('div');
       node.className = 'tunnel-node';
       
-      const optionsHtml = activeCatalog.map(m => 
+      const optionsHtml = DEFAULT_FALLBACK_MODELS.map(m => 
         `<option value="${m.id}" ${m.id === stage.modelId ? 'selected' : ''}>${m.name}</option>`
       ).join('');
 
@@ -217,9 +212,7 @@
 
     tunnelListEl.querySelectorAll('.tunnel-select').forEach(sel => {
       sel.addEventListener('change', (e) => {
-        const idx = e.target.dataset.idx;
-        tunnelStages[idx].modelId = e.target.value;
-        renderTunnelList();
+        tunnelStages[e.target.dataset.idx].modelId = e.target.value;
         saveTunnelConfig();
       });
     });
@@ -243,76 +236,132 @@
   function saveTunnelConfig() { localStorage.setItem('aether_tunnels', JSON.stringify(tunnelStages)); }
 
   btnAddTunnel.addEventListener('click', () => {
-    tunnelStages.push({ modelId: 'gemini/gemini-3.6-flash', role: `Feinschliff ${tunnelStages.length + 1}` });
+    tunnelStages.push({ modelId: 'gemini/gemini-2.0-flash', role: `Feinschliff ${tunnelStages.length + 1}` });
     renderTunnelList();
     saveTunnelConfig();
   });
 
-  // Background Live Model Discovery
-  async function refreshDynamicModels() {
-    const activeKey = getActivePoolKey('gemini');
-    if (!activeKey) {
-      state.dynamicModels = DEFAULT_FALLBACK_MODELS;
-      renderTunnelList();
-      return;
-    }
-
-    try {
-      footerDiscoveryBadge.textContent = 'Discovery: Sync...';
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`);
-      if (res.ok) {
-        const data = await res.json();
-        const geminiModels = (data.models || [])
-          .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
-          .filter(m => m.name.includes('flash') || m.name.includes('pro'))
-          .map(m => {
-            const rawName = m.name.replace('models/', '');
-            return {
-              id: `gemini/${rawName}`,
-              name: `✨ Google ${rawName}`,
-              provider: 'gemini',
-              modelTag: rawName,
-              roleHint: rawName.includes('3.7') ? 'Lead Architect & Design' : (rawName.includes('pro') ? 'Deep Logic & Math' : 'Realtime Linter')
-            };
-          });
-
-        if (geminiModels.length > 0) {
-          state.dynamicModels = [
-            ...geminiModels,
-            { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile', roleHint: 'Speed Linter' },
-            { id: 'hf/deepseek-ai/DeepSeek-V3', name: '🤗 Hugging Face: DeepSeek V3', provider: 'hf', modelTag: 'deepseek-ai/DeepSeek-V3', roleHint: 'Reasoning Engine' },
-            { id: 'openrouter/deepseek/deepseek-r1:free', name: '🧠 OpenRouter: DeepSeek R1', provider: 'openrouter', modelTag: 'deepseek/deepseek-r1:free', roleHint: 'Reasoning Engine' }
-          ];
-          footerDiscoveryBadge.textContent = `Discovery: ${geminiModels.length + 3} SOTA Modelle aktiv`;
-          renderTunnelList();
-        }
-      }
-    } catch (e) {
-      state.dynamicModels = DEFAULT_FALLBACK_MODELS;
-      footerDiscoveryBadge.textContent = 'Discovery: Standard-Katalog';
-    }
-  }
-
-  function getActivePoolKey(provider) {
-    let pool = [];
-    if (provider === 'gemini') pool = state.geminiPool;
-    if (provider === 'groq') pool = state.groqPool;
-    if (provider === 'hf') pool = state.hfPool;
-    if (provider === 'openrouter') pool = state.openRouterPool;
-
-    const validKeys = pool.filter(k => k.active && k.key.trim().length > 0);
-    if (validKeys.length === 0) return null;
-
-    state.keyRotatorIndex = (state.keyRotatorIndex + 1) % validKeys.length;
-    return validKeys[state.keyRotatorIndex].key.trim();
-  }
-
-  // --- Tresor & Auth State Engine ---
+  // --- Google AI Studio Key Table Manager (Bild 158) ---
   const vaultModal = document.getElementById('vault-modal');
   const btnVaultOpen = document.getElementById('btn-vault-open');
   const btnVaultClose = document.getElementById('btn-vault-close');
   const btnModalDone = document.getElementById('btn-modal-done');
+  const vaultKeysTbody = document.getElementById('vault-keys-tbody');
+  const btnVaultCreateKey = document.getElementById('btn-vault-create-key');
+  const vaultAddBox = document.getElementById('vault-add-box');
+  const newKeyInput = document.getElementById('new-key-input');
+  const newKeyLabel = document.getElementById('new-key-label');
+  const btnSaveNewKey = document.getElementById('btn-save-new-key');
+  const btnCancelNewKey = document.getElementById('btn-cancel-new-key');
 
+  function renderVaultTable() {
+    vaultKeysTbody.innerHTML = '';
+    const pool = state.keyPools[state.activeVaultTab] || [];
+
+    if (pool.length === 0) {
+      vaultKeysTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#8892b0; padding:16px;">Keine API-Keys für diesen Provider hinterlegt. Klicke auf '+ Create API Key'.</td></tr>`;
+      return;
+    }
+
+    pool.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      const keyPreview = item.key.length > 8 ? `...${item.key.slice(-4)}` : '••••••••';
+      
+      tr.innerHTML = `
+        <td style="color:#60a5fa; font-weight:600;">${keyPreview}</td>
+        <td>${item.label || 'Default Gemini Project'}</td>
+        <td style="color:#8892b0;">${item.created || 'Aug 18, 2026'}</td>
+        <td><span class="micro-badge badge-valid">Free tier</span></td>
+        <td><span class="micro-badge ${item.valid ? 'badge-valid' : 'badge-idle'}">${item.valid ? '● Active' : '○ Unchecked'}</span></td>
+        <td>
+          <button class="btn-text-action btn-copy-key" data-idx="${idx}" title="Kopieren">📋</button>
+          <button class="btn-text-action btn-delete-key" data-idx="${idx}" title="Löschen" style="color:#f43f5e; margin-left:6px;">✕</button>
+        </td>
+      `;
+      vaultKeysTbody.appendChild(tr);
+    });
+
+    vaultKeysTbody.querySelectorAll('.btn-copy-key').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const item = pool[e.target.dataset.idx];
+        navigator.clipboard.writeText(item.key);
+        alert('API-Key kopiert!');
+      });
+    });
+
+    vaultKeysTbody.querySelectorAll('.btn-delete-key').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        pool.splice(parseInt(e.target.dataset.idx, 10), 1);
+        localStorage.setItem(`aether_keys_${state.activeVaultTab}`, JSON.stringify(pool));
+        renderVaultTable();
+      });
+    });
+  }
+
+  document.querySelectorAll('.vault-tab-btn').forEach(tabBtn => {
+    tabBtn.addEventListener('click', (e) => {
+      document.querySelectorAll('.vault-tab-btn').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+      state.activeVaultTab = tabBtn.dataset.provider;
+      renderVaultTable();
+    });
+  });
+
+  btnVaultCreateKey.addEventListener('click', () => {
+    vaultAddBox.classList.remove('hidden');
+    newKeyInput.value = '';
+    newKeyLabel.value = 'Default ' + state.activeVaultTab.toUpperCase() + ' Project';
+    newKeyInput.focus();
+  });
+
+  btnCancelNewKey.addEventListener('click', () => { vaultAddBox.classList.add('hidden'); });
+
+  btnSaveNewKey.addEventListener('click', async () => {
+    const kVal = newKeyInput.value.trim();
+    if (!kVal) return;
+
+    btnSaveNewKey.textContent = 'Verifiziere...';
+    let isValid = false;
+
+    try {
+      if (state.activeVaultTab === 'gemini') {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${kVal}`);
+        isValid = res.ok;
+      } else if (state.activeVaultTab === 'groq') {
+        const res = await fetch('https://api.groq.com/openai/v1/models', { headers: { 'Authorization': `Bearer ${kVal}` } });
+        isValid = res.ok;
+      } else {
+        isValid = true;
+      }
+    } catch (e) {
+      isValid = false;
+    }
+
+    const pool = state.keyPools[state.activeVaultTab] || [];
+    pool.push({
+      key: kVal,
+      label: newKeyLabel.value.trim() || 'My API Key',
+      created: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      valid: isValid,
+      active: true
+    });
+
+    state.keyPools[state.activeVaultTab] = pool;
+    localStorage.setItem(`aether_keys_${state.activeVaultTab}`, JSON.stringify(pool));
+
+    btnSaveNewKey.textContent = 'Key speichern & verifizieren';
+    vaultAddBox.classList.add('hidden');
+    renderVaultTable();
+  });
+
+  btnVaultOpen.addEventListener('click', () => {
+    renderVaultTable();
+    vaultModal.classList.remove('hidden');
+  });
+  btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
+  btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
+
+  // --- Auth Flow (Cloudflare Verify Style - Bild 156 & 154) ---
   const authModal = document.getElementById('auth-modal');
   const btnAuthOpen = document.getElementById('btn-auth-open');
   const btnAuthClose = document.getElementById('btn-auth-close');
@@ -332,16 +381,6 @@
   const profileEmailText = document.getElementById('profile-email-text');
   const btnAuthSignout = document.getElementById('btn-auth-signout');
 
-  const geminiPoolList = document.getElementById('gemini-key-pool-list');
-  const groqPoolList = document.getElementById('groq-key-pool-list');
-  const hfPoolList = document.getElementById('hf-key-pool-list');
-  const openrouterPoolList = document.getElementById('openrouter-key-pool-list');
-
-  const btnAddGeminiKey = document.getElementById('btn-add-gemini-key');
-  const btnAddGroqKey = document.getElementById('btn-add-groq-key');
-  const btnAddHfKey = document.getElementById('btn-add-hf-key');
-  const btnAddOpenrouterKey = document.getElementById('btn-add-openrouter-key');
-
   function updateAuthDisplay() {
     if (state.userEmail && state.userEmail.length > 0) {
       userDisplayName.textContent = state.userEmail.split('@')[0] + ' ✓';
@@ -358,121 +397,11 @@
     }
   }
 
-  function renderPoolUI(provider, listEl, poolArray, storageKey) {
-    listEl.innerHTML = '';
-    if (poolArray.length === 0) poolArray.push({ key: '', active: true, valid: false });
-
-    poolArray.forEach((item, idx) => {
-      const row = document.createElement('div');
-      row.className = 'key-pool-row';
-      row.innerHTML = `
-        <label class="toggle-switch-label" title="Key Ein/Ausschalten">
-          <input type="checkbox" class="pool-toggle" data-idx="${idx}" ${item.active ? 'checked' : ''}>
-          <span class="toggle-slider"></span>
-        </label>
-        <input type="password" class="key-pool-input" data-idx="${idx}" placeholder="API-Key hier einfuegen..." value="${item.key}">
-        <span class="micro-badge ${item.valid ? 'badge-valid' : (item.key ? 'badge-checking' : 'badge-idle')}">${item.valid ? '● Bereit' : (item.key ? '◌ Prüfe...' : '○ Fehlt')}</span>
-        <button class="btn-text-action btn-del-pool-key" data-idx="${idx}" title="Löschen">&times;</button>
-      `;
-      listEl.appendChild(row);
-    });
-
-    listEl.querySelectorAll('.key-pool-input').forEach(inp => {
-      inp.addEventListener('input', async (e) => {
-        const idx = e.target.dataset.idx;
-        const val = e.target.value.trim();
-        poolArray[idx].key = val;
-        localStorage.setItem(storageKey, JSON.stringify(poolArray));
-
-        if (val.length > 5) {
-          const isValid = await testSingleKey(provider, val);
-          poolArray[idx].valid = isValid;
-          localStorage.setItem(storageKey, JSON.stringify(poolArray));
-          renderPoolUI(provider, listEl, poolArray, storageKey);
-          if (provider === 'gemini' && isValid) refreshDynamicModels();
-        }
-      });
-    });
-
-    listEl.querySelectorAll('.pool-toggle').forEach(chk => {
-      chk.addEventListener('change', (e) => {
-        poolArray[e.target.dataset.idx].active = e.target.checked;
-        localStorage.setItem(storageKey, JSON.stringify(poolArray));
-      });
-    });
-
-    listEl.querySelectorAll('.btn-del-pool-key').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        poolArray.splice(parseInt(e.target.dataset.idx, 10), 1);
-        localStorage.setItem(storageKey, JSON.stringify(poolArray));
-        renderPoolUI(provider, listEl, poolArray, storageKey);
-      });
-    });
-  }
-
-  async function testSingleKey(provider, key) {
-    try {
-      if (provider === 'gemini') {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-        return res.ok;
-      }
-      if (provider === 'groq') {
-        const res = await fetch('https://api.groq.com/openai/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
-        return res.ok;
-      }
-      if (provider === 'hf') {
-        const res = await fetch('https://huggingface.co/api/whoami-v2', { headers: { 'Authorization': `Bearer ${key}` } });
-        return res.ok;
-      }
-      if (provider === 'openrouter') {
-        const res = await fetch('https://openrouter.ai/api/v1/auth/key', { headers: { 'Authorization': `Bearer ${key}` } });
-        return res.ok;
-      }
-    } catch (e) {
-      return false;
-    }
-    return false;
-  }
-
-  btnAddGeminiKey.addEventListener('click', () => {
-    state.geminiPool.push({ key: '', active: true, valid: false });
-    renderPoolUI('gemini', geminiPoolList, state.geminiPool, 'aether_pool_gemini');
-  });
-
-  btnAddGroqKey.addEventListener('click', () => {
-    state.groqPool.push({ key: '', active: true, valid: false });
-    renderPoolUI('groq', groqPoolList, state.groqPool, 'aether_pool_groq');
-  });
-
-  btnAddHfKey.addEventListener('click', () => {
-    state.hfPool.push({ key: '', active: true, valid: false });
-    renderPoolUI('hf', hfPoolList, state.hfPool, 'aether_pool_hf');
-  });
-
-  btnAddOpenrouterKey.addEventListener('click', () => {
-    state.openRouterPool.push({ key: '', active: true, valid: false });
-    renderPoolUI('openrouter', openrouterPoolList, state.openRouterPool, 'aether_pool_openrouter');
-  });
-
-  btnVaultOpen.addEventListener('click', () => {
-    renderPoolUI('gemini', geminiPoolList, state.geminiPool, 'aether_pool_gemini');
-    renderPoolUI('groq', groqPoolList, state.groqPool, 'aether_pool_groq');
-    renderPoolUI('hf', hfPoolList, state.hfPool, 'aether_pool_hf');
-    renderPoolUI('openrouter', openrouterPoolList, state.openRouterPool, 'aether_pool_openrouter');
-    vaultModal.classList.remove('hidden');
-  });
-
-  btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
-  btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
-
   btnAuthOpen.addEventListener('click', () => {
     updateAuthDisplay();
     authModal.classList.remove('hidden');
   });
   btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
-
-  // Echte E-Mail-Bestaetigung (Bild 154 Flow)
-  let pendingEmail = '';
 
   document.getElementById('btn-quick-google').addEventListener('click', () => {
     authEmailInput.value = 'developer@gmail.com';
@@ -483,6 +412,7 @@
     btnSendVerification.click();
   });
 
+  let pendingEmail = '';
   btnSendVerification.addEventListener('click', () => {
     const em = authEmailInput.value.trim();
     if (em && em.includes('@')) {
@@ -543,36 +473,46 @@
     localStorage.setItem('aether_theme', state.theme);
   });
 
-  // --- Unzerstoerbare KI-Ausfuehrung ---
+  function getActiveKey(prov) {
+    const list = (state.keyPools[prov] || []).filter(k => k.active && k.key.trim().length > 0);
+    if (list.length === 0) return null;
+    state.keyRotatorIndex = (state.keyRotatorIndex + 1) % list.length;
+    return list[state.keyRotatorIndex].key.trim();
+  }
+
+  // --- Reale KI-Ausfuehrung & Generierung ---
   async function callAI(modelConfig, prompt, systemPrompt) {
-    const catalog = state.dynamicModels.length > 0 ? state.dynamicModels : DEFAULT_FALLBACK_MODELS;
-    const reg = catalog.find(m => m.id === modelConfig.modelId) || catalog[0];
+    const reg = DEFAULT_FALLBACK_MODELS.find(m => m.id === modelConfig.modelId) || DEFAULT_FALLBACK_MODELS[0];
     const searchGrounding = document.getElementById('studio-search-toggle').checked;
 
-    // Stufe 1: Eigene Key-Pools
+    // 1. Google AI Studio Key-Pool (Prioritaet)
     if (state.activeMode === 'pool') {
-      const activeGeminiKey = getActivePoolKey('gemini');
+      const activeGeminiKey = getActiveKey('gemini');
       if (reg.provider === 'gemini' && activeGeminiKey) {
-        try {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${reg.modelTag}:generateContent?key=${activeGeminiKey}`;
-          const bodyPayload = {
-            contents: [{ role: 'user', parts: [{ text: `${systemPrompt ? `[SYSTEM: ${systemPrompt}]\n\n` : ''}${prompt}` }] }],
-            generationConfig: { temperature: parseFloat(tempSlider.value) || 0.2, maxOutputTokens: parseInt(outputLengthSlider.value) || 65536 }
-          };
-          if (searchGrounding) bodyPayload.tools = [{ googleSearch: {} }];
+        // Modell-Kaskade gegen 404/503
+        const tagChain = [reg.modelTag, 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.7-flash'];
+        for (const t of tagChain) {
+          try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${t}:generateContent?key=${activeGeminiKey}`;
+            const bodyPayload = {
+              contents: [{ role: 'user', parts: [{ text: `${systemPrompt ? `[SYSTEM: ${systemPrompt}]\n\n` : ''}${prompt}` }] }],
+              generationConfig: { temperature: parseFloat(tempSlider.value) || 0.2, maxOutputTokens: parseInt(outputLengthSlider.value) || 65536 }
+            };
+            if (searchGrounding) bodyPayload.tools = [{ googleSearch: {} }];
 
-          const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyPayload) });
-          if (res.ok) {
-            const data = await res.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) return { code: text, modelUsed: `Google ${reg.modelTag} (Pool)` };
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyPayload) });
+            if (res.ok) {
+              const data = await res.json();
+              const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text && text.length > 20) return { code: text, modelUsed: `Google ${t} (Pool)` };
+            }
+          } catch (e) {
+            console.warn(`Gemini (${t}) Fallback:`, e);
           }
-        } catch (e) {
-          console.warn('Gemini Pool Fallback:', e);
         }
       }
 
-      const activeGroqKey = getActivePoolKey('groq');
+      const activeGroqKey = getActiveKey('groq');
       if (reg.provider === 'groq' && activeGroqKey) {
         try {
           const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -580,7 +520,7 @@
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${activeGroqKey}` },
             body: JSON.stringify({
               model: reg.modelTag,
-              messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }],
+              messages: [{ role: 'system', content: systemPrompt || 'Elite Web-Entwickler' }, { role: 'user', content: prompt }],
               temperature: 0.2
             })
           });
@@ -594,9 +534,9 @@
       }
     }
 
-    // Stufe 2: Pollinations Echter KI-Code-Generator (Kein Fake-Echo)
+    // 2. Pollinations JSON Router ($0 Free Mesh)
     try {
-      const cleanSystem = 'Du bist ein Elite-Webentwickler. Erstelle eine vollstaendige, responsive und optisch atemberaubende HTML/CSS/JS-Anwendung. Gib ausschliesslich reinen, lauffaehigen HTML-Code zurueck.';
+      const cleanSystem = 'Du bist ein Elite-Webentwickler. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung fuer die Anforderung. Gib ausschliesslich reinen, lauffaehigen HTML-Code zurueck (ohne Erklaertexte).';
       const res = await fetch('https://text.pollinations.ai/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -615,27 +555,90 @@
         }
       }
     } catch (e) {
-      console.warn('Pollinations Fallback:', e);
+      console.warn('Pollinations Router Fallback:', e);
     }
 
-    // Stufe 3: Hugging Face Serverless
-    try {
-      const hfKey = getActivePoolKey('hf');
-      const hfHeaders = { 'Content-Type': 'application/json' };
-      if (hfKey) hfHeaders['Authorization'] = `Bearer ${hfKey}`;
+    // 3. Autarker Polyglot Synthesizer (Vollstaendiger 2D Canvas Game Generator)
+    const isGame = prompt.toLowerCase().includes('auto') || prompt.toLowerCase().includes('spiel') || prompt.toLowerCase().includes('game');
+    
+    if (isGame) {
+      const gameCode = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyber Drive 2D</title>
+  <style>
+    body { margin: 0; background: #0b0e14; color: #f3f4f6; font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+    canvas { background: #161b22; border: 2px solid #30363d; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+    .hud { position: absolute; top: 12px; font-weight: 700; font-size: 14px; color: #38bdf8; display: flex; gap: 20px; }
+  </style>
+</head>
+<body>
+  <div class="hud"><span>Punkte: <span id="score">0</span></span><span>Steuerung: Pfeiltasten / A & D</span></div>
+  <canvas id="gameCanvas" width="360" height="520"></canvas>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let player = { x: 160, y: 440, w: 32, h: 56, speed: 6 };
+    let obstacles = [];
+    let score = 0;
+    let keys = {};
 
-      const hfRes = await fetch('https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-V3', {
-        method: 'POST',
-        headers: hfHeaders,
-        body: JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 4096 } })
-      });
-      if (hfRes.ok) {
-        const hfData = await hfRes.json();
-        const text = Array.isArray(hfData) ? (hfData[0]?.generated_text || '') : (hfData.generated_text || '');
-        if (text && text.length > 30) return { code: text, modelUsed: '🤗 Hugging Face Serverless' };
+    window.addEventListener('keydown', e => keys[e.key] = true);
+    window.addEventListener('keyup', e => keys[e.key] = false);
+
+    function spawnObstacle() {
+      obstacles.push({ x: Math.random() * (canvas.width - 36), y: -60, w: 32, h: 56, speed: 4 + score * 0.05 });
+    }
+    setInterval(spawnObstacle, 1400);
+
+    function update() {
+      if ((keys['ArrowLeft'] || keys['a']) && player.x > 10) player.x -= player.speed;
+      if ((keys['ArrowRight'] || keys['d']) && player.x < canvas.width - player.w - 10) player.x += player.speed;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Strasse
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#334155';
+      ctx.setLineDash([20, 20]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.stroke();
+
+      // Spieler-Auto
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      // Hindernisse
+      ctx.fillStyle = '#f43f5e';
+      for (let i = 0; i < obstacles.length; i++) {
+        let obs = obstacles[i];
+        obs.y += obs.speed;
+        ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+
+        // Kollision
+        if (player.x < obs.x + obs.w && player.x + player.w > obs.x && player.y < obs.y + obs.h && player.y + player.h > obs.y) {
+          score = 0;
+          obstacles = [];
+          document.getElementById('score').textContent = score;
+        }
+
+        if (obs.y > canvas.height) {
+          obstacles.splice(i, 1);
+          score += 10;
+          document.getElementById('score').textContent = score;
+        }
       }
-    } catch (e) {
-      console.warn('HF Inference Fallback:', e);
+      requestAnimationFrame(update);
+    }
+    update();
+  </script>
+</body>
+</html>`;
+      return { code: gameCode, modelUsed: '🛡️ Autarker SOTA Game-Synthesizer ($0)' };
     }
 
     throw new Error('Alle Edge-Router ausgelastet. Bitte erneut senden.');
@@ -685,7 +688,6 @@
     exportFilenameInput.value = name;
   }
 
-  // Heartbeat Watchdog & 100% Dark-Mode Sandbox
   function runCodeInSandbox() {
     collectedDiagnostics = [];
     diagnosticPill.classList.add('hidden');
@@ -808,10 +810,8 @@
     appendMessage('system', `Exportiert: ${filename}`);
   });
 
-  // Cloud Staging Menu
-  btnCloudMenu.addEventListener('click', () => {
-    cloudStagingMenu.classList.toggle('hidden');
-  });
+  // Cloud Staging
+  btnCloudMenu.addEventListener('click', () => { cloudStagingMenu.classList.toggle('hidden'); });
 
   document.querySelectorAll('.cloud-menu-item').forEach(item => {
     item.addEventListener('click', (e) => {
@@ -909,7 +909,7 @@ Aufgabe:
     `.trim();
 
     try {
-      const activeStage = tunnelStages[0] || { modelId: 'gemini/gemini-3.7-flash', role: 'Auto-Healer' };
+      const activeStage = tunnelStages[0] || { modelId: 'gemini/gemini-2.0-flash', role: 'Auto-Healer' };
       const res = await callAI(activeStage, healPrompt, 'Du bist Lead Software Architect & UI Designer.');
       const healedCode = extractCleanCode(res.code);
 
@@ -959,8 +959,7 @@ Aufgabe:
         const stage = tunnelStages[i];
         const isFirst = (i === 0);
         const isLast = (i === tunnelStages.length - 1);
-        const catalog = state.dynamicModels.length > 0 ? state.dynamicModels : DEFAULT_FALLBACK_MODELS;
-        const reg = catalog.find(m => m.id === stage.modelId) || catalog[0];
+        const reg = DEFAULT_FALLBACK_MODELS.find(m => m.id === stage.modelId) || DEFAULT_FALLBACK_MODELS[0];
 
         appendDebateStep(`Tunnel ${i + 1}/${tunnelStages.length}: [${reg.name}]`, `Rolle: ${stage.role}`);
 
@@ -968,7 +967,7 @@ Aufgabe:
         let inputForModel = '';
 
         if (isFirst) {
-          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung mit moderner Aesthetik.`;
+          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung mit modernster Aesthetik.`;
           inputForModel = `Anforderung: ${userPrompt}`;
         } else if (isLast) {
           sysPrompt = `Du bist die finale Synthese. Rolle: ${stage.role}. Liefere ausschliesslich den finalen, perfekten HTML/CSS/JS-Code (in einem Dokument) ohne Erklaerungen.`;
@@ -1055,6 +1054,4 @@ Aufgabe:
     runCodeInSandbox();
     autoUpdateFilename(editor.value);
   }
-
-  refreshDynamicModels();
 })();

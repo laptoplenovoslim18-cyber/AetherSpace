@@ -10,7 +10,7 @@
 <body>
   <div class="app-container">
     
-    <!-- Linkes Slide-Out Menue (Google AI Studio Style) -->
+    <!-- Linkes Navigations-Menue (Google AI Studio Slide-Out) -->
     <aside id="nav-drawer" class="nav-drawer hidden">
       <div class="nav-drawer-header">
         <div class="brand">
@@ -25,18 +25,18 @@
         <button class="nav-item" id="nav-history">📚 Projekt-Bibliothek</button>
         
         <div class="nav-section-title">SCHNITTSTELLEN</div>
-        <button class="nav-item" id="nav-open-vault">🔑 API-Keys & Multi-Pool</button>
+        <button class="nav-item" id="nav-open-vault">🔑 API-Keys (AI Studio Style)</button>
         <button class="nav-item" id="nav-open-auth">👤 Mein Konto & Profil</button>
 
-        <div class="nav-section-title">CLOUD-RUNNER</div>
-        <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud ↗</a>
+        <div class="nav-section-title">EXTERNE CLOUD</div>
+        <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud Runner ↗</a>
         <a href="https://huggingface.co/spaces" target="_blank" class="nav-item-link">🤗 Hugging Face Spaces ↗</a>
-        <a href="https://stackblitz.com" target="_blank" class="nav-item-link">⚡ StackBlitz VM ↗</a>
+        <a href="https://stackblitz.com" target="_blank" class="nav-item-link">⚡ StackBlitz Cloud VM ↗</a>
       </div>
     </aside>
     <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
 
-    <!-- Rechtes Slide-Out Panel: Google AI Studio Run Settings (Bild 153) -->
+    <!-- Rechtes Panel: Google AI Studio Run Settings -->
     <aside id="run-settings-drawer" class="run-settings-drawer hidden">
       <div class="run-settings-header">
         <span>Run settings</span>
@@ -44,19 +44,21 @@
       </div>
       <div class="run-settings-body">
         <div class="setting-block">
-          <label class="setting-label">Modell</label>
+          <label class="setting-label">Model</label>
           <select id="studio-model-select" class="text-input select-styled">
+            <option value="gemini/gemini-2.0-flash">Gemini 2.0 Flash (Stable / Free Tier)</option>
+            <option value="gemini/gemini-1.5-flash">Gemini 1.5 Flash (Failsafe)</option>
             <option value="gemini/gemini-3.7-flash">Gemini 3.7 Flash (SOTA Coding)</option>
-            <option value="gemini/gemini-3.6-flash">Gemini 3.6 Flash (Empfohlen)</option>
-            <option value="gemini/gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
+            <option value="gemini/gemini-3.6-flash">Gemini 3.6 Flash</option>
             <option value="groq/llama-3.3-70b-versatile">Groq Llama 3.3 70B (500+ tok/s)</option>
             <option value="hf/deepseek-ai/DeepSeek-V3">Hugging Face DeepSeek V3</option>
+            <option value="openrouter/qwen/qwen-2.5-coder-32b-instruct:free">OpenRouter Qwen 2.5 Coder (Free)</option>
           </select>
         </div>
 
         <div class="setting-block">
           <label class="setting-label">System instructions</label>
-          <textarea id="studio-system-prompt" class="text-input" rows="4" placeholder="Optionale System-Anweisungen definieren..."></textarea>
+          <textarea id="studio-system-prompt" class="text-input" rows="4" placeholder="SYSTEM INSTRUCTION: AUTONOMOUS HIGH-LEVERAGE ENGINE. Erstelle sauberen, vollständigen HTML5/CSS/JS-Code..."></textarea>
         </div>
 
         <div class="setting-block">
@@ -64,7 +66,7 @@
           <select id="studio-thinking-select" class="text-input select-styled">
             <option value="high">High (Deep Reasoning)</option>
             <option value="medium">Medium</option>
-            <option value="fast">Fast (Zero Reasoning)</option>
+            <option value="fast">Fast (Sub-Sec)</option>
           </select>
         </div>
 
@@ -79,6 +81,10 @@
               <span>Code execution (Sandbox)</span>
               <input type="checkbox" id="studio-code-exec" checked>
             </label>
+            <label class="tool-switch-row">
+              <span>Structured outputs</span>
+              <input type="checkbox" id="studio-structured-out" checked>
+            </label>
           </div>
         </div>
 
@@ -92,7 +98,7 @@
 
         <div class="setting-block">
           <div class="slider-header">
-            <label class="setting-label">Temperature</label>
+            <label class="setting-label">Temperature (Top P: 0.95)</label>
             <span id="temp-val" class="slider-val">0.2</span>
           </div>
           <input type="range" id="studio-temperature" min="0.0" max="1.0" step="0.05" value="0.2" class="range-slider">
@@ -103,7 +109,7 @@
     <!-- Top Navigation Bar -->
     <header class="app-header">
       <div class="brand-group">
-        <button id="btn-hamburger" class="btn btn-icon" title="Hauptmenü">☰</button>
+        <button id="btn-hamburger" class="btn btn-icon" title="Hauptmenü öffnen">☰</button>
         <button id="btn-toggle-sidebar" class="btn btn-icon" title="Dateibaum ein-/ausklappen">📁</button>
         <div class="brand">
           <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
@@ -119,9 +125,9 @@
 
         <button id="btn-theme" class="btn btn-icon" title="Theme wechseln (Dark/Light)">🌙</button>
 
-        <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen-Tresor">
+        <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen-Tresor (AI Studio Style)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-          <span id="vault-btn-label">Tresor</span>
+          <span id="vault-btn-label">API Keys</span>
         </button>
 
         <button id="btn-auth-open" class="btn btn-outline" title="Konto & Profil">
@@ -134,7 +140,7 @@
           Teilen
         </button>
 
-        <button id="btn-open-settings" class="btn btn-outline" title="Run settings (Google AI Studio)">
+        <button id="btn-open-settings" class="btn btn-outline" title="Google AI Studio Run Settings">
           ⚙️ Settings
         </button>
 
@@ -180,7 +186,7 @@
         <div class="panel-body chat-history" id="chat-history"></div>
 
         <div class="panel-footer chat-input-wrapper">
-          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein 3D-Canvas Ausweichspiel mit Punktezähler')..." rows="2"></textarea>
+          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein vollständiges 2D-Auto-Ausweichspiel mit Canvas & Punktezähler')..." rows="2"></textarea>
           <button id="btn-send" class="btn btn-secondary">
             <span id="send-spinner" class="spinner hidden"></span>
             <span id="send-text">Pipeline starten</span>
@@ -293,71 +299,65 @@
     </footer>
   </div>
 
-  <!-- MULTI-KEY TRESOR MODAL -->
+  <!-- MULTI-KEY TRESOR MODAL (Google AI Studio API Keys Design - Bild 158) -->
   <div id="vault-modal" class="modal-backdrop hidden">
-    <div class="modal-card">
+    <div class="modal-card vault-studio-card">
       <div class="modal-header">
-        <h3>Schnittstellen-Tresor & Multi-Key Swarm</h3>
+        <div class="vault-title-group">
+          <h3>API Keys Dashboard</h3>
+          <span class="vault-subtitle-tag">Google AI Studio & Cloud Providers</span>
+        </div>
         <button id="btn-vault-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
         
-        <!-- Google Gemini Pool -->
-        <div class="vault-field">
-          <div class="field-header">
-            <div class="field-label-group">
-              <label>Google Gemini Key-Pool</label>
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" class="field-link" title="Key erstellen">↗</a>
-            </div>
-            <button id="btn-add-gemini-key" class="btn-text-action">+ Key hinzufuegen</button>
+        <div class="vault-toolbar">
+          <div class="vault-tabs">
+            <button class="vault-tab-btn active" data-provider="gemini">Google AI Studio</button>
+            <button class="vault-tab-btn" data-provider="groq">Groq Cloud</button>
+            <button class="vault-tab-btn" data-provider="hf">Hugging Face</button>
+            <button class="vault-tab-btn" data-provider="openrouter">OpenRouter</button>
           </div>
-          <div id="gemini-key-pool-list" class="key-pool-list"></div>
+          <button id="btn-vault-create-key" class="btn btn-primary btn-sm">+ Create API Key</button>
         </div>
 
-        <!-- Groq Cloud Key Pool -->
-        <div class="vault-field">
-          <div class="field-header">
-            <div class="field-label-group">
-              <label>Groq Cloud Key-Pool</label>
-              <a href="https://console.groq.com/keys" target="_blank" class="field-link" title="Key erstellen">↗</a>
-            </div>
-            <button id="btn-add-groq-key" class="btn-text-action">+ Key hinzufuegen</button>
-          </div>
-          <div id="groq-key-pool-list" class="key-pool-list"></div>
+        <!-- Key Table List (Bild 158) -->
+        <div class="vault-table-container">
+          <table class="vault-table">
+            <thead>
+              <tr>
+                <th>Key Preview</th>
+                <th>Project / Label</th>
+                <th>Created</th>
+                <th>Billing Tier</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vault-keys-tbody">
+              <!-- Dynamische Key-Zeilen -->
+            </tbody>
+          </table>
         </div>
 
-        <!-- Hugging Face Token Pool -->
-        <div class="vault-field">
-          <div class="field-header">
-            <div class="field-label-group">
-              <label>Hugging Face Token-Pool</label>
-              <a href="https://huggingface.co/settings/tokens" target="_blank" class="field-link" title="HF Token">↗</a>
-            </div>
-            <button id="btn-add-hf-key" class="btn-text-action">+ Token hinzufuegen</button>
+        <!-- Inline Key Add Box -->
+        <div id="vault-add-box" class="vault-add-box hidden">
+          <input type="password" id="new-key-input" class="text-input" placeholder="API-Key hier einfügen (z. B. AIzaSy... oder gsk_...)...">
+          <input type="text" id="new-key-label" class="text-input" placeholder="Projektname (z. B. Default Gemini Project)">
+          <div class="add-box-actions">
+            <button id="btn-save-new-key" class="btn btn-primary btn-sm">Key speichern & verifizieren</button>
+            <button id="btn-cancel-new-key" class="btn btn-outline btn-sm">Abbrechen</button>
           </div>
-          <div id="hf-key-pool-list" class="key-pool-list"></div>
-        </div>
-
-        <!-- OpenRouter Key Pool -->
-        <div class="vault-field">
-          <div class="field-header">
-            <div class="field-label-group">
-              <label>OpenRouter Key-Pool</label>
-              <a href="https://openrouter.ai/keys" target="_blank" class="field-link" title="Key erstellen">↗</a>
-            </div>
-            <button id="btn-add-openrouter-key" class="btn-text-action">+ Key hinzufuegen</button>
-          </div>
-          <div id="openrouter-key-pool-list" class="key-pool-list"></div>
         </div>
 
         <div class="modal-footer-actions">
-          <button id="btn-modal-done" class="btn btn-primary btn-full">Schliessen & Speichern</button>
+          <button id="btn-modal-done" class="btn btn-secondary btn-full">Schließen & Speichern</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- AUTH MODAL (Echter Cloudflare E-Mail Bestaetigungs-Flow nach Bild 154) -->
+  <!-- AUTH MODAL (Cloudflare Verify Flow - Bild 156 & 154) -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
@@ -373,7 +373,7 @@
             <div class="profile-details">
               <strong id="profile-name-text">Benutzer</strong>
               <small id="profile-email-text">email@domain.com</small>
-              <span class="micro-badge badge-valid">✓ E-Mail bestätigt</span>
+              <span class="micro-badge badge-valid">✓ E-Mail verifiziert</span>
             </div>
           </div>
           <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden / Konto wechseln</button>
@@ -382,42 +382,41 @@
         <!-- Anmelde-/Registrierungs-Ansicht -->
         <div id="auth-logged-out-view">
           
-          <!-- Stufe 1: Eingabe -->
           <div id="auth-step-1">
             <div class="social-login-stack">
               <button id="btn-quick-google" class="btn-social">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                Mit Google registrieren
+                Mit Google anmelden
               </button>
               <button id="btn-quick-ms" class="btn-social">
                 <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M13 1h10v10H13z"/><path fill="#00A4EF" d="M1 13h10v10H1z"/><path fill="#FFB900" d="M13 13h10v10H13z"/></svg>
-                Mit Microsoft registrieren
+                Mit Microsoft / Outlook anmelden
               </button>
             </div>
 
-            <div class="auth-divider"><span>Oder mit beliebiger E-Mail</span></div>
+            <div class="auth-divider"><span>Oder mit E-Mail fortfahren</span></div>
 
             <div class="auth-email-form">
-              <input type="email" id="auth-email-input" class="text-input" placeholder="name@outlook.de / gmail / yahoo / gmx...">
+              <input type="email" id="auth-email-input" class="text-input" placeholder="deine-email@outlook.de / gmail / yahoo / gmx...">
               <button id="btn-send-verification" class="btn btn-primary btn-full btn-auth-submit">Bestätigungs-Link anfordern &rarr;</button>
             </div>
           </div>
 
-          <!-- Stufe 2: E-Mail Bestaetigungs-Design (Exakt nach Referenz-Bild 154) -->
+          <!-- Stufe 2: Cloudflare E-Mail Verification Flow (Bild 154) -->
           <div id="auth-step-2" class="cloudflare-verify-card hidden">
             <div class="cf-email-banner">
               <div class="cf-logo">☁️ AetherSpace Auth</div>
               <h4>Your account needs a confirmed email address</h4>
-              <p class="cf-desc">Wir haben eine Bestätigungsanforderung für <strong id="cf-target-email">deine-email</strong> vorbereitet.</p>
+              <p class="cf-desc">Bestätigung für <strong id="cf-target-email">deine-email</strong> erforderlich.</p>
               
               <button id="btn-confirm-email-action" class="btn btn-verify-action">Verify your email</button>
               
               <div class="cf-token-box">
-                <small>Token:</small>
+                <small>Auth Token:</small>
                 <code id="cf-token-string">74fc01f1ba2ae74d3dd94bef498cfb6039d71ffb4827fc2c05910dd41ca57b20</code>
               </div>
             </div>
-            <button id="btn-back-to-input" class="btn-text-action" style="margin-top:10px; display:block; text-align:center; width:100%;">E-Mail-Adresse korrigieren</button>
+            <button id="btn-back-to-input" class="btn-text-action" style="margin-top:10px; display:block; text-align:center; width:100%;">E-Mail-Adresse ändern</button>
           </div>
 
         </div>

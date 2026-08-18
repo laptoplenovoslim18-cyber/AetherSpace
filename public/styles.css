@@ -72,7 +72,7 @@ html, body {
 .nav-item:hover, .nav-item-link:hover { background: var(--bg-active); color: #60a5fa; }
 .nav-item.active { background: rgba(37, 99, 235, 0.15); color: #60a5fa; font-weight: 600; }
 
-/* Right Run Settings Drawer (Google AI Studio Bild 153) */
+/* Right Run Settings Drawer (Google AI Studio) */
 .run-settings-drawer {
   position: absolute;
   top: 38px; right: 0; bottom: 24px;
@@ -124,6 +124,7 @@ html, body {
 .btn-heal:hover { background: rgba(16, 185, 129, 0.22); }
 .btn-icon { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer; }
 .btn-icon:hover { color: var(--text-main); background: var(--bg-active); }
+.btn-sm { padding: 3px 8px; font-size: 11px; }
 
 /* Main Workspace */
 .workspace { display: flex; flex: 1; height: calc(100vh - 62px); position: relative; overflow: hidden; }
@@ -219,7 +220,25 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .footer-right { display: flex; gap: 8px; }
 .divider { color: var(--border-color); }
 
-/* Cloudflare E-Mail Bestaetigungs-Card (Bild 154) */
+/* Google AI Studio API Keys Table Dashboard (Bild 158) */
+.vault-studio-card { width: 620px; max-width: 95vw; }
+.vault-title-group { display: flex; flex-direction: column; gap: 2px; }
+.vault-subtitle-tag { font-size: 10px; color: var(--text-muted); font-weight: normal; }
+.vault-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.vault-tabs { display: flex; gap: 4px; }
+.vault-tab-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+.vault-tab-btn.active { background: var(--bg-active); color: #60a5fa; border-color: var(--accent); font-weight: 600; }
+
+.vault-table-container { background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; overflow-x: auto; max-height: 180px; }
+.vault-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+.vault-table th { padding: 6px 10px; background: var(--bg-surface); color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border-color); }
+.vault-table td { padding: 6px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-family: var(--font-mono); }
+.vault-table tr:hover td { background: var(--bg-active); }
+
+.vault-add-box { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.add-box-actions { display: flex; gap: 6px; }
+
+/* Cloudflare E-Mail Verification Template (Bild 154) */
 .cloudflare-verify-card { background: #1c1815; border: 1px solid #d97706; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
 .cf-email-banner h4 { font-size: 14px; color: #fff; margin-top: 6px; margin-bottom: 4px; }
 .cf-logo { font-size: 13px; font-weight: 700; color: #f59e0b; }
@@ -227,13 +246,6 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .btn-verify-action { background-color: #ea580c; color: #fff; font-weight: 700; padding: 8px 14px; border-radius: 4px; margin-top: 8px; border: none; cursor: pointer; font-size: 12px; }
 .btn-verify-action:hover { background-color: #c2410c; }
 .cf-token-box { margin-top: 10px; padding: 8px; background: #0d0b09; border-radius: 4px; font-size: 10px; color: #9ca3af; word-break: break-all; }
-
-/* Multi-Key Pool */
-.key-pool-list { display: flex; flex-direction: column; gap: 4px; max-height: 100px; overflow-y: auto; margin-top: 3px; }
-.key-pool-row { display: flex; align-items: center; gap: 5px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 4px; padding: 3px 6px; }
-.key-pool-input { flex: 1; background: transparent; border: none; color: #fff; font-size: 11px; outline: none; font-family: var(--font-mono); }
-.btn-text-action { background: transparent; border: none; color: #60a5fa; font-size: 10px; cursor: pointer; }
-.btn-text-action:hover { text-decoration: underline; }
 
 /* Auth Profile Card */
 .auth-profile-view { display: flex; flex-direction: column; gap: 12px; }
@@ -260,12 +272,6 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .modal-header h3 { font-size: 14px; font-weight: 600; color: var(--text-main); }
 .modal-close { background: transparent; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
 .modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-
-.vault-field { display: flex; flex-direction: column; gap: 3px; }
-.field-header { display: flex; justify-content: space-between; align-items: center; }
-.field-label-group { display: flex; align-items: center; gap: 4px; }
-.vault-field label { font-size: 11px; font-weight: 600; color: var(--text-main); }
-.field-link { color: #60a5fa; text-decoration: none; font-size: 11px; }
 
 .text-input { background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px; padding: 6px 8px; font-size: 11px; outline: none; }
 .text-input:focus { border-color: var(--border-focus); }
