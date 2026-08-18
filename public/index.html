@@ -10,12 +10,41 @@
 <body>
   <div class="app-container">
     
+    <!-- Google AI Studio Navigation Drawer (Slide-Out) -->
+    <aside id="nav-drawer" class="nav-drawer hidden">
+      <div class="nav-drawer-header">
+        <div class="brand">
+          <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
+          <span class="brand-title">AetherSpace</span>
+        </div>
+        <button id="btn-close-drawer" class="btn-icon">&times;</button>
+      </div>
+      <div class="nav-drawer-body">
+        <div class="nav-section-title">WORKSPACE</div>
+        <button class="nav-item active" data-view="studio">⚡ Studio / Playground</button>
+        <button class="nav-item" data-view="history">📚 Projekt-Bibliothek</button>
+        
+        <div class="nav-section-title">SCHNITTSTELLEN</div>
+        <button class="nav-item" id="nav-open-vault">🔑 API-Keys & Multi-Pool</button>
+        <button class="nav-item" id="nav-open-auth">👤 Mein Konto & Profil</button>
+
+        <div class="nav-section-title">EXTERNE CLOUD</div>
+        <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud Runner ↗</a>
+        <a href="https://huggingface.co/spaces" target="_blank" class="nav-item-link">🤗 Hugging Face Spaces ↗</a>
+        <a href="https://stackblitz.com" target="_blank" class="nav-item-link">⚡ StackBlitz Cloud VM ↗</a>
+      </div>
+    </aside>
+    <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
+
     <!-- Top Navigation Bar -->
     <header class="app-header">
-      <div class="brand">
+      <div class="brand-group">
+        <button id="btn-hamburger" class="btn btn-icon" title="Hauptmenü öffnen">☰</button>
         <button id="btn-toggle-sidebar" class="btn btn-icon" title="Dateibaum ein-/ausklappen">📁</button>
-        <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
-        <span class="brand-title">AetherSpace</span>
+        <div class="brand">
+          <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
+          <span class="brand-title">AetherSpace</span>
+        </div>
       </div>
 
       <div class="header-controls">
@@ -26,14 +55,14 @@
 
         <button id="btn-theme" class="btn btn-icon" title="Theme wechseln (Dark/Light)">🌙</button>
 
-        <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen & Multi-Key Tresor">
+        <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen-Tresor">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
           <span id="vault-btn-label">Tresor</span>
         </button>
 
-        <button id="btn-auth-open" class="btn btn-outline" title="Konto & Profil verwalten">
+        <button id="btn-auth-open" class="btn btn-outline" title="Konto & Profil">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          <span id="user-display-name">Gast</span>
+          <span id="user-display-name">Anmelden</span>
         </button>
 
         <button id="btn-share" class="btn btn-outline" title="Projekt teilen">
@@ -76,18 +105,17 @@
 
         <!-- Hierarchische Two-Tier Toggles -->
         <div class="nested-toggles-bar">
-          <div class="master-pill active" data-target="tier2-autopilot" title="Auto-Pilot Parameter">
+          <div class="master-pill active" data-target="tier2-autopilot">
             <span>⚡ Auto-Pilot</span>
           </div>
-          <div class="master-pill" data-target="tier2-hardware" title="Hardware-Schutz">
+          <div class="master-pill" data-target="tier2-hardware">
             <span>🛡️ Hardware</span>
           </div>
-          <div class="master-pill" data-target="tier2-cloud" title="Cloud-Staging">
+          <div class="master-pill" data-target="tier2-cloud">
             <span>🌐 Cloud-Staging</span>
           </div>
         </div>
 
-        <!-- Tier 2 Ausklappbare Feineinstellungen -->
         <div class="tier2-drawer" id="tier2-autopilot">
           <div class="pro-control-item">
             <span class="pro-label">Thinking:</span>
@@ -108,7 +136,7 @@
 
         <div class="tier2-drawer hidden" id="tier2-hardware">
           <div class="pro-control-item">
-            <span class="pro-label">RAM-Limit:</span>
+            <span class="pro-label">RAM:</span>
             <span class="pro-badge">Max 500 MB</span>
           </div>
           <div class="pro-control-item">
@@ -126,7 +154,6 @@
 
         <div class="tunnel-config-container" id="tunnel-list"></div>
 
-        <!-- Aktive Kontext-Plakette -->
         <div id="context-files-badge" class="context-files-badge hidden">
           📎 Kontext aktiv: <strong id="context-files-names">index.html</strong>
         </div>
@@ -134,7 +161,7 @@
         <div class="panel-body chat-history" id="chat-history"></div>
 
         <div class="panel-footer chat-input-wrapper">
-          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein 3D-Voxel-Physikspiel mit 60+ FPS')..." rows="2"></textarea>
+          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein vollwertiges 2D-Auto-Ausweichspiel mit Steuerung')..." rows="2"></textarea>
           <button id="btn-send" class="btn btn-secondary">
             <span id="send-spinner" class="spinner hidden"></span>
             <span id="send-text">Pipeline starten</span>
@@ -189,9 +216,9 @@
               </button>
             </div>
 
-            <!-- Cloud-Staging Hub Dropdown -->
+            <!-- Cloud-Staging Dropdown -->
             <div class="cloud-staging-dropdown">
-              <button id="btn-cloud-menu" class="btn btn-icon" title="In externer Cloud auslagern">
+              <button id="btn-cloud-menu" class="btn btn-icon" title="In Cloud auslagern">
                 🚀 Cloud ▾
               </button>
               <div id="cloud-staging-menu" class="cloud-menu-content hidden">
@@ -201,7 +228,6 @@
               </div>
             </div>
 
-            <!-- Autonomer Polyglot Healer -->
             <button id="btn-auto-heal" class="btn btn-heal" title="Fehler finden & durch KI heilen lassen">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.06 3.4L12 9.35l1.06-1.06 1.34 1.34-1.09 1.06z"/></svg>
               Auto-Heal
@@ -236,7 +262,7 @@
 
     </main>
 
-    <!-- Footer -->
+    <!-- Footer Statusleiste -->
     <footer class="app-footer">
       <div class="footer-left">
         <span>AetherSpace Studio</span>
@@ -313,14 +339,16 @@
     </div>
   </div>
 
-  <!-- AUTH MODAL (Echte Authentifizierung & Profil-Verwaltung) -->
+  <!-- AUTH MODAL (Echte SOTA-Verifizierung & Profil-Management) -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
-        <h3 id="auth-modal-title">Konto & Anmeldung</h3>
+        <h3 id="auth-modal-title">Konto & Authentifizierung</h3>
         <button id="btn-auth-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body auth-modal-body">
+        
+        <!-- Bereits eingeloggt-Ansicht -->
         <div id="auth-logged-in-view" class="auth-profile-view hidden">
           <div class="profile-card">
             <div class="profile-avatar">👤</div>
@@ -333,31 +361,40 @@
           <button id="btn-auth-signout" class="btn btn-outline btn-full">Abmelden / Konto wechseln</button>
         </div>
 
+        <!-- Anmelde-Formular (Kein window.prompt mehr!) -->
         <div id="auth-logged-out-view">
-          <div class="social-login-stack">
-            <button id="btn-login-google" class="btn-social">
-              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-              Mit Google fortfahren
-            </button>
-            <button id="btn-login-ms" class="btn-social">
-              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M13 1h10v10H13z"/><path fill="#00A4EF" d="M1 13h10v10H1z"/><path fill="#FFB900" d="M13 13h10v10H13z"/></svg>
-              Mit Microsoft fortfahren
-            </button>
+          
+          <!-- Stufe 1: E-Mail & Login-Provider -->
+          <div id="auth-step-1">
+            <div class="social-login-stack">
+              <button id="btn-quick-google" class="btn-social">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                Google Konto verwenden
+              </button>
+              <button id="btn-quick-ms" class="btn-social">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M13 1h10v10H13z"/><path fill="#00A4EF" d="M1 13h10v10H1z"/><path fill="#FFB900" d="M13 13h10v10H13z"/></svg>
+                Microsoft Konto verwenden
+              </button>
+            </div>
+
+            <div class="auth-divider"><span>Oder mit E-Mail fortfahren</span></div>
+
+            <div class="auth-email-form">
+              <input type="email" id="auth-email-input" class="text-input" placeholder="deine-email@outlook.de / gmail / yahoo...">
+              <button id="btn-send-otp" class="btn btn-primary btn-full btn-auth-submit">Weiter mit E-Mail &rarr;</button>
+            </div>
           </div>
 
-          <div class="auth-divider"><span>Oder Anmelden per E-Mail</span></div>
-
-          <div class="auth-email-form">
-            <input type="email" id="auth-email" class="text-input" placeholder="deine-email@outlook.de / yahoo / custom...">
-            <div class="password-input-group">
-              <input type="password" id="auth-password" class="text-input" placeholder="Passwort">
-              <button id="btn-toggle-pwd" class="btn-pwd-eye" type="button">👁️</button>
+          <!-- Stufe 2: Integrierte 6-stellige Code-Verifizierung (Im Modal) -->
+          <div id="auth-step-2" class="hidden">
+            <p class="modal-subtitle">Geben Sie den 6-stelligen Bestätigungscode ein:</p>
+            <div class="otp-input-group">
+              <input type="text" id="otp-code-input" class="text-input otp-field" maxlength="6" placeholder="123456">
             </div>
-            <div class="auth-options-row">
-              <label class="checkbox-label"><input type="checkbox" id="auth-remember" checked> Angemeldet bleiben</label>
-            </div>
-            <button id="btn-submit-auth" class="btn btn-primary btn-full btn-auth-submit">Anmelden & Verifizieren</button>
+            <button id="btn-verify-otp" class="btn btn-primary btn-full btn-auth-submit">Code bestätigen & Einloggen</button>
+            <button id="btn-back-auth" class="btn-text-action" style="margin-top:8px; display:block; text-align:center; width:100%;">Zurück zur E-Mail-Eingabe</button>
           </div>
+
         </div>
       </div>
     </div>

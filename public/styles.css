@@ -42,7 +42,57 @@ html, body {
   line-height: 1.5;
 }
 
-.app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+.app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
+
+/* Google AI Studio Slide-Out Navigation Drawer */
+.nav-drawer {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 240px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-color);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.8);
+  transition: transform 0.25s ease;
+}
+.nav-drawer.hidden { display: none !important; }
+.drawer-backdrop {
+  position: absolute;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.6);
+  z-index: 90;
+  backdrop-filter: blur(2px);
+}
+.drawer-backdrop.hidden { display: none !important; }
+
+.nav-drawer-header {
+  height: 42px;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-drawer-body { padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; }
+.nav-section-title { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.8px; margin: 10px 6px 4px 6px; }
+
+.nav-item, .nav-item-link {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 4px;
+  color: var(--text-main);
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+.nav-item:hover, .nav-item-link:hover { background: var(--bg-active); color: #60a5fa; }
+.nav-item.active { background: rgba(37, 99, 235, 0.15); color: #60a5fa; font-weight: 600; }
 
 .app-header {
   height: 38px;
@@ -55,6 +105,7 @@ html, body {
   user-select: none;
 }
 
+.brand-group { display: flex; align-items: center; gap: 6px; }
 .brand { display: flex; align-items: center; gap: 8px; }
 .brand-icon { width: 18px; height: 18px; }
 .brand-title { font-weight: 700; color: var(--text-main); font-size: 14px; letter-spacing: -0.2px; }
@@ -412,7 +463,7 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .btn-text-action { background: transparent; border: none; color: #60a5fa; font-size: 10px; cursor: pointer; }
 .btn-text-action:hover { text-decoration: underline; }
 
-/* Auth Profile Card */
+/* Auth Profile Card & SOTA OTP Form */
 .auth-profile-view { display: flex; flex-direction: column; gap: 12px; }
 .profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; }
 .profile-avatar { font-size: 24px; background: var(--bg-surface); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
@@ -420,7 +471,6 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .profile-details strong { font-size: 13px; color: var(--text-main); }
 .profile-details small { color: var(--text-muted); font-size: 11px; }
 
-/* Social Login Stack */
 .auth-modal-card { width: 390px; }
 .social-login-stack { display: flex; flex-direction: column; gap: 8px; }
 .btn-social {
@@ -442,12 +492,10 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 .auth-divider { text-align: center; margin: 10px 0; position: relative; }
 .auth-divider span { font-size: 11px; color: var(--text-muted); background: var(--bg-surface); padding: 0 8px; }
 .auth-email-form { display: flex; flex-direction: column; gap: 8px; }
-.password-input-group { position: relative; display: flex; align-items: center; }
-.password-input-group .text-input { width: 100%; padding-right: 32px; }
-.btn-pwd-eye { position: absolute; right: 6px; background: transparent; border: none; cursor: pointer; font-size: 14px; color: var(--text-muted); }
-.auth-options-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); }
 .btn-auth-submit { background-color: #059669; border-color: #047857; font-weight: 600; margin-top: 4px; }
 .btn-auth-submit:hover { background-color: #047857; }
+
+.otp-field { font-size: 18px; letter-spacing: 6px; text-align: center; font-family: var(--font-mono); }
 
 /* Modal Styles */
 .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }

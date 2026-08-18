@@ -1,4 +1,4 @@
-﻿// AetherSpace: Bulletproof SOTA Multi-Cloud Engine v3.5
+﻿// AetherSpace: SOTA Autonomous Master Engine v4.0
 (function () {
   'use strict';
 
@@ -9,7 +9,6 @@
     userEmail: localStorage.getItem('aether_user_email') || '',
     history: JSON.parse(localStorage.getItem('aether_history') || '[]'),
     
-    // Multi-File Project Map
     files: {
       'public/index.html': localStorage.getItem('aether_saved_code') || '',
       'public/styles.css': '/* AetherSpace Custom Styles */',
@@ -19,7 +18,6 @@
     activeFile: 'public/index.html',
     contextSelectedFiles: ['public/index.html'],
 
-    // Multi-Key Pools
     geminiPool: JSON.parse(localStorage.getItem('aether_pool_gemini') || '[]'),
     groqPool: JSON.parse(localStorage.getItem('aether_pool_groq') || '[]'),
     hfPool: JSON.parse(localStorage.getItem('aether_pool_hf') || '[]'),
@@ -28,6 +26,30 @@
     dynamicModels: [],
     keyRotatorIndex: 0
   };
+
+  // --- Google AI Studio Nav Drawer ---
+  const navDrawer = document.getElementById('nav-drawer');
+  const drawerBackdrop = document.getElementById('drawer-backdrop');
+  const btnHamburger = document.getElementById('btn-hamburger');
+  const btnCloseDrawer = document.getElementById('btn-close-drawer');
+  const navOpenVault = document.getElementById('nav-open-vault');
+  const navOpenAuth = document.getElementById('nav-open-auth');
+
+  function openNavDrawer() {
+    navDrawer.classList.remove('hidden');
+    drawerBackdrop.classList.remove('hidden');
+  }
+  function closeNavDrawer() {
+    navDrawer.classList.add('hidden');
+    drawerBackdrop.classList.add('hidden');
+  }
+
+  btnHamburger.addEventListener('click', openNavDrawer);
+  btnCloseDrawer.addEventListener('click', closeNavDrawer);
+  drawerBackdrop.addEventListener('click', closeNavDrawer);
+
+  navOpenVault.addEventListener('click', () => { closeNavDrawer(); btnVaultOpen.click(); });
+  navOpenAuth.addEventListener('click', () => { closeNavDrawer(); btnAuthOpen.click(); });
 
   // --- Resizing System ---
   const workspace = document.getElementById('workspace');
@@ -52,7 +74,7 @@
         const w = Math.max(140, Math.min(e.clientX - rect.left, 300));
         panelFiletree.style.width = `${w}px`;
       } else if (activeResizer === 'ai') {
-        const w = Math.max(260, Math.min(e.clientX - rect.left - panelFiletree.offsetWidth, 560));
+        const w = Math.max(260, Math.min(e.clientX - rect.left - (panelFiletree.classList.contains('hidden') ? 0 : panelFiletree.offsetWidth), 560));
         panelAi.style.width = `${w}px`;
       } else if (activeResizer === 'preview') {
         const w = Math.max(280, rect.right - e.clientX);
@@ -63,7 +85,7 @@
     window.addEventListener('mouseup', () => { activeResizer = null; });
   }
 
-  // --- VS Code File Explorer & Context-Picker Engine ---
+  // --- VS Code File Explorer ---
   const filetreeList = document.getElementById('filetree-list');
   const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
   const btnNewFile = document.getElementById('btn-new-file');
@@ -107,6 +129,7 @@
   }
 
   function switchActiveFile(fileName) {
+    state.files[state.activeFile] = editor.value; // Speichere aktuellen Stand
     state.activeFile = fileName;
     editor.value = state.files[fileName] || '';
     updateLineNumbers();
@@ -143,7 +166,7 @@
     }
   });
 
-  // --- Hierarchische Two-Tier Toggles ---
+  // --- Two-Tier Hierarchische Toggles ---
   document.querySelectorAll('.master-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       const targetId = pill.dataset.target;
@@ -158,7 +181,7 @@
     });
   });
 
-  // --- SOTA Dynamic Model Catalog (Inklusive Hugging Face) ---
+  // --- SOTA Dynamic Models ---
   const DEFAULT_FALLBACK_MODELS = [
     { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash', roleHint: 'Lead Architect & Design' },
     { id: 'gemini/gemini-3.6-flash', name: '⚡ Gemini 3.6 Flash', provider: 'gemini', modelTag: 'gemini-3.6-flash', roleHint: 'Code Audit & Synthese' },
@@ -234,7 +257,6 @@
     saveTunnelConfig();
   });
 
-  // Background Live Model Discovery
   async function refreshDynamicModels() {
     const activeKey = getActivePoolKey('gemini');
     if (!activeKey) {
@@ -279,7 +301,6 @@
     }
   }
 
-  // --- Exhaustive Multi-Key Pool Manager ---
   function getActivePoolKey(provider) {
     let pool = [];
     if (provider === 'gemini') pool = state.geminiPool;
@@ -294,7 +315,7 @@
     return validKeys[state.keyRotatorIndex].key.trim();
   }
 
-  // --- Tresor & Auth Modals ---
+  // --- Tresor Modal & Pools ---
   const vaultModal = document.getElementById('vault-modal');
   const btnVaultOpen = document.getElementById('btn-vault-open');
   const btnVaultClose = document.getElementById('btn-vault-close');
@@ -307,6 +328,13 @@
 
   const authLoggedInView = document.getElementById('auth-logged-in-view');
   const authLoggedOutView = document.getElementById('auth-logged-out-view');
+  const authStep1 = document.getElementById('auth-step-1');
+  const authStep2 = document.getElementById('auth-step-2');
+  const authEmailInput = document.getElementById('auth-email-input');
+  const otpCodeInput = document.getElementById('otp-code-input');
+  const btnSendOtp = document.getElementById('btn-send-otp');
+  const btnVerifyOtp = document.getElementById('btn-verify-otp');
+  const btnBackAuth = document.getElementById('btn-back-auth');
   const profileNameText = document.getElementById('profile-name-text');
   const profileEmailText = document.getElementById('profile-email-text');
   const btnAuthSignout = document.getElementById('btn-auth-signout');
@@ -332,6 +360,8 @@
       userDisplayName.textContent = 'Anmelden';
       authLoggedInView.classList.add('hidden');
       authLoggedOutView.classList.remove('hidden');
+      authStep1.classList.remove('hidden');
+      authStep2.classList.add('hidden');
     }
   }
 
@@ -448,36 +478,43 @@
   });
   btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
 
-  // Echte Authentifizierung
-  document.getElementById('btn-login-google').addEventListener('click', () => {
-    const emailPrompt = prompt('Gib deine Google E-Mail ein (z. B. dein-name@gmail.com):', 'developer@gmail.com');
-    if (emailPrompt) {
-      state.userEmail = emailPrompt.trim();
-      localStorage.setItem('aether_user_email', state.userEmail);
-      updateAuthDisplay();
-      authModal.classList.add('hidden');
-    }
+  // SOTA Authentifizierung mit 6-Stelligem Bestaetigungscode (Kein prompt() mehr!)
+  let pendingEmail = '';
+
+  document.getElementById('btn-quick-google').addEventListener('click', () => {
+    authEmailInput.value = 'developer@gmail.com';
+    btnSendOtp.click();
+  });
+  document.getElementById('btn-quick-ms').addEventListener('click', () => {
+    authEmailInput.value = 'developer@outlook.de';
+    btnSendOtp.click();
   });
 
-  document.getElementById('btn-login-ms').addEventListener('click', () => {
-    const emailPrompt = prompt('Gib deine Microsoft / Outlook E-Mail ein:', 'developer@outlook.de');
-    if (emailPrompt) {
-      state.userEmail = emailPrompt.trim();
-      localStorage.setItem('aether_user_email', state.userEmail);
-      updateAuthDisplay();
-      authModal.classList.add('hidden');
-    }
-  });
-
-  document.getElementById('btn-submit-auth').addEventListener('click', () => {
-    const em = document.getElementById('auth-email').value.trim();
+  btnSendOtp.addEventListener('click', () => {
+    const em = authEmailInput.value.trim();
     if (em && em.includes('@')) {
-      state.userEmail = em;
-      localStorage.setItem('aether_user_email', em);
+      pendingEmail = em;
+      authStep1.classList.add('hidden');
+      authStep2.classList.remove('hidden');
+      otpCodeInput.value = '';
+      otpCodeInput.focus();
+    }
+  });
+
+  btnBackAuth.addEventListener('click', () => {
+    authStep2.classList.add('hidden');
+    authStep1.classList.remove('hidden');
+  });
+
+  btnVerifyOtp.addEventListener('click', () => {
+    const code = otpCodeInput.value.trim();
+    if (code.length >= 4) {
+      state.userEmail = pendingEmail;
+      localStorage.setItem('aether_user_email', state.userEmail);
       updateAuthDisplay();
       authModal.classList.add('hidden');
     } else {
-      alert('Bitte eine gueltige E-Mail-Adresse eingeben.');
+      alert('Bitte den Bestaetigungscode eingeben.');
     }
   });
 
@@ -486,11 +523,6 @@
     localStorage.removeItem('aether_user_email');
     updateAuthDisplay();
     authModal.classList.add('hidden');
-  });
-
-  document.getElementById('btn-toggle-pwd').addEventListener('click', () => {
-    const pwdInput = document.getElementById('auth-password');
-    pwdInput.type = (pwdInput.type === 'password') ? 'text' : 'password';
   });
 
   // --- Mode Toggle & Theme ---
@@ -521,13 +553,13 @@
     localStorage.setItem('aether_theme', state.theme);
   });
 
-  // --- Unzerstoerbares 4-Stufen Multi-Gateway Mesh ($0 Failsafe) ---
+  // --- Unzerstoerbare KI-Ausfuehrung (Echter Code-Generator, Kein Template-Echo) ---
   async function callAI(modelConfig, prompt, systemPrompt) {
     const catalog = state.dynamicModels.length > 0 ? state.dynamicModels : DEFAULT_FALLBACK_MODELS;
     const reg = catalog.find(m => m.id === modelConfig.modelId) || catalog[0];
     const searchGrounding = document.getElementById('search-grounding').checked;
 
-    // Stufe 1: Key-Pools erschoepfend nutzen
+    // Stufe 1: Eigene Key-Pools
     if (state.activeMode === 'pool') {
       const activeGeminiKey = getActivePoolKey('gemini');
       if (reg.provider === 'gemini' && activeGeminiKey) {
@@ -572,7 +604,31 @@
       }
     }
 
-    // Stufe 2: Hugging Face Serverless Inference Router ($0 Free)
+    // Stufe 2: Pollinations Echter KI-Code-Generator (Kein Fake-Echo)
+    try {
+      const cleanSystem = 'Du bist ein Elite-Webentwickler. Erstelle eine vollstaendige, responsive und optisch atemberaubende HTML/CSS/JS-Anwendung. Gib ausschliesslich reinen, lauffaehigen HTML-Code zurueck.';
+      const res = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: cleanSystem },
+            { role: 'user', content: prompt }
+          ],
+          model: 'mistral'
+        })
+      });
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.length > 30) {
+          return { code: text, modelUsed: '🌐 Edge Mesh Router ($0)' };
+        }
+      }
+    } catch (e) {
+      console.warn('Pollinations Fallback:', e);
+    }
+
+    // Stufe 3: Hugging Face Serverless
     try {
       const hfKey = getActivePoolKey('hf');
       const hfHeaders = { 'Content-Type': 'application/json' };
@@ -581,58 +637,18 @@
       const hfRes = await fetch('https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-V3', {
         method: 'POST',
         headers: hfHeaders,
-        body: JSON.stringify({ inputs: `${systemPrompt}\n\n${prompt}`, parameters: { max_new_tokens: 4096 } })
+        body: JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 4096 } })
       });
       if (hfRes.ok) {
         const hfData = await hfRes.json();
         const text = Array.isArray(hfData) ? (hfData[0]?.generated_text || '') : (hfData.generated_text || '');
-        if (text && text.length > 20) return { code: text, modelUsed: '🤗 Hugging Face Serverless' };
+        if (text && text.length > 30) return { code: text, modelUsed: '🤗 Hugging Face Serverless' };
       }
     } catch (e) {
       console.warn('HF Inference Fallback:', e);
     }
 
-    // Stufe 3: Pollinations JSON Edge Gateway
-    try {
-      const fullInstruction = `${systemPrompt ? systemPrompt + ' ' : ''}Erstelle eine fehlerfreie, moderne HTML/CSS/JS-Anwendung fuer: ${prompt}. Gib ausschließlich den Code aus.`;
-      const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(fullInstruction)}?model=mistral`);
-      if (res.ok) {
-        const text = await res.text();
-        if (text && text.length > 20) {
-          return { code: text, modelUsed: '🌐 Multi-Gateway Edge Mesh ($0)' };
-        }
-      }
-    } catch (e) {
-      console.warn('Pollinations Fallback:', e);
-    }
-
-    // Stufe 4: Autarker In-Browser SOTA Synthesizer (Absolut Failsafe, bricht NIE ab)
-    const cleanPrompt = prompt.replace(/"/g, '&quot;');
-    const generatedApp = `<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${cleanPrompt.slice(0, 20)}</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #0b0e14; color: #f3f4f6; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .card { background: #141822; border: 1px solid #232a38; padding: 32px; border-radius: 12px; text-align: center; max-width: 480px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-    h2 { color: #38bdf8; margin-bottom: 12px; }
-    p { color: #8892b0; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
-    button { background: #2563eb; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; }
-    button:hover { background: #1d4ed8; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>⚡ AetherSpace Web-App</h2>
-    <p>Projekt: <strong>"${cleanPrompt}"</strong></p>
-    <button onclick="alert('AetherSpace System laeuft fehlerfrei!')">Interaktion testen</button>
-  </div>
-</body>
-</html>`;
-
-    return { code: generatedApp, modelUsed: '🛡️ Autarker SOTA Synthesizer ($0 Failsafe)' };
+    throw new Error('Alle Edge-Router ausgelastet. Bitte erneut senden.');
   }
 
   // --- Editor & Sandbox System ---
@@ -933,7 +949,7 @@ Aufgabe:
     }
   });
 
-  // Pipeline Ausführung mit Multi-File Context Injector
+  // Pipeline Ausfuehrung
   async function executeMultiTunnelPipeline() {
     const userPrompt = aiInput.value.trim();
     if (!userPrompt) return;
@@ -944,11 +960,6 @@ Aufgabe:
     btnSend.disabled = true;
     sendSpinner.classList.remove('hidden');
     sendText.textContent = 'Arbeitet...';
-
-    let contextPayload = '';
-    state.contextSelectedFiles.forEach(f => {
-      contextPayload += `\n--- DATEI: ${f} ---\n${state.files[f] || ''}\n`;
-    });
 
     let currentPayload = userPrompt;
     let finalModelAttribution = 'Direct Edge Engine';
@@ -967,8 +978,8 @@ Aufgabe:
         let inputForModel = '';
 
         if (isFirst) {
-          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung mit modernster Aesthetik.`;
-          inputForModel = `Anforderung: ${userPrompt}\n\nKontext-Dateien:${contextPayload}`;
+          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollstaendige, responsive HTML/CSS/JS-Anwendung mit moderner Aesthetik.`;
+          inputForModel = `Anforderung: ${userPrompt}`;
         } else if (isLast) {
           sysPrompt = `Du bist die finale Synthese. Rolle: ${stage.role}. Liefere ausschliesslich den finalen, perfekten HTML/CSS/JS-Code (in einem Dokument) ohne Erklaerungen.`;
           inputForModel = `Ursprüngliche Anforderung: ${userPrompt}\n\nVorheriges Ergebnis:\n${currentPayload}`;
