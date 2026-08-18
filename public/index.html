@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,15 +16,26 @@
         <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
         <span class="brand-title">AetherSpace</span>
       </div>
+
       <div class="header-controls">
-        <div class="status-indicator">
-          <span class="status-dot"></span>
-          <span id="header-status-text" class="status-text">Gateway Aktiv</span>
+        <!-- Quick Mode Switcher (Vault Keys vs Free Edge) -->
+        <div class="mode-toggle-pill" id="mode-toggle" title="Klick: Zwischen eigenem Key-Pool und $0 Gratis-Edge wechseln">
+          <span class="mode-pill-dot"></span>
+          <span id="mode-pill-text">Key-Pool Aktiv</span>
         </div>
-        <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen & Keys">
+
+        <button id="btn-theme" class="btn btn-icon" title="Theme wechseln (Dark/Light)">🌙</button>
+
+        <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen & Multi-Key Tresor">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
           <span id="vault-btn-label">Tresor</span>
         </button>
+
+        <button id="btn-share" class="btn btn-outline" title="Projekt teilen (WhatsApp & Web-Link)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
+          Teilen
+        </button>
+
         <button id="btn-run" class="btn btn-primary" title="Code in Sandbox rendern">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           Ausführen
@@ -39,8 +50,35 @@
       <section class="panel panel-ai" id="panel-ai">
         <div class="panel-header">
           <span class="panel-title">Pipeline</span>
-          <div class="tunnel-header-actions">
+          <div class="pipeline-header-actions">
+            <button id="btn-teleport" class="btn-icon" title="Chat-Kontext für neues Fenster komprimieren & kopieren">⏩ Teleport</button>
             <button id="btn-add-tunnel" class="btn-icon" title="KI-Stufe hinzufügen">+ Stufe</button>
+          </div>
+        </div>
+
+        <!-- SOTA Pro Controls Drawer (Google AI Studio inspiriert) -->
+        <div class="pro-controls-bar">
+          <div class="pro-control-item" title="Denktiefe / Reasoning Level">
+            <span class="pro-label">Thinking:</span>
+            <select id="thinking-level" class="mini-select">
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="fast">Fast</option>
+            </select>
+          </div>
+          <div class="pro-control-item" title="Google Search Grounding aktivieren">
+            <label class="toggle-switch-label">
+              <input type="checkbox" id="search-grounding">
+              <span class="toggle-slider"></span>
+              <span class="pro-label">Search</span>
+            </label>
+          </div>
+          <div class="pro-control-item" title="Auto-Pilot Modell-Routing">
+            <label class="toggle-switch-label">
+              <input type="checkbox" id="autopilot-routing" checked>
+              <span class="toggle-slider"></span>
+              <span class="pro-label">Auto-Pilot</span>
+            </label>
           </div>
         </div>
 
@@ -49,7 +87,7 @@
         <div class="panel-body chat-history" id="chat-history"></div>
 
         <div class="panel-footer chat-input-wrapper">
-          <textarea id="ai-input" placeholder="Prompt eingeben..." rows="2"></textarea>
+          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein Weltraum-Physik-Spiel')..." rows="2"></textarea>
           <button id="btn-send" class="btn btn-secondary">
             <span id="send-spinner" class="spinner hidden"></span>
             <span id="send-text">Pipeline starten</span>
@@ -64,9 +102,10 @@
       <section class="panel panel-editor" id="panel-editor">
         <div class="panel-header">
           <div class="editor-tabs">
-            <button class="tab-btn active">index.html</button>
+            <button class="tab-btn active" data-file="index.html">index.html</button>
           </div>
           <div class="editor-actions">
+            <button id="btn-history-toggle" class="btn-icon" title="Projekt-Historie / Versionen">📚 History</button>
             <button id="btn-copy" class="btn-icon" title="Code kopieren">Kopieren</button>
             <button id="btn-clear" class="btn-icon" title="Editor leeren">Leeren</button>
           </div>
@@ -93,16 +132,17 @@
           </div>
           
           <div class="preview-actions">
-            <!-- Smart Export Feld -->
+            <!-- Smart Export Feld mit Live-Rename -->
             <div class="export-group">
               <input type="text" id="export-filename" class="export-input" placeholder="app-name" title="Dateinamen anpassen">
               <span id="export-ext-label" class="export-ext">.html</span>
-              <button id="btn-export" class="btn btn-icon btn-export-action" title="Datei auf Laptop herunterladen">
+              <button id="btn-export" class="btn btn-icon btn-export-action" title="Datei herunterladen">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                 Export
               </button>
             </div>
 
+            <!-- Autonomer Polyglot Healer Button -->
             <button id="btn-auto-heal" class="btn btn-heal" title="Fehler finden & durch KI heilen lassen">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29c-.39-.39-1.02-.39-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35zm-1.06 3.4L12 9.35l1.06-1.06 1.34 1.34-1.09 1.06z"/></svg>
               Auto-Heal
@@ -116,10 +156,19 @@
           <iframe id="sandbox-frame" sandbox="allow-scripts allow-modals" title="Sandbox Output"></iframe>
         </div>
 
-        <!-- Collapsible Diagnostic Console -->
+        <!-- History Drawer (wie in Google AI Studio) -->
+        <div id="history-drawer" class="history-drawer hidden">
+          <div class="drawer-header">
+            <span>Projekt-Historie (Snapshots)</span>
+            <button id="btn-close-history" class="btn-icon">&times;</button>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </div>
+
+        <!-- Diagnostics Drawer -->
         <div id="diagnostics-drawer" class="diagnostics-drawer hidden">
-          <div class="diagnostics-header">
-            <span>Diagnose & Linter-Bericht</span>
+          <div class="drawer-header">
+            <span>Polyglot Diagnose-Bericht</span>
             <button id="btn-close-diagnostics" class="btn-icon">&times;</button>
           </div>
           <div id="diagnostics-log" class="diagnostics-log"></div>
@@ -134,75 +183,93 @@
         <span>AetherSpace</span>
       </div>
       <div class="footer-right">
-        <span id="footer-model-badge">SOTA Edge</span>
+        <span id="footer-discovery-badge">Live Discovery: Bereit</span>
         <span class="divider">|</span>
         <span>RAM: <strong>&lt; 15 MB</strong></span>
       </div>
     </footer>
   </div>
 
-  <!-- TRESOR MODAL (Bereinigt) -->
+  <!-- MULTI-KEY TRESOR & AUTH MODAL -->
   <div id="vault-modal" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>Schnittstellen-Tresor</h3>
+        <h3>Schnittstellen-Tresor & Multi-Key Pool</h3>
         <button id="btn-vault-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
         
-        <!-- Google Gemini -->
+        <!-- Google Gemini Multi-Key Pool (Load Balancer) -->
         <div class="vault-field">
           <div class="field-header">
             <div class="field-label-group">
-              <label>Google Gemini</label>
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" class="field-link" title="Key holen">↗</a>
+              <label>Google Gemini Key-Pool</label>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" class="field-link" title="Neuen Key im Google AI Studio erstellen">↗</a>
             </div>
-            <span id="badge-gemini" class="micro-badge badge-idle">○ Key eingeben</span>
+            <button id="btn-add-gemini-key" class="btn-text-action">+ Key hinzufuegen</button>
           </div>
-          <div class="input-with-clear">
-            <input type="password" id="key-gemini" class="text-input" placeholder="AIzaSy...">
-            <button class="btn-clear-key" data-provider="gemini" title="Schlüssel löschen">&times;</button>
-          </div>
+          <div id="gemini-key-pool-list" class="key-pool-list"></div>
         </div>
 
-        <!-- Groq API Key -->
+        <!-- Groq Cloud Key Pool -->
         <div class="vault-field">
           <div class="field-header">
             <div class="field-label-group">
-              <label>Groq Cloud</label>
-              <a href="https://console.groq.com/keys" target="_blank" class="field-link" title="Key holen">↗</a>
+              <label>Groq Cloud Key-Pool</label>
+              <a href="https://console.groq.com/keys" target="_blank" class="field-link" title="Neuen Groq Key erstellen">↗</a>
             </div>
-            <span id="badge-groq" class="micro-badge badge-idle">○ Key eingeben</span>
+            <button id="btn-add-groq-key" class="btn-text-action">+ Key hinzufuegen</button>
           </div>
-          <div class="input-with-clear">
-            <input type="password" id="key-groq" class="text-input" placeholder="gsk_...">
-            <button class="btn-clear-key" data-provider="groq" title="Schlüssel löschen">&times;</button>
-          </div>
+          <div id="groq-key-pool-list" class="key-pool-list"></div>
         </div>
 
-        <!-- OpenRouter API Key -->
+        <!-- OpenRouter Key Pool -->
         <div class="vault-field">
           <div class="field-header">
             <div class="field-label-group">
-              <label>OpenRouter</label>
-              <a href="https://openrouter.ai/keys" target="_blank" class="field-link" title="Key holen">↗</a>
+              <label>OpenRouter Key-Pool</label>
+              <a href="https://openrouter.ai/keys" target="_blank" class="field-link" title="Neuen OpenRouter Key erstellen">↗</a>
             </div>
-            <span id="badge-openrouter" class="micro-badge badge-idle">○ Key eingeben</span>
+            <button id="btn-add-openrouter-key" class="btn-text-action">+ Key hinzufuegen</button>
           </div>
-          <div class="input-with-clear">
-            <input type="password" id="key-openrouter" class="text-input" placeholder="sk-or-v1-...">
-            <button class="btn-clear-key" data-provider="openrouter" title="Schlüssel löschen">&times;</button>
-          </div>
+          <div id="openrouter-key-pool-list" class="key-pool-list"></div>
         </div>
 
-        <!-- Profil -->
+        <!-- Universal Open Identity Profile (Any Email) -->
         <div class="vault-field">
-          <label>Entwickler-Profil</label>
-          <input type="text" id="profile-name-input" class="text-input" placeholder="Aether Entwickler">
+          <div class="field-header">
+            <label>Konto & Cloud-Profil (Beliebige E-Mail / ID):</label>
+            <span id="auth-verified-badge" class="micro-badge badge-valid">✓ Verifiziert</span>
+          </div>
+          <div class="input-with-clear">
+            <input type="text" id="profile-email-input" class="text-input" placeholder="name@google.com / yahoo / custom...">
+            <button id="btn-logout" class="btn-clear-key" title="Profil abmelden">✕</button>
+          </div>
         </div>
 
         <div class="modal-footer-actions">
-          <button id="btn-modal-done" class="btn btn-primary btn-full">Fertig</button>
+          <button id="btn-modal-done" class="btn btn-primary btn-full">Schliessen & Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE MODAL -->
+  <div id="share-modal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Projekt teilen</h3>
+        <button id="btn-share-close" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Teile dein erstelltes Projekt per Web-Link oder direkt auf WhatsApp:</p>
+        <div class="share-actions-group">
+          <button id="btn-share-whatsapp" class="btn btn-whatsapp btn-full">
+            💬 Auf WhatsApp teilen
+          </button>
+          <button id="btn-copy-share-url" class="btn btn-outline btn-full">
+            📋 Vorschau-Link kopieren
+          </button>
         </div>
       </div>
     </div>

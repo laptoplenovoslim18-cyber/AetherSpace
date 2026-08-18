@@ -14,7 +14,6 @@ const MIME_TYPES = {
   '.json': 'application/json'
 };
 
-// Lokaler Webserver
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -46,19 +45,13 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`[AUTO-SYNC] Datei-Waechter fuer GitHub & Cloudflare ist SCHARF.`);
 });
 
-// Automatischer Datei-Waechter fuer C:\Test\public
 let syncTimer = null;
 fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
   if (!filename) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(() => {
-    console.log(`[AENDERUNG ERKANNT] ${filename} wurde geaendert -> Lade automatisch zu GitHub & Cloudflare hoch...`);
-    exec('git add . && git commit -m "Auto-Sync: AetherSpace Update" && git push origin main', { cwd: __dirname }, (error, stdout) => {
-      if (error) {
-        console.warn(`[SYNC-HINWEIS] Keine neuen Änderungen zum Hochladen.`);
-      } else {
-        console.log(`[ERFOLG] Automatisch mit GitHub & Cloudflare synchronisiert!`);
-      }
+    exec('git add . && git commit -m "Auto-Sync: AetherSpace SOTA Update" && git push origin main', { cwd: __dirname }, (error) => {
+      if (!error) console.log(`[ERFOLG] Automatisch mit GitHub & Cloudflare synchronisiert!`);
     });
-  }, 2500); // 2.5 Sekunden warten, damit alle Dateien fertig geschrieben sind
+  }, 2500);
 });

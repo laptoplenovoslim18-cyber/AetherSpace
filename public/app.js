@@ -1,21 +1,25 @@
-﻿// AetherSpace: Polyglot Autonomous Healer & Smart Exporter Engine
+﻿// AetherSpace: SOTA Autonomous Engine & Dynamic Discovery v2.0
 (function () {
   'use strict';
 
-  // Vault State
-  const vault = {
-    profile: localStorage.getItem('aether_profile') || 'Aether Entwickler',
-    geminiKey: localStorage.getItem('aether_key_gemini') || '',
-    groqKey: localStorage.getItem('aether_key_groq') || '',
-    openRouterKey: localStorage.getItem('aether_key_openrouter') || '',
-    savedCode: localStorage.getItem('aether_saved_code') || '',
-    tunnelConfig: JSON.parse(localStorage.getItem('aether_tunnels') || 'null')
+  // --- State & Key-Pool Registry ---
+  const state = {
+    theme: localStorage.getItem('aether_theme') || 'dark',
+    activeMode: localStorage.getItem('aether_mode') || 'pool', // 'pool' or 'free'
+    userEmail: localStorage.getItem('aether_user_email') || 'aether-developer@open.id',
+    history: JSON.parse(localStorage.getItem('aether_history') || '[]'),
+    
+    // Multi-Key Pools (Load Balanced)
+    geminiPool: JSON.parse(localStorage.getItem('aether_pool_gemini') || '[]'),
+    groqPool: JSON.parse(localStorage.getItem('aether_pool_groq') || '[]'),
+    openRouterPool: JSON.parse(localStorage.getItem('aether_pool_openrouter') || '[]'),
+
+    // Active Dynamic Model Catalog
+    dynamicModels: [],
+    keyRotatorIndex: 0
   };
 
-  // State & Diagnostic Tracker
-  let collectedDiagnostics = [];
-
-  // Resizing System
+  // Resizers
   const workspace = document.getElementById('workspace');
   const panelAi = document.getElementById('panel-ai');
   const panelPreview = document.getElementById('panel-preview');
@@ -42,30 +46,33 @@
     window.addEventListener('mouseup', () => { activeResizer = null; });
   }
 
-  // --- SOTA Model Registry ---
-  const MODEL_REGISTRY = [
-    { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash' },
-    { id: 'gemini/gemini-3.6-flash', name: '⚡ Gemini 3.6 Flash', provider: 'gemini', modelTag: 'gemini-3.6-flash' },
-    { id: 'gemini/gemini-3.5-flash-lite', name: '🚀 Gemini 3.5 Flash Lite', provider: 'gemini', modelTag: 'gemini-3.5-flash-lite' },
-    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile' },
-    { id: 'openrouter/deepseek/deepseek-r1:free', name: '🧠 OpenRouter: DeepSeek R1', provider: 'openrouter', modelTag: 'deepseek/deepseek-r1:free' }
+  // --- Dynamic Model Discovery Engine (SOTA 2026 Ever-Green) ---
+  const DEFAULT_FALLBACK_MODELS = [
+    { id: 'gemini/gemini-3.7-flash', name: '✨ Gemini 3.7 Flash', provider: 'gemini', modelTag: 'gemini-3.7-flash', roleHint: 'Lead Architect & Design' },
+    { id: 'gemini/gemini-3.6-flash', name: '⚡ Gemini 3.6 Flash', provider: 'gemini', modelTag: 'gemini-3.6-flash', roleHint: 'Code Audit & Synthese' },
+    { id: 'gemini/gemini-3.5-flash-lite', name: '🚀 Gemini 3.5 Flash Lite', provider: 'gemini', modelTag: 'gemini-3.5-flash-lite', roleHint: 'Fast Linter' },
+    { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile', roleHint: 'Deep Logic & Speed' },
+    { id: 'openrouter/deepseek/deepseek-r1:free', name: '🧠 OpenRouter: DeepSeek R1', provider: 'openrouter', modelTag: 'deepseek/deepseek-r1:free', roleHint: 'Reasoning Engine' }
   ];
 
-  let tunnelStages = vault.tunnelConfig || [
+  let tunnelStages = JSON.parse(localStorage.getItem('aether_tunnels') || 'null') || [
     { modelId: 'gemini/gemini-3.7-flash', role: 'Architektur & Design' },
     { modelId: 'gemini/gemini-3.6-flash', role: 'Qualitaet & Synthese' }
   ];
 
   const tunnelListEl = document.getElementById('tunnel-list');
   const btnAddTunnel = document.getElementById('btn-add-tunnel');
+  const footerDiscoveryBadge = document.getElementById('footer-discovery-badge');
 
   function renderTunnelList() {
     tunnelListEl.innerHTML = '';
+    const activeCatalog = state.dynamicModels.length > 0 ? state.dynamicModels : DEFAULT_FALLBACK_MODELS;
+
     tunnelStages.forEach((stage, idx) => {
       const node = document.createElement('div');
       node.className = 'tunnel-node';
       
-      const optionsHtml = MODEL_REGISTRY.map(m => 
+      const optionsHtml = activeCatalog.map(m => 
         `<option value="${m.id}" ${m.id === stage.modelId ? 'selected' : ''}>${m.name}</option>`
       ).join('');
 
@@ -80,7 +87,13 @@
 
     tunnelListEl.querySelectorAll('.tunnel-select').forEach(sel => {
       sel.addEventListener('change', (e) => {
-        tunnelStages[e.target.dataset.idx].modelId = e.target.value;
+        const idx = e.target.dataset.idx;
+        tunnelStages[idx].modelId = e.target.value;
+        const matched = activeCatalog.find(m => m.id === e.target.value);
+        if (matched && matched.roleHint) {
+          tunnelStages[idx].role = matched.roleHint;
+        }
+        renderTunnelList();
         saveTunnelConfig();
       });
     });
@@ -111,227 +124,299 @@
     saveTunnelConfig();
   });
 
-  // --- Tresor Modal & Auto-Verify ---
+  // Background Live Model Discovery (Pings Google AI Studio & Groq)
+  async function refreshDynamicModels() {
+    const activeKey = getActivePoolKey('gemini');
+    if (!activeKey) {
+      state.dynamicModels = DEFAULT_FALLBACK_MODELS;
+      renderTunnelList();
+      return;
+    }
+
+    try {
+      footerDiscoveryBadge.textContent = 'Discovery: Synchronisiere...';
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`);
+      if (res.ok) {
+        const data = await res.json();
+        const geminiModels = (data.models || [])
+          .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+          .filter(m => m.name.includes('flash') || m.name.includes('pro'))
+          .map(m => {
+            const rawName = m.name.replace('models/', '');
+            return {
+              id: `gemini/${rawName}`,
+              name: `✨ Google ${rawName}`,
+              provider: 'gemini',
+              modelTag: rawName,
+              roleHint: rawName.includes('3.7') ? 'Lead Architect & Design' : (rawName.includes('pro') ? 'Deep Logic & Math' : 'Realtime Linter')
+            };
+          });
+
+        if (geminiModels.length > 0) {
+          state.dynamicModels = [
+            ...geminiModels,
+            { id: 'groq/llama-3.3-70b-versatile', name: '⚡ Groq: Llama 3.3 70B', provider: 'groq', modelTag: 'llama-3.3-70b-versatile', roleHint: 'Speed Linter' },
+            { id: 'openrouter/deepseek/deepseek-r1:free', name: '🧠 OpenRouter: DeepSeek R1', provider: 'openrouter', modelTag: 'deepseek/deepseek-r1:free', roleHint: 'Reasoning Engine' }
+          ];
+          footerDiscoveryBadge.textContent = `Discovery: ${geminiModels.length} SOTA Modelle aktiv`;
+          renderTunnelList();
+        }
+      }
+    } catch (e) {
+      console.warn('Discovery Fallback aktiv:', e);
+      state.dynamicModels = DEFAULT_FALLBACK_MODELS;
+      footerDiscoveryBadge.textContent = 'Discovery: Standard-Katalog';
+    }
+  }
+
+  // --- Multi-Key Pool Manager (Load Balancer & Rotation) ---
+  function getActivePoolKey(provider) {
+    let pool = [];
+    if (provider === 'gemini') pool = state.geminiPool;
+    if (provider === 'groq') pool = state.groqPool;
+    if (provider === 'openrouter') pool = state.openRouterPool;
+
+    const validKeys = pool.filter(k => k.active && k.key.trim().length > 0);
+    if (validKeys.length === 0) return null;
+
+    state.keyRotatorIndex = (state.keyRotatorIndex + 1) % validKeys.length;
+    return validKeys[state.keyRotatorIndex].key.trim();
+  }
+
+  // --- Tresor Modal & Key-Pool UI ---
   const vaultModal = document.getElementById('vault-modal');
   const btnVaultOpen = document.getElementById('btn-vault-open');
   const btnVaultClose = document.getElementById('btn-vault-close');
   const btnModalDone = document.getElementById('btn-modal-done');
-  const profileInput = document.getElementById('profile-name-input');
-  const keyGeminiInput = document.getElementById('key-gemini');
-  const keyGroqInput = document.getElementById('key-groq');
-  const keyOpenRouterInput = document.getElementById('key-openrouter');
-  const vaultBtnLabel = document.getElementById('vault-btn-label');
+  const profileEmailInput = document.getElementById('profile-email-input');
+  const btnLogout = document.getElementById('btn-logout');
+
+  const geminiPoolList = document.getElementById('gemini-key-pool-list');
+  const groqPoolList = document.getElementById('groq-key-pool-list');
+  const openrouterPoolList = document.getElementById('openrouter-key-pool-list');
+
+  const btnAddGeminiKey = document.getElementById('btn-add-gemini-key');
+  const btnAddGroqKey = document.getElementById('btn-add-groq-key');
+  const btnAddOpenrouterKey = document.getElementById('btn-add-openrouter-key');
+
+  function renderPoolUI(provider, listEl, poolArray, storageKey) {
+    listEl.innerHTML = '';
+    if (poolArray.length === 0) {
+      poolArray.push({ key: '', active: true, valid: false });
+    }
+
+    poolArray.forEach((item, idx) => {
+      const row = document.createElement('div');
+      row.className = 'key-pool-row';
+      row.innerHTML = `
+        <label class="toggle-switch-label" title="Key Ein/Ausschalten">
+          <input type="checkbox" class="pool-toggle" data-idx="${idx}" ${item.active ? 'checked' : ''}>
+          <span class="toggle-slider"></span>
+        </label>
+        <input type="password" class="key-pool-input" data-idx="${idx}" placeholder="API-Key hier einfuegen..." value="${item.key}">
+        <span class="micro-badge ${item.valid ? 'badge-valid' : (item.key ? 'badge-checking' : 'badge-idle')}">${item.valid ? '● Bereit' : (item.key ? '◌ Prüfe...' : '○ Fehlt')}</span>
+        <button class="btn-text-action btn-del-pool-key" data-idx="${idx}" title="Löschen">&times;</button>
+      `;
+      listEl.appendChild(row);
+    });
+
+    listEl.querySelectorAll('.key-pool-input').forEach(inp => {
+      inp.addEventListener('input', async (e) => {
+        const idx = e.target.dataset.idx;
+        const val = e.target.value.trim();
+        poolArray[idx].key = val;
+        localStorage.setItem(storageKey, JSON.stringify(poolArray));
+
+        // Auto-Verify Key
+        if (val.length > 5) {
+          const isValid = await testSingleKey(provider, val);
+          poolArray[idx].valid = isValid;
+          localStorage.setItem(storageKey, JSON.stringify(poolArray));
+          renderPoolUI(provider, listEl, poolArray, storageKey);
+          if (provider === 'gemini' && isValid) refreshDynamicModels();
+        }
+      });
+    });
+
+    listEl.querySelectorAll('.pool-toggle').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        poolArray[e.target.dataset.idx].active = e.target.checked;
+        localStorage.setItem(storageKey, JSON.stringify(poolArray));
+      });
+    });
+
+    listEl.querySelectorAll('.btn-del-pool-key').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        poolArray.splice(parseInt(e.target.dataset.idx, 10), 1);
+        localStorage.setItem(storageKey, JSON.stringify(poolArray));
+        renderPoolUI(provider, listEl, poolArray, storageKey);
+      });
+    });
+  }
+
+  async function testSingleKey(provider, key) {
+    try {
+      if (provider === 'gemini') {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        return res.ok;
+      }
+      if (provider === 'groq') {
+        const res = await fetch('https://api.groq.com/openai/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+        return res.ok;
+      }
+      if (provider === 'openrouter') {
+        const res = await fetch('https://openrouter.ai/api/v1/auth/key', { headers: { 'Authorization': `Bearer ${key}` } });
+        return res.ok;
+      }
+    } catch (e) {
+      return false;
+    }
+    return false;
+  }
+
+  btnAddGeminiKey.addEventListener('click', () => {
+    state.geminiPool.push({ key: '', active: true, valid: false });
+    renderPoolUI('gemini', geminiPoolList, state.geminiPool, 'aether_pool_gemini');
+  });
+
+  btnAddGroqKey.addEventListener('click', () => {
+    state.groqPool.push({ key: '', active: true, valid: false });
+    renderPoolUI('groq', groqPoolList, state.groqPool, 'aether_pool_groq');
+  });
+
+  btnAddOpenrouterKey.addEventListener('click', () => {
+    state.openRouterPool.push({ key: '', active: true, valid: false });
+    renderPoolUI('openrouter', openrouterPoolList, state.openRouterPool, 'aether_pool_openrouter');
+  });
 
   btnVaultOpen.addEventListener('click', () => {
-    profileInput.value = vault.profile;
-    keyGeminiInput.value = vault.geminiKey;
-    keyGroqInput.value = vault.groqKey;
-    keyOpenRouterInput.value = vault.openRouterKey;
+    profileEmailInput.value = state.userEmail;
+    renderPoolUI('gemini', geminiPoolList, state.geminiPool, 'aether_pool_gemini');
+    renderPoolUI('groq', groqPoolList, state.groqPool, 'aether_pool_groq');
+    renderPoolUI('openrouter', openrouterPoolList, state.openRouterPool, 'aether_pool_openrouter');
     vaultModal.classList.remove('hidden');
-    
-    if (vault.geminiKey) autoVerify('gemini', vault.geminiKey);
-    if (vault.groqKey) autoVerify('groq', vault.groqKey);
-    if (vault.openRouterKey) autoVerify('openrouter', vault.openRouterKey);
   });
 
   btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
   btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
 
-  profileInput.addEventListener('input', () => {
-    vault.profile = profileInput.value.trim() || 'Aether Entwickler';
-    localStorage.setItem('aether_profile', vault.profile);
-    vaultBtnLabel.textContent = vault.profile;
+  profileEmailInput.addEventListener('input', () => {
+    state.userEmail = profileEmailInput.value.trim() || 'aether-developer@open.id';
+    localStorage.setItem('aether_user_email', state.userEmail);
   });
 
-  async function testKey(provider, key) {
-    if (!key) return { status: 'idle', msg: '○ Key eingeben' };
-    try {
-      if (provider === 'gemini') {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-        return res.ok ? { status: 'valid', msg: '● Bereit' } : { status: 'invalid', msg: '✕ Ungültig' };
-      }
-      if (provider === 'groq') {
-        const res = await fetch('https://api.groq.com/openai/v1/models', {
-          headers: { 'Authorization': `Bearer ${key}` }
-        });
-        return res.ok ? { status: 'valid', msg: '● Bereit' } : { status: 'invalid', msg: '✕ Ungültig' };
-      }
-      if (provider === 'openrouter') {
-        const res = await fetch('https://openrouter.ai/api/v1/auth/key', {
-          headers: { 'Authorization': `Bearer ${key}` }
-        });
-        return res.ok ? { status: 'valid', msg: '● Bereit' } : { status: 'invalid', msg: '✕ Ungültig' };
-      }
-    } catch (e) {
-      return { status: 'invalid', msg: '✕ Offline' };
-    }
-    return { status: 'invalid', msg: '✕ Fehler' };
-  }
-
-  const debounceTimers = {};
-  function autoVerify(provider, key) {
-    const badge = document.getElementById(`badge-${provider}`);
-    if (!key) {
-      badge.textContent = '○ Key eingeben';
-      badge.className = 'micro-badge badge-idle';
-      if (provider === 'gemini') { vault.geminiKey = ''; localStorage.removeItem('aether_key_gemini'); }
-      if (provider === 'groq') { vault.groqKey = ''; localStorage.removeItem('aether_key_groq'); }
-      if (provider === 'openrouter') { vault.openRouterKey = ''; localStorage.removeItem('aether_key_openrouter'); }
-      return;
-    }
-
-    badge.textContent = '◌ Prüfe...';
-    badge.className = 'micro-badge badge-checking';
-
-    clearTimeout(debounceTimers[provider]);
-    debounceTimers[provider] = setTimeout(async () => {
-      const result = await testKey(provider, key);
-      badge.textContent = result.msg;
-      badge.className = `micro-badge badge-${result.status}`;
-
-      if (result.status === 'valid') {
-        if (provider === 'gemini') { vault.geminiKey = key; localStorage.setItem('aether_key_gemini', key); }
-        if (provider === 'groq') { vault.groqKey = key; localStorage.setItem('aether_key_groq', key); }
-        if (provider === 'openrouter') { vault.openRouterKey = key; localStorage.setItem('aether_key_openrouter', key); }
-      }
-    }, 300);
-  }
-
-  keyGeminiInput.addEventListener('input', (e) => autoVerify('gemini', e.target.value.trim()));
-  keyGroqInput.addEventListener('input', (e) => autoVerify('groq', e.target.value.trim()));
-  keyOpenRouterInput.addEventListener('input', (e) => autoVerify('openrouter', e.target.value.trim()));
-
-  document.querySelectorAll('.btn-clear-key').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const prov = e.target.dataset.provider;
-      if (prov === 'gemini') { keyGeminiInput.value = ''; autoVerify('gemini', ''); }
-      if (prov === 'groq') { keyGroqInput.value = ''; autoVerify('groq', ''); }
-      if (prov === 'openrouter') { keyOpenRouterInput.value = ''; autoVerify('openrouter', ''); }
-    });
+  btnLogout.addEventListener('click', () => {
+    state.userEmail = '';
+    profileEmailInput.value = '';
+    localStorage.removeItem('aether_user_email');
   });
 
-  // --- Gemini SOTA Auto-Healing (3.7 -> 3.6 -> 3.5 -> 2.0) ---
-  async function executeGeminiWithHealing(modelTag, prompt, systemPrompt, key) {
-    const modelChain = [modelTag, 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.0-flash'];
-    const uniqueChain = [...new Set(modelChain)];
+  // --- Mode Toggle & Theme Engine ---
+  const modeToggle = document.getElementById('mode-toggle');
+  const modePillText = document.getElementById('mode-pill-text');
+  const btnTheme = document.getElementById('btn-theme');
 
-    for (const targetModel of uniqueChain) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${key}`;
-        const payload = {
-          contents: [{
-            role: 'user',
-            parts: [{ text: `${systemPrompt ? `[SYSTEM: ${systemPrompt}]\n\n` : ''}${prompt}` }]
-          }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 8192 }
-        };
-
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.status === 503 || res.status === 404) {
-          console.warn(`[Auto-Heilung] ${targetModel} HTTP ${res.status}. Wechsle zu nächstem Modell...`);
-          continue;
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) return { code: text, modelUsed: `Google ${targetModel}` };
-        }
-      } catch (err) {
-        console.warn('Gemini Fehler:', err);
-      }
+  function updateModeUI() {
+    if (state.activeMode === 'free') {
+      modeToggle.classList.add('free-mode');
+      modePillText.textContent = '$0 Gratis Edge';
+    } else {
+      modeToggle.classList.remove('free-mode');
+      modePillText.textContent = 'Key-Pool Aktiv';
     }
-    throw new Error('Gemini temporär ausgelastet.');
+    localStorage.setItem('aether_mode', state.activeMode);
   }
 
-  // --- CORS-Freier Zero-Key Router ---
-  async function executeZeroKeyEdge(prompt, systemPrompt) {
-    const fullInstruction = `${systemPrompt ? systemPrompt + ' ' : ''}Erstelle eine vollständige, fehlerfreie HTML/CSS/JS Web-Anwendung für: ${prompt}. Antworte ausschließlich mit dem Code.`;
-    try {
-      const url = `https://text.pollinations.ai/${encodeURIComponent(fullInstruction)}?model=mistral`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const text = await res.text();
-        if (text && text.length > 20) {
-          return { code: text, modelUsed: '🌐 Direct Edge Router ($0)' };
-        }
-      }
-    } catch (e) {
-      console.warn('Zero-Key GET Fallback:', e);
-    }
-    throw new Error('Edge-Router temporär ausgelastet.');
-  }
+  modeToggle.addEventListener('click', () => {
+    state.activeMode = (state.activeMode === 'pool') ? 'free' : 'pool';
+    updateModeUI();
+  });
 
-  // --- Multi-Provider Router ---
+  btnTheme.addEventListener('click', () => {
+    state.theme = (state.theme === 'dark') ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', state.theme);
+    btnTheme.textContent = (state.theme === 'dark') ? '🌙' : '☀️';
+    localStorage.setItem('aether_theme', state.theme);
+  });
+
+  // --- Smart Model Caller (Resilience Circuit Breaker) ---
   async function callAI(modelConfig, prompt, systemPrompt) {
-    let reg = MODEL_REGISTRY.find(m => m.id === modelConfig.modelId) || MODEL_REGISTRY[0];
+    const catalog = state.dynamicModels.length > 0 ? state.dynamicModels : DEFAULT_FALLBACK_MODELS;
+    const reg = catalog.find(m => m.id === modelConfig.modelId) || catalog[0];
 
-    // 1. Gemini
-    if (reg.provider === 'gemini' && (vault.geminiKey || keyGeminiInput.value.trim())) {
-      try {
-        const key = vault.geminiKey || keyGeminiInput.value.trim();
-        return await executeGeminiWithHealing(reg.modelTag, prompt, systemPrompt, key);
-      } catch (e) {
-        console.warn('Gemini Fehler -> Fallback:', e);
-      }
-    }
+    const thinking = document.getElementById('thinking-level').value;
+    const searchGrounding = document.getElementById('search-grounding').checked;
 
-    // 2. Groq
-    if (reg.provider === 'groq' && (vault.groqKey || keyGroqInput.value.trim())) {
-      try {
-        const key = vault.groqKey || keyGroqInput.value.trim();
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-          body: JSON.stringify({
-            model: reg.modelTag,
-            messages: [
-              { role: 'system', content: systemPrompt || 'Du bist ein Elite Web-Entwickler.' },
-              { role: 'user', content: prompt }
-            ],
-            temperature: 0.2
-          })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          return { code: data.choices[0].message.content, modelUsed: `⚡ Groq ${reg.modelTag}` };
+    // 1. If Key-Pool is active, use load-balanced keys
+    if (state.activeMode === 'pool') {
+      const activeGeminiKey = getActivePoolKey('gemini');
+      if (reg.provider === 'gemini' && activeGeminiKey) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${reg.modelTag}:generateContent?key=${activeGeminiKey}`;
+          const bodyPayload = {
+            contents: [{
+              role: 'user',
+              parts: [{ text: `${systemPrompt ? `[SYSTEM: ${systemPrompt}]\n\n` : ''}${prompt}` }]
+            }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 65536
+            }
+          };
+
+          if (searchGrounding) {
+            bodyPayload.tools = [{ googleSearch: {} }];
+          }
+
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyPayload)
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) return { code: text, modelUsed: `Google ${reg.modelTag} (Pool)` };
+          }
+        } catch (e) {
+          console.warn('Gemini Pool Circuit Breaker aktiv -> Fallback:', e);
         }
-      } catch (e) {
-        console.warn('Groq Fehler -> Fallback:', e);
       }
-    }
 
-    // 3. OpenRouter
-    if (reg.provider === 'openrouter' && (vault.openRouterKey || keyOpenRouterInput.value.trim())) {
-      try {
-        const key = vault.openRouterKey || keyOpenRouterInput.value.trim();
-        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-          body: JSON.stringify({
-            model: reg.modelTag,
-            messages: [
-              { role: 'system', content: systemPrompt || 'Du bist ein Elite Web-Entwickler.' },
-              { role: 'user', content: prompt }
-            ]
-          })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          return { code: data.choices[0].message.content, modelUsed: `🧠 OpenRouter ${reg.modelTag}` };
+      const activeGroqKey = getActivePoolKey('groq');
+      if (reg.provider === 'groq' && activeGroqKey) {
+        try {
+          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${activeGroqKey}` },
+            body: JSON.stringify({
+              model: reg.modelTag,
+              messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }],
+              temperature: 0.2
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return { code: data.choices[0].message.content, modelUsed: `Groq ${reg.modelTag}` };
+          }
+        } catch (e) {
+          console.warn('Groq Pool Fallback:', e);
         }
-      } catch (e) {
-        console.warn('OpenRouter Fehler -> Fallback:', e);
       }
     }
 
-    // 4. Zero-Key Fallback
-    return await executeZeroKeyEdge(prompt, systemPrompt);
+    // 2. $0 Zero-Key Fallback Router (CORS-Frei)
+    const fullInstruction = `${systemPrompt ? systemPrompt + ' ' : ''}Erstelle eine fehlerfreie, moderne HTML/CSS/JS-Anwendung fuer: ${prompt}. Gib nur den Code aus.`;
+    const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(fullInstruction)}?model=mistral`);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.length > 20) {
+        return { code: text, modelUsed: '🌐 Direct Edge Router ($0)' };
+      }
+    }
+
+    throw new Error('Alle KI-Router ausgelastet. Bitte erneut senden.');
   }
 
   // --- Editor & Sandbox System ---
@@ -352,6 +437,12 @@
   const diagnosticsDrawer = document.getElementById('diagnostics-drawer');
   const diagnosticsLog = document.getElementById('diagnostics-log');
   const btnCloseDiagnostics = document.getElementById('btn-close-diagnostics');
+  const btnHistoryToggle = document.getElementById('btn-history-toggle');
+  const historyDrawer = document.getElementById('history-drawer');
+  const historyList = document.getElementById('history-list');
+  const btnCloseHistory = document.getElementById('btn-close-history');
+
+  let collectedDiagnostics = [];
 
   function updateLineNumbers() {
     const lines = editor.value.split('\n').length;
@@ -370,22 +461,19 @@
     exportFilenameInput.value = name;
   }
 
-  // Error-Bridge: Fängt Fehler aus allen Sprachen im Iframe ab
   function runCodeInSandbox() {
     collectedDiagnostics = [];
     diagnosticPill.classList.add('hidden');
 
     const code = editor.value;
-    
-    // Inject Error Bridge Listener in Iframe
     const errorInterceptor = `
       <script>
-        window.onerror = function(msg, url, line, col, error) {
-          window.parent.postMessage({ type: 'AETHER_ERROR', lang: 'JavaScript/Runtime', msg: msg + ' (Zeile: ' + line + ')' }, '*');
+        window.onerror = function(msg, url, line) {
+          window.parent.postMessage({ type: 'AETHER_ERROR', lang: 'JavaScript', msg: msg + ' (L:' + line + ')' }, '*');
           return false;
         };
         window.addEventListener('unhandledrejection', function(event) {
-          window.parent.postMessage({ type: 'AETHER_ERROR', lang: 'Async/Promise', msg: event.reason ? (event.reason.message || event.reason) : 'Promise Error' }, '*');
+          window.parent.postMessage({ type: 'AETHER_ERROR', lang: 'Promise', msg: event.reason?.message || 'Async Error' }, '*');
         });
       </script>
     `;
@@ -401,7 +489,6 @@
     sandboxFrame.src = URL.createObjectURL(blob);
   }
 
-  // Empfange Diagnosedaten aus Sandbox
   window.addEventListener('message', (e) => {
     if (e.data && e.data.type === 'AETHER_ERROR') {
       collectedDiagnostics.push(`[${e.data.lang}] ${e.data.msg}`);
@@ -411,12 +498,8 @@
     }
   });
 
-  diagnosticPill.addEventListener('click', () => {
-    diagnosticsDrawer.classList.toggle('hidden');
-  });
-  btnCloseDiagnostics.addEventListener('click', () => {
-    diagnosticsDrawer.classList.add('hidden');
-  });
+  diagnosticPill.addEventListener('click', () => { diagnosticsDrawer.classList.toggle('hidden'); });
+  btnCloseDiagnostics.addEventListener('click', () => { diagnosticsDrawer.classList.add('hidden'); });
 
   function extractCleanCode(rawText) {
     const htmlMatch = rawText.match(/```html([\s\S]*?)```/i);
@@ -445,15 +528,46 @@
     return card;
   }
 
-  editor.addEventListener('input', () => {
-    updateLineNumbers();
-    localStorage.setItem('aether_saved_code', editor.value);
-  });
+  // --- Snapshot History & Time Machine ---
+  function saveSnapshot(promptText, code) {
+    const snapshot = {
+      id: Date.now(),
+      title: promptText.slice(0, 30) || 'Snapshot',
+      code: code,
+      time: new Date().toLocaleTimeString()
+    };
+    state.history.unshift(snapshot);
+    if (state.history.length > 20) state.history.pop();
+    localStorage.setItem('aether_history', JSON.stringify(state.history));
+    renderHistoryUI();
+  }
 
-  // --- Smart Export Engine (Herunterladen als Datei) ---
+  function renderHistoryUI() {
+    historyList.innerHTML = '';
+    state.history.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'history-item';
+      el.innerHTML = `<span><strong>${item.title}</strong> (${item.time})</span><span style="color:#60a5fa">Laden</span>`;
+      el.addEventListener('click', () => {
+        editor.value = item.code;
+        updateLineNumbers();
+        runCodeInSandbox();
+        historyDrawer.classList.add('hidden');
+        appendMessage('system', `Snapshot '${item.title}' wiederhergestellt.`);
+      });
+      historyList.appendChild(el);
+    });
+  }
+
+  btnHistoryToggle.addEventListener('click', () => {
+    renderHistoryUI();
+    historyDrawer.classList.toggle('hidden');
+  });
+  btnCloseHistory.addEventListener('click', () => { historyDrawer.classList.add('hidden'); });
+
+  // --- Smart Export (Download File) ---
   btnExport.addEventListener('click', () => {
-    let filename = exportFilenameInput.value.trim();
-    if (!filename) filename = 'aetherspace-app';
+    let filename = exportFilenameInput.value.trim() || 'aetherspace-app';
     if (!filename.endsWith('.html')) filename += '.html';
 
     const blob = new Blob([editor.value], { type: 'text/html;charset=utf-8' });
@@ -463,36 +577,74 @@
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    appendMessage('system', `Datei erfolgreich exportiert als: ${filename}`);
+    appendMessage('system', `Exportiert: ${filename}`);
   });
 
-  // --- Autonome Polyglot Selbstheilungs-Engine (Auto-Heal) ---
+  // --- Chat-Teleporter (Context Compactor) ---
+  document.getElementById('btn-teleport').addEventListener('click', () => {
+    const currentCode = editor.value.trim();
+    const teleportPayload = `
+Ich setze das Projekt "AetherSpace" in einer neuen Session fort.
+- GitHub Repository: https://github.com/laptoplenovoslim18-cyber/AetherSpace
+- Live Website: https://aetherspace.pages.dev
+- Aktueller Code-Stand:
+\`\`\`html
+${currentCode}
+\`\`\`
+Bitte analysiere diesen Stand und setze folgendes naechstes Feature um:
+    `.trim();
+
+    navigator.clipboard.writeText(teleportPayload);
+    alert('Teleport-Kontext kopiert! Du kannst ihn direkt in ein neues Chat-Fenster einfügen.');
+  });
+
+  // --- WhatsApp & Social Share Modal ---
+  const shareModal = document.getElementById('share-modal');
+  const btnShare = document.getElementById('btn-share');
+  const btnShareClose = document.getElementById('btn-share-close');
+  const btnShareWhatsapp = document.getElementById('btn-share-whatsapp');
+  const btnCopyShareUrl = document.getElementById('btn-copy-share-url');
+
+  btnShare.addEventListener('click', () => { shareModal.classList.remove('hidden'); });
+  btnShareClose.addEventListener('click', () => { shareModal.classList.add('hidden'); });
+
+  btnShareWhatsapp.addEventListener('click', () => {
+    const shareText = encodeURIComponent(`Schau dir meine neue Web-App an: https://aetherspace.pages.dev`);
+    window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
+  });
+
+  btnCopyShareUrl.addEventListener('click', () => {
+    navigator.clipboard.writeText('https://aetherspace.pages.dev');
+    btnCopyShareUrl.textContent = 'Link kopiert!';
+    setTimeout(() => { btnCopyShareUrl.textContent = '📋 Vorschau-Link kopieren'; shareModal.classList.add('hidden'); }, 1200);
+  });
+
+  // --- Autonomer Polyglot Healer ---
   btnAutoHeal.addEventListener('click', async () => {
     const currentCode = editor.value.trim();
     if (!currentCode) return;
 
     btnAutoHeal.disabled = true;
-    btnAutoHeal.textContent = 'Heilung läuft...';
+    btnAutoHeal.textContent = 'Heilung...';
 
     const errorReport = collectedDiagnostics.length > 0 
       ? collectedDiagnostics.join('\n') 
-      : 'Keine kritischen Laufzeitfehler, führe Design-Veredelung und Code-Audit durch.';
+      : 'Prüfe auf Syntax-, CSS-Überlauf- und Designfehler.';
 
-    appendMessage('user', `[Auto-Heal & Veredelung angefordert]`);
-    appendDebateStep('Polyglot Code-Audit', `Prüfe HTML5, CSS3, JS, WebGL & Design-Ebene...`);
+    appendMessage('user', `[Auto-Heal & Veredelung]`);
+    appendDebateStep('Polyglot Audit', `Prüfe HTML, CSS, JS & Canvas...`);
 
     const healPrompt = `
-Hier ist der aktuelle Code:
+Aktueller Code:
 ${currentCode}
 
-Fehlerbericht / Diagnose:
+Diagnose:
 ${errorReport}
 
 Aufgabe:
-1. Behebe alle Syntax-, Logik-, Canvas/WebGL- und CSS-Fehler.
-2. Veredele das Design: SOTA Dark-Mode Ästhetik, flüssige Animationen, perfekte Typografie und Responsive-Layout.
-3. Gib ausschließlich den vollständigen, bereinigten HTML-Code zurück (ohne Erklärtexte).
+1. Behebe alle Syntax-, Logik-, WebGL/Canvas- und Layout-Fehler.
+2. Veredele das Design: SOTA Dark-Mode, elegante Verläufe, perfekte Typografie und flüssige Animationen.
+3. Gib ausschließlich den vollständigen HTML-Code zurück.
     `.trim();
 
     try {
@@ -505,6 +657,7 @@ Aufgabe:
       updateLineNumbers();
       runCodeInSandbox();
       autoUpdateFilename(healedCode);
+      saveSnapshot('Auto-Healed Version', healedCode);
 
       collectedDiagnostics = [];
       diagnosticPill.classList.add('hidden');
@@ -524,7 +677,7 @@ Aufgabe:
     }
   });
 
-  // --- Pipeline Ausführung ---
+  // --- Stateless Pipeline Execution ---
   async function executeMultiTunnelPipeline() {
     const userPrompt = aiInput.value.trim();
     if (!userPrompt) return;
@@ -544,7 +697,8 @@ Aufgabe:
         const stage = tunnelStages[i];
         const isFirst = (i === 0);
         const isLast = (i === tunnelStages.length - 1);
-        const reg = MODEL_REGISTRY.find(m => m.id === stage.modelId) || MODEL_REGISTRY[0];
+        const catalog = state.dynamicModels.length > 0 ? state.dynamicModels : DEFAULT_FALLBACK_MODELS;
+        const reg = catalog.find(m => m.id === stage.modelId) || catalog[0];
 
         appendDebateStep(`Tunnel ${i + 1}/${tunnelStages.length}: [${reg.name}]`, `Rolle: ${stage.role}`);
 
@@ -552,7 +706,7 @@ Aufgabe:
         let inputForModel = '';
 
         if (isFirst) {
-          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollständige, fehlerfreie HTML/CSS/JS-Anwendung mit modernster Ästhetik.`;
+          sysPrompt = `Du bist Stufe 1. Rolle: ${stage.role}. Erstelle eine vollständige, responsive HTML/CSS/JS-Anwendung mit moderner Ästhetik.`;
           inputForModel = `Anforderung: ${userPrompt}`;
         } else if (isLast) {
           sysPrompt = `Du bist die finale Synthese. Rolle: ${stage.role}. Liefere ausschließlich den finalen, perfekten HTML/CSS/JS-Code (in einem Dokument) ohne Erklärungen.`;
@@ -573,6 +727,7 @@ Aufgabe:
       updateLineNumbers();
       runCodeInSandbox();
       autoUpdateFilename(cleanCode, userPrompt);
+      saveSnapshot(userPrompt, cleanCode);
 
       const aiMsg = appendMessage('ai', `Code erfolgreich generiert.`);
       const badge = document.createElement('div');
@@ -617,31 +772,18 @@ Aufgabe:
 
   // Init
   initResizers();
-  renderTunnelList();
-  if (vault.profile) vaultBtnLabel.textContent = vault.profile;
+  updateModeUI();
+  document.documentElement.setAttribute('data-theme', state.theme);
+  btnTheme.textContent = (state.theme === 'dark') ? '🌙' : '☀️';
 
-  const defaultTemplate = `<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <title>cyber-drive</title>
-  <style>
-    body { font-family: system-ui; background: #0b0e14; color: #fff; display: flex; height: 100vh; margin: 0; align-items: center; justify-content: center; }
-    .box { background: #141822; border: 1px solid #232a38; padding: 28px; border-radius: 10px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    h2 { color: #38bdf8; margin-bottom: 8px; font-size: 18px; }
-    p { color: #8892b0; font-size: 13px; margin: 0; }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h2>AetherSpace Studio</h2>
-    <p>Bereit für autonome Code-Generierung & Polyglot-Heilung.</p>
-  </div>
-</body>
-</html>`;
-
-  editor.value = vault.savedCode || defaultTemplate;
+  // Clean Blank Start Canvas
+  editor.value = localStorage.getItem('aether_saved_code') || '';
   updateLineNumbers();
-  runCodeInSandbox();
-  autoUpdateFilename(editor.value);
+  if (editor.value.trim().length > 0) {
+    runCodeInSandbox();
+    autoUpdateFilename(editor.value);
+  }
+
+  // Trigger Dynamic Model Discovery in background
+  refreshDynamicModels();
 })();
