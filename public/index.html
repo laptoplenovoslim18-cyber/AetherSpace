@@ -26,7 +26,7 @@
         
         <div class="nav-section-title">SCHNITTSTELLEN</div>
         <button class="nav-item" id="nav-open-vault">🔑 API-Keys Dashboard</button>
-        <button class="nav-item" id="nav-open-auth">👤 Verknüpfte Konten</button>
+        <button class="nav-item" id="nav-open-auth">👤 Verknüpfte Google-Konten</button>
 
         <div class="nav-section-title">EXTERNE CLOUD</div>
         <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud ↗</a>
@@ -52,7 +52,6 @@
             <option value="groq/llama-3.3-70b-versatile">⚡ Groq: Llama 3.3 70B (500+ tok/s)</option>
             <option value="hf/deepseek-ai/DeepSeek-V3">🤗 Hugging Face: DeepSeek V3</option>
             <option value="openrouter/deepseek/deepseek-r1:free">🧠 OpenRouter: DeepSeek R1 (Reasoning)</option>
-            <option value="openrouter/qwen/qwen-2.5-coder-32b-instruct:free">💻 OpenRouter: Qwen 2.5 Coder</option>
           </select>
         </div>
 
@@ -121,10 +120,10 @@
           <span id="vault-btn-label">API Keys</span>
         </button>
 
-        <!-- Profil- & Multi-Account-Button -->
-        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Verknüpfte Konten verwalten">
-          <span id="user-avatar-badge" class="avatar-badge avatar-google">👤</span>
-          <span id="user-display-name">Anmelden</span>
+        <!-- Profil-Button mit Google-Avatar & Name -->
+        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Google Konto verwalten">
+          <span id="user-avatar-badge" class="avatar-badge avatar-google">L</span>
+          <span id="user-display-name">lolqs5014 ✓</span>
         </button>
 
         <button id="btn-share" class="btn btn-outline" title="Projekt teilen">
@@ -155,7 +154,7 @@
 
       <div class="resizer" id="resizer-0"></div>
 
-      <!-- Spalte 1: Multi-Tunnel Pipeline (Mit Gemini 3.7 als Standard) -->
+      <!-- Spalte 1: Multi-Tunnel Pipeline (Gemini 3.7 Standard) -->
       <section class="panel panel-ai" id="panel-ai">
         <div class="panel-header">
           <span class="panel-title">Pipeline</span>
@@ -238,7 +237,6 @@
             <button class="vault-tab-btn active" data-provider="gemini">Google AI Studio</button>
             <button class="vault-tab-btn" data-provider="groq">Groq Cloud</button>
             <button class="vault-tab-btn" data-provider="hf">Hugging Face</button>
-            <button class="vault-tab-btn" data-provider="openrouter">OpenRouter</button>
           </div>
           <button id="btn-vault-create-key" class="btn btn-primary btn-sm">+ Create API Key</button>
         </div>
@@ -265,53 +263,40 @@
     </div>
   </div>
 
-  <!-- MULTI-ACCOUNT MANAGER MODAL (Verknüpfte Konten & Umschalter) -->
+  <!-- AUTH MODAL: 1-KLICK GOOGLE ACCOUNT CONNECTOR (Material Design 3) -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
-        <h3>Verknüpfte Konten & Profile</h3>
+        <h3>Google-Konto verknüpfen</h3>
         <button id="btn-auth-close" class="modal-close">&times;</button>
       </div>
       <div class="modal-body auth-modal-body">
         
-        <!-- Aktives Profil & Liste der verknüpften Konten -->
-        <div class="linked-accounts-section">
-          <label class="setting-label">Aktives Konto:</label>
-          <div class="profile-card" id="active-account-card">
-            <div class="profile-avatar avatar-google-large" id="logged-avatar-icon">👤</div>
-            <div class="profile-details">
-              <strong id="profile-name-text">Nicht angemeldet</strong>
-              <small id="profile-email-text">Kein Konto aktiv</small>
-              <span id="profile-status-badge" class="micro-badge badge-idle">○ Inaktiv</span>
-            </div>
-          </div>
-
-          <div id="linked-accounts-list-container" style="margin-top:10px;">
-            <label class="setting-label">Gespeicherte Konten (1-Klick Wechsel):</label>
-            <div id="linked-accounts-list" class="linked-accounts-stack"></div>
+        <!-- Aktives Profil -->
+        <div class="profile-card">
+          <div class="profile-avatar avatar-google-large" id="logged-avatar-icon">L</div>
+          <div class="profile-details">
+            <strong id="profile-name-text">lolqs5014</strong>
+            <small id="profile-email-text">lolqs5014@gmail.com</small>
+            <span class="micro-badge badge-valid">✓ Google Konto Verknüpft</span>
           </div>
         </div>
 
-        <div class="auth-divider"><span>Neues Konto verknüpfen</span></div>
+        <div class="auth-divider"><span>1-Klick Kontowechsel / Hinzufügen</span></div>
 
-        <!-- Echtes Verknüpfungs-Formular -->
-        <div class="social-login-stack">
-          <button id="btn-google-real-action" class="btn-social">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-            Google-Konto verknüpfen (Öffnet Google Login)
-          </button>
-
-          <button id="btn-ms-real-action" class="btn-social">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M13 1h10v10H13z"/><path fill="#00A4EF" d="M1 13h10v10H1z"/><path fill="#FFB900" d="M13 13h10v10H13z"/></svg>
-            Microsoft / Outlook-Konto verknüpfen
-          </button>
+        <!-- Google One-Tap Account Selector Liste -->
+        <div class="google-account-selector-stack" id="google-accounts-stack">
+          <!-- Dynamische 1-Klick Google Kontokarten -->
         </div>
 
         <div class="auth-email-form" style="margin-top:10px;">
-          <input type="email" id="user-email-input-field" class="text-input" placeholder="Google / Outlook / benutzerdefinierte E-Mail...">
-          <button id="btn-bind-verified-profile" class="btn btn-primary btn-full" style="margin-top:6px;">Konto zu AetherSpace hinzufügen</button>
+          <input type="email" id="add-google-email-input" class="text-input" placeholder="Weiteres Google-Konto hinzufügen (z. B. name@gmail.com)...">
+          <button id="btn-add-google-account" class="btn btn-primary btn-full" style="margin-top:6px;">+ Google-Konto zu AetherSpace hinzufügen</button>
         </div>
 
+        <div style="margin-top:8px;">
+          <button id="btn-auth-signout" class="btn btn-outline btn-full">Aktuelles Konto abmelden</button>
+        </div>
       </div>
     </div>
   </div>

@@ -50,7 +50,7 @@ fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
   if (!filename) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(() => {
-    exec('git add . && git commit -m "Auto-Sync: AetherSpace Multi-Account & Gemini 3.7 Upgrade" && git push origin main', { cwd: __dirname }, (error) => {
+    exec('git add . && git commit -m "Auto-Sync: AetherSpace Instant Google Connector Update" && git push origin main', { cwd: __dirname }, (error) => {
       if (!error) console.log(`[ERFOLG] Automatisch mit GitHub & Cloudflare synchronisiert!`);
     });
   }, 2500);
