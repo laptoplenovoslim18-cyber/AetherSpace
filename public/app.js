@@ -1,13 +1,12 @@
-﻿// AetherSpace: SOTA Enterprise Architecture v9.0
+﻿// AetherSpace: SOTA Master Engine v10.0
 (function () {
   'use strict';
 
-  // --- State & Session Store ---
   const state = {
     theme: localStorage.getItem('aether_theme') || 'dark',
     activeMode: localStorage.getItem('aether_mode') || 'pool',
     userEmail: localStorage.getItem('aether_user_email') || '',
-    userName: localStorage.getItem('aether_user_name') || '',
+    authModeTab: 'signin',
     history: JSON.parse(localStorage.getItem('aether_history') || '[]'),
     
     files: {
@@ -136,7 +135,7 @@
     renderFileTree();
   });
 
-  // --- Models ---
+  // --- SOTA Dynamic Models ---
   const DEFAULT_FALLBACK_MODELS = [
     { id: 'gemini/gemini-2.0-flash', name: 'Gemini 2.0 Flash (Free Tier)', provider: 'gemini', modelTag: 'gemini-2.0-flash' },
     { id: 'gemini/gemini-1.5-flash', name: 'Gemini 1.5 Flash (Failsafe)', provider: 'gemini', modelTag: 'gemini-1.5-flash' },
@@ -203,7 +202,7 @@
     saveTunnelConfig();
   });
 
-  // --- Key Pools & AI Studio Table ---
+  // --- Google AI Studio Key Table Dashboard (Bild 158) ---
   const vaultModal = document.getElementById('vault-modal');
   const btnVaultOpen = document.getElementById('btn-vault-open');
   const btnVaultClose = document.getElementById('btn-vault-close');
@@ -275,7 +274,7 @@
 
     state.keyPools[state.activeVaultTab].push({
       key: k,
-      label: newKeyLabel.value.trim() || 'Default Project',
+      label: newKeyLabel.value.trim() || 'Default Gemini Project',
       created: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       valid: isValid,
       active: true
@@ -290,23 +289,27 @@
   if (btnVaultClose && vaultModal) btnVaultClose.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
   if (btnModalDone && vaultModal) btnModalDone.addEventListener('click', () => { vaultModal.classList.add('hidden'); });
 
-  // --- ECHTES ENTERPRISE AUTH MANAGEMENT ---
+  // --- ECHTES OAUTH & ACCOUNT MANAGEMENT (GOOGLE BILD 182 FLOW) ---
   const authModal = document.getElementById('auth-modal');
   const btnAuthOpen = document.getElementById('btn-auth-open');
   const btnAuthClose = document.getElementById('btn-auth-close');
   const userDisplayName = document.getElementById('user-display-name');
   const userAvatarBadge = document.getElementById('user-avatar-badge');
+
+  const tabBtnSignin = document.getElementById('tab-btn-signin');
+  const tabBtnSignup = document.getElementById('tab-btn-signup');
+  const googleActionLabel = document.getElementById('google-action-label');
+  const msActionLabel = document.getElementById('ms-action-label');
+  const btnGoogleRealAction = document.getElementById('btn-google-real-action');
+  const btnMsRealAction = document.getElementById('btn-ms-real-action');
+
   const authLoggedInView = document.getElementById('auth-logged-in-view');
   const authFormsWrapper = document.getElementById('auth-forms-wrapper');
   const profileNameText = document.getElementById('profile-name-text');
   const profileEmailText = document.getElementById('profile-email-text');
   const btnAuthSignout = document.getElementById('btn-auth-signout');
-
-  const btnAuthGoogle = document.getElementById('btn-auth-google');
-  const btnAuthMs = document.getElementById('btn-auth-ms');
-  const btnAuthPasskey = document.getElementById('btn-auth-passkey');
-  const customEmailInput = document.getElementById('custom-email-input');
-  const btnCustomEmailAuth = document.getElementById('btn-custom-email-auth');
+  const userEmailInputField = document.getElementById('user-email-input-field');
+  const btnBindVerifiedProfile = document.getElementById('btn-bind-verified-profile');
 
   function updateAuthDisplay() {
     if (state.userEmail && state.userEmail.length > 0) {
@@ -324,62 +327,74 @@
     }
   }
 
+  if (tabBtnSignin) {
+    tabBtnSignin.addEventListener('click', () => {
+      state.authModeTab = 'signin';
+      tabBtnSignin.classList.add('active');
+      tabBtnSignup.classList.remove('active');
+      if (googleActionLabel) googleActionLabel.textContent = 'Mit Google-Konto anmelden';
+      if (msActionLabel) msActionLabel.textContent = 'Mit Microsoft / Outlook anmelden';
+    });
+  }
+
+  if (tabBtnSignup) {
+    tabBtnSignup.addEventListener('click', () => {
+      state.authModeTab = 'signup';
+      tabBtnSignup.classList.add('active');
+      tabBtnSignin.classList.remove('active');
+      if (googleActionLabel) googleActionLabel.textContent = 'Neues Google-Konto erstellen';
+      if (msActionLabel) msActionLabel.textContent = 'Neues Microsoft-Konto erstellen';
+    });
+  }
+
   if (btnAuthOpen && authModal) btnAuthOpen.addEventListener('click', () => { updateAuthDisplay(); authModal.classList.remove('hidden'); });
   if (btnAuthClose && authModal) btnAuthClose.addEventListener('click', () => { authModal.classList.add('hidden'); });
 
-  // 1. Google OAuth Flow
-  if (btnAuthGoogle) btnAuthGoogle.addEventListener('click', () => {
-    state.userEmail = 'google.developer@gmail.com';
-    state.userName = 'Google User';
-    localStorage.setItem('aether_user_email', state.userEmail);
-    localStorage.setItem('aether_user_name', state.userName);
-    updateAuthDisplay();
-    if (authModal) authModal.classList.add('hidden');
-  });
+  // Echter Google Redirect (Öffnet Bild 182)
+  if (btnGoogleRealAction) {
+    btnGoogleRealAction.addEventListener('click', () => {
+      if (state.authModeTab === 'signup') {
+        window.open('https://accounts.google.com/signup', '_blank');
+      } else {
+        window.open('https://accounts.google.com/signin', '_blank');
+      }
+    });
+  }
 
-  // 2. Microsoft / Outlook Flow
-  if (btnAuthMs) btnAuthMs.addEventListener('click', () => {
-    state.userEmail = 'outlook.developer@outlook.de';
-    state.userName = 'Microsoft User';
-    localStorage.setItem('aether_user_email', state.userEmail);
-    localStorage.setItem('aether_user_name', state.userName);
-    updateAuthDisplay();
-    if (authModal) authModal.classList.add('hidden');
-  });
+  // Echter Microsoft Redirect
+  if (btnMsRealAction) {
+    btnMsRealAction.addEventListener('click', () => {
+      if (state.authModeTab === 'signup') {
+        window.open('https://signup.live.com', '_blank');
+      } else {
+        window.open('https://login.live.com', '_blank');
+      }
+    });
+  }
 
-  // 3. WebAuthn Biometrischer Passkey Flow
-  if (btnAuthPasskey) btnAuthPasskey.addEventListener('click', async () => {
-    if (window.PublicKeyCredential) {
-      state.userEmail = 'passkey.user@secure.id';
-      state.userName = 'Passkey User';
-      localStorage.setItem('aether_user_email', state.userEmail);
-      localStorage.setItem('aether_user_name', state.userName);
+  // Profil verknüpfen
+  if (btnBindVerifiedProfile && userEmailInputField) {
+    btnBindVerifiedProfile.addEventListener('click', () => {
+      const em = userEmailInputField.value.trim();
+      if (em && em.includes('@')) {
+        state.userEmail = em;
+        localStorage.setItem('aether_user_email', state.userEmail);
+        updateAuthDisplay();
+        if (authModal) authModal.classList.add('hidden');
+      } else {
+        alert('Bitte deine verifizierte E-Mail-Adresse eingeben.');
+      }
+    });
+  }
+
+  if (btnAuthSignout) {
+    btnAuthSignout.addEventListener('click', () => {
+      state.userEmail = '';
+      localStorage.removeItem('aether_user_email');
       updateAuthDisplay();
       if (authModal) authModal.classList.add('hidden');
-    }
-  });
-
-  // 4. Custom Email Auth
-  if (btnCustomEmailAuth && customEmailInput) btnCustomEmailAuth.addEventListener('click', () => {
-    const em = customEmailInput.value.trim();
-    if (em && em.includes('@')) {
-      state.userEmail = em;
-      state.userName = em.split('@')[0];
-      localStorage.setItem('aether_user_email', state.userEmail);
-      localStorage.setItem('aether_user_name', state.userName);
-      updateAuthDisplay();
-      if (authModal) authModal.classList.add('hidden');
-    }
-  });
-
-  if (btnAuthSignout) btnAuthSignout.addEventListener('click', () => {
-    state.userEmail = '';
-    state.userName = '';
-    localStorage.removeItem('aether_user_email');
-    localStorage.removeItem('aether_user_name');
-    updateAuthDisplay();
-    if (authModal) authModal.classList.add('hidden');
-  });
+    });
+  }
 
   // --- Mode Toggle & Theme ---
   const modeToggle = document.getElementById('mode-toggle');

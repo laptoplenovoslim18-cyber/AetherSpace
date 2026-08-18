@@ -102,7 +102,6 @@ html, body {
 
 /* Avatar Badge */
 .btn-auth-header { display: flex; align-items: center; gap: 6px; }
-.avatar-google-large { background-color: #7c3aed; color: #fff; font-size: 22px; font-weight: 700; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
 /* Workspace */
 .workspace { display: flex; flex: 1; height: calc(100vh - 62px); position: relative; overflow: hidden; }
@@ -187,19 +186,24 @@ textarea#ai-input:focus { border-color: var(--border-focus); }
 
 .vault-add-box { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 
-/* Social Login Stack */
-.auth-modal-card { width: 390px; }
+/* Auth Modal Styles */
+.auth-modal-card { width: 400px; }
+.auth-tabs-header { display: flex; gap: 8px; }
+.auth-header-tab { background: transparent; border: none; font-size: 14px; font-weight: 700; color: var(--text-muted); cursor: pointer; padding-bottom: 4px; border-bottom: 2px solid transparent; }
+.auth-header-tab.active { color: #fff; border-bottom-color: var(--accent); }
+
 .social-login-stack { display: flex; flex-direction: column; gap: 8px; }
-.btn-social { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 12px; border-radius: 6px; background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-social { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 9px 12px; border-radius: 6px; background: var(--bg-root); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .btn-social:hover { background: var(--bg-active); border-color: var(--border-focus); }
 .auth-divider { text-align: center; margin: 10px 0; position: relative; }
 .auth-divider span { font-size: 11px; color: var(--text-muted); background: var(--bg-surface); padding: 0 8px; }
 .auth-email-form { display: flex; flex-direction: column; gap: 8px; }
 .auth-security-note { font-size: 11px; color: var(--text-muted); line-height: 1.4; text-align: center; }
 
-/* Auth Profile Card */
+/* Profile Card */
 .auth-profile-view { display: flex; flex-direction: column; gap: 12px; }
 .profile-card { display: flex; align-items: center; gap: 12px; background: var(--bg-root); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; }
+.profile-avatar { font-size: 22px; width: 40px; height: 40px; border-radius: 50%; background: var(--bg-surface); display: flex; align-items: center; justify-content: center; }
 .profile-details { display: flex; flex-direction: column; gap: 2px; }
 .profile-details strong { font-size: 14px; color: var(--text-main); }
 .profile-details small { color: var(--text-muted); font-size: 11px; font-family: var(--font-mono); }
