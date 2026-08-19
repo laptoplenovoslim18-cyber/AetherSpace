@@ -1,4 +1,5 @@
-﻿const http = require('http');
+﻿// AetherSpace High-Velocity Local Server & File Watcher
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
@@ -19,7 +20,6 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   let reqPath = req.url.split('?')[0];
   if (reqPath === '/') reqPath = '/index.html';
-  
   let filePath = path.join(PUBLIC_DIR, reqPath);
   
   if (!filePath.startsWith(PUBLIC_DIR)) {
@@ -27,15 +27,14 @@ const server = http.createServer((req, res) => {
     res.end('Access Denied');
     return;
   }
-  
+
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
       filePath = path.join(PUBLIC_DIR, 'index.html');
     }
-    
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-    
+
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500);
@@ -54,7 +53,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`\n======================================================`);
-  console.log(`  🚀 AetherSpace Local Engine Active: http://127.0.0.1:${PORT}`);
-  console.log(`  ⚡ Fast Static Server & Live Watcher Running`);
+  console.log(`  🚀 AetherSpace Local Studio: http://127.0.0.1:${PORT}`);
+  console.log(`  ⚡ Multi-Agent Pipeline & 144Hz Sandbox Active`);
   console.log(`======================================================\n`);
 });
