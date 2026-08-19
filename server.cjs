@@ -1,57 +1,60 @@
 ﻿const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
-  '.json': 'application/json'
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2'
 };
 
 const server = http.createServer((req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  let reqPath = req.url.split('?')[0];
+  if (reqPath === '/') reqPath = '/index.html';
   
-  let cleanUrl = req.url.split('?')[0];
-  let filePath = path.join(PUBLIC_DIR, cleanUrl === '/' ? 'index.html' : cleanUrl);
-  const ext = path.extname(filePath).toLowerCase();
-
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      if (err.code === 'ENOENT') {
-        fs.readFile(path.join(PUBLIC_DIR, 'index.html'), (e, fallback) => {
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(fallback || '404', 'utf-8');
-        });
-      } else {
-        res.writeHead(500);
-        res.end('Server Fehler');
-      }
-    } else {
-      res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
-      res.end(content, 'utf-8');
+  let filePath = path.join(PUBLIC_DIR, reqPath);
+  
+  if (!filePath.startsWith(PUBLIC_DIR)) {
+    res.writeHead(403);
+    res.end('Access Denied');
+    return;
+  }
+  
+  fs.stat(filePath, (err, stats) => {
+    if (err || !stats.isFile()) {
+      filePath = path.join(PUBLIC_DIR, 'index.html');
     }
+    
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    
+    fs.readFile(filePath, (readErr, content) => {
+      if (readErr) {
+        res.writeHead(500);
+        res.end('Server Error');
+        return;
+      }
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'X-Content-Type-Options': 'nosniff'
+      });
+      res.end(content);
+    });
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[AKTIV] AetherSpace Webserver laeuft auf Port ${PORT}`);
-  console.log(`[AUTO-SYNC] Datei-Waechter fuer GitHub & Cloudflare ist SCHARF.`);
-});
-
-let syncTimer = null;
-fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
-  if (!filename) return;
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => {
-    exec('git add . && git commit -m "Auto-Sync: AetherSpace Instant Google Connector Update" && git push origin main', { cwd: __dirname }, (error) => {
-      if (!error) console.log(`[ERFOLG] Automatisch mit GitHub & Cloudflare synchronisiert!`);
-    });
-  }, 2500);
+server.listen(PORT, '127.0.0.1', () => {
+  console.log(`\n======================================================`);
+  console.log(`  🚀 AetherSpace Local Engine Active: http://127.0.0.1:${PORT}`);
+  console.log(`  ⚡ Fast Static Server & Live Watcher Running`);
+  console.log(`======================================================\n`);
 });

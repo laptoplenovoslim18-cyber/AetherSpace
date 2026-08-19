@@ -1,323 +1,496 @@
 ﻿<!DOCTYPE html>
-<html lang="de" data-theme="dark">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace</title>
+  <title>AetherSpace | Enterprise Autonomous AI Workspace</title>
+  <meta name="description" content="AetherSpace - High-Leverage Cloud AI IDE, 144Hz Interactive Canvas, Polyglot Healer & Zero-Trust Workspace">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <div class="app-container">
-    
-    <!-- Linkes Nav-Menue (Google AI Studio Slide-Out) -->
-    <aside id="nav-drawer" class="nav-drawer hidden">
-      <div class="nav-drawer-header">
-        <div class="brand">
-          <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
-          <span class="brand-title">AetherSpace</span>
-        </div>
-        <button id="btn-close-drawer" class="btn-icon">&times;</button>
-      </div>
-      <div class="nav-drawer-body">
-        <div class="nav-section-title">WORKSPACE</div>
-        <button class="nav-item active" id="nav-studio">⚡ Studio / Playground</button>
-        <button class="nav-item" id="nav-history">📚 Projekt-Bibliothek</button>
-        
-        <div class="nav-section-title">SCHNITTSTELLEN</div>
-        <button class="nav-item" id="nav-open-vault">🔑 API-Keys Dashboard</button>
-        <button class="nav-item" id="nav-open-auth">👤 Verknüpfte Google-Konten</button>
-
-        <div class="nav-section-title">EXTERNE CLOUD</div>
-        <a href="https://codepen.io" target="_blank" class="nav-item-link">🚀 CodePen Cloud ↗</a>
-        <a href="https://huggingface.co/spaces" target="_blank" class="nav-item-link">🤗 Hugging Face Spaces ↗</a>
-        <a href="https://stackblitz.com" target="_blank" class="nav-item-link">⚡ StackBlitz VM ↗</a>
-      </div>
-    </aside>
-    <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
-
-    <!-- Rechtes Panel: Google AI Studio Run Settings -->
-    <aside id="run-settings-drawer" class="run-settings-drawer hidden">
-      <div class="run-settings-header">
-        <span>Run settings</span>
-        <button id="btn-close-settings" class="btn-icon">&times;</button>
-      </div>
-      <div class="run-settings-body">
-        <div class="setting-block">
-          <label class="setting-label">Model</label>
-          <select id="studio-model-select" class="text-input select-styled">
-            <option value="gemini/gemini-3.7-flash" selected>✨ Gemini 3.7 Flash (SOTA Coding / Default)</option>
-            <option value="gemini/gemini-3.6-flash">⚡ Gemini 3.6 Flash (High Reliability)</option>
-            <option value="gemini/gemini-2.0-flash">🚀 Gemini 2.0 Flash (Free Tier)</option>
-            <option value="groq/llama-3.3-70b-versatile">⚡ Groq: Llama 3.3 70B (500+ tok/s)</option>
-            <option value="hf/deepseek-ai/DeepSeek-V3">🤗 Hugging Face: DeepSeek V3</option>
-            <option value="openrouter/deepseek/deepseek-r1:free">🧠 OpenRouter: DeepSeek R1 (Reasoning)</option>
-          </select>
-        </div>
-
-        <div class="setting-block">
-          <label class="setting-label">Thinking level</label>
-          <select id="studio-thinking-select" class="text-input select-styled">
-            <option value="high" selected>High (Deep Reasoning)</option>
-            <option value="medium">Medium</option>
-            <option value="fast">Fast (Sub-Sec)</option>
-          </select>
-        </div>
-
-        <div class="setting-block">
-          <label class="setting-label">Tools & Grounding</label>
-          <div class="tools-toggle-stack">
-            <label class="tool-switch-row">
-              <span>Grounding with Google Search</span>
-              <input type="checkbox" id="studio-search-toggle">
-            </label>
-            <label class="tool-switch-row">
-              <span>Code execution (Sandbox)</span>
-              <input type="checkbox" id="studio-code-exec" checked>
-            </label>
-          </div>
-        </div>
-
-        <div class="setting-block">
-          <div class="slider-header">
-            <label class="setting-label">Output length</label>
-            <span id="output-length-val" class="slider-val">65536</span>
-          </div>
-          <input type="range" id="studio-output-length" min="1024" max="65536" step="1024" value="65536" class="range-slider">
-        </div>
-
-        <div class="setting-block">
-          <div class="slider-header">
-            <label class="setting-label">Temperature</label>
-            <span id="temp-val" class="slider-val">0.2</span>
-          </div>
-          <input type="range" id="studio-temperature" min="0.0" max="1.0" step="0.05" value="0.2" class="range-slider">
-        </div>
-      </div>
-    </aside>
-
-    <!-- Top Navigation Bar -->
-    <header class="app-header">
-      <div class="brand-group">
-        <button id="btn-hamburger" class="btn btn-icon" title="Hauptmenü">☰</button>
-        <button id="btn-toggle-sidebar" class="btn btn-icon" title="Dateibaum">📁</button>
-        <div class="brand">
-          <img src="favicon.svg" alt="AetherSpace" class="brand-icon">
-          <span class="brand-title">AetherSpace</span>
-        </div>
+<body class="bg-obsidian text-slate-100 antialiased overflow-hidden select-none">
+  <!-- TOP APP HEADER -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <svg class="brand-icon" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4L27 10.5V21.5L16 28L5 21.5V10.5L16 4Z" stroke="url(#h-grad)" stroke-width="2" fill="#06080c"/>
+          <path d="M16 9L23 13V20L16 24L9 20V13L16 9Z" stroke="#38bdf8" stroke-width="1.2" fill="#0c0f16"/>
+          <circle cx="16" cy="16.5" r="3" fill="url(#h-grad)"/>
+          <defs>
+            <linearGradient id="h-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6366f1" />
+              <stop offset="50%" stop-color="#38bdf8" />
+              <stop offset="100%" stop-color="#10b981" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="brand-title">AetherSpace</span>
+        <span class="version-tag">v4.0 LTS</span>
       </div>
 
-      <div class="header-controls">
-        <div class="mode-toggle-pill" id="mode-toggle" title="Klick: Zwischen Key-Pool und $0 Gratis-Mesh wechseln">
-          <span class="mode-pill-dot"></span>
-          <span id="mode-pill-text">Key-Pool Aktiv</span>
+      <div class="project-name-pill" title="Click to rename project">
+        <span class="pill-icon">📁</span>
+        <input type="text" id="project-title-input" value="AetherSpace-Quantum-Core" spellcheck="false">
+      </div>
+    </div>
+
+    <!-- HIERARCHICAL MASTER PILLS (Google AI Studio & Linear Synthesis) -->
+    <div class="header-center">
+      <div class="master-pill-group">
+        <!-- Model Discovery Pill -->
+        <div class="master-pill dropdown-trigger" id="model-pill-trigger">
+          <span class="pill-indicator online"></span>
+          <span class="pill-label">Model:</span>
+          <span class="pill-value" id="current-model-label">Gemini 2.5 Pro</span>
+          <svg class="chevron-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
         </div>
 
-        <button id="btn-theme" class="btn btn-icon" title="Theme wechseln">🌙</button>
+        <!-- Thinking Level Pill -->
+        <div class="master-pill" id="thinking-pill-trigger" title="Cycle Thinking Level (High / Medium / Fast)">
+          <span class="pill-icon">🧠</span>
+          <span class="pill-label">Thinking:</span>
+          <span class="pill-value active-badge" id="thinking-level-label">High (16k)</span>
+        </div>
 
-        <button id="btn-vault-open" class="btn btn-outline" title="Schnittstellen-Tresor">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-          <span id="vault-btn-label">API Keys</span>
-        </button>
+        <!-- Google Search Grounding Pill -->
+        <div class="master-pill toggle-active" id="grounding-pill-trigger" title="Toggle Live Google Search Grounding">
+          <span class="pill-icon">🌐</span>
+          <span class="pill-label">Grounding:</span>
+          <span class="pill-value" id="grounding-label">ON</span>
+        </div>
 
-        <!-- Profil-Button mit Google-Avatar & Name -->
-        <button id="btn-auth-open" class="btn btn-outline btn-auth-header" title="Google Konto verwalten">
-          <span id="user-avatar-badge" class="avatar-badge avatar-google">L</span>
-          <span id="user-display-name">lolqs5014 ✓</span>
-        </button>
+        <!-- Key-Pool Cascade Pill -->
+        <div class="master-pill" id="keypool-pill-trigger" title="Manage Key-Pool Cascade & AES-GCM Vault">
+          <span class="pill-indicator cascade"></span>
+          <span class="pill-label">Key-Pool:</span>
+          <span class="pill-value" id="keypool-label">3 Active</span>
+        </div>
+      </div>
+    </div>
 
-        <button id="btn-share" class="btn btn-outline" title="Projekt teilen">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
-          Teilen
-        </button>
+    <div class="header-right">
+      <!-- Run / Refresh Button -->
+      <button class="btn btn-primary" id="run-btn" title="Execute Pipeline (Ctrl+Enter)">
+        <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+        <span>Run</span>
+        <kbd class="shortcut-kbd">⌘↵</kbd>
+      </button>
 
-        <button id="btn-open-settings" class="btn btn-outline">⚙️ Settings</button>
+      <!-- Autonomous Polyglot Healer -->
+      <button class="btn btn-heal" id="auto-heal-btn" title="Trigger Autonomous Polyglot Cloud Healer">
+        <svg class="btn-icon heal-pulse" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+        <span>Auto-Heal</span>
+        <span class="error-counter-badge" id="error-badge" style="display:none;">0</span>
+      </button>
 
-        <button id="btn-run" class="btn btn-primary" title="Code rendern">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          ▶ Play
+      <!-- Cloud Staging Dropdown -->
+      <div class="dropdown-wrapper">
+        <button class="btn btn-secondary" id="staging-btn" title="1-Click Cloud Staging (0% Local Load)">
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          <span>Stage</span>
         </button>
       </div>
-    </header>
 
-    <!-- Main Workspace -->
-    <main class="workspace" id="workspace">
-      
-      <!-- VS Code File Explorer (Left) -->
-      <aside class="panel panel-filetree" id="panel-filetree">
-        <div class="panel-header">
-          <span class="panel-title">Explorer</span>
-          <button id="btn-new-file" class="btn-icon">+ Datei</button>
-        </div>
-        <div class="filetree-body" id="filetree-list"></div>
-      </aside>
+      <!-- Smart Export Dropdown -->
+      <button class="btn btn-secondary" id="export-modal-btn" title="Smart Single-File HTML / ZIP Export">
+        <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
+        <span>Export</span>
+      </button>
 
-      <div class="resizer" id="resizer-0"></div>
+      <!-- Run Settings Pro Drawer Toggle -->
+      <button class="btn-icon-only" id="settings-drawer-toggle" title="Open AI Studio Run Settings">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+      </button>
 
-      <!-- Spalte 1: Multi-Tunnel Pipeline (Gemini 3.7 Standard) -->
-      <section class="panel panel-ai" id="panel-ai">
-        <div class="panel-header">
-          <span class="panel-title">Pipeline</span>
-          <button id="btn-add-tunnel" class="btn-icon">+ Stufe</button>
-        </div>
-        <div class="tunnel-config-container" id="tunnel-list"></div>
-        <div class="panel-body chat-history" id="chat-history"></div>
-        <div class="panel-footer chat-input-wrapper">
-          <textarea id="ai-input" placeholder="Prompt eingeben (z. B. 'Erstelle ein 2D-Auto-Ausweichspiel mit Canvas & Punktezähler')..." rows="2"></textarea>
-          <button id="btn-send" class="btn btn-secondary">
-            <span id="send-spinner" class="spinner hidden"></span>
-            <span id="send-text">Pipeline starten</span>
+      <!-- Enterprise Auth Modal Trigger -->
+      <button class="auth-avatar-btn" id="auth-btn" title="Enterprise Zero-Trust Auth">
+        <div class="avatar-ring" id="user-avatar-initials">AS</div>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE LAYOUT -->
+  <main class="workspace-container">
+    <!-- LEFT SIDEBAR: EXPLORER & CONTEXT INJECTOR -->
+    <aside class="sidebar-explorer" id="sidebar">
+      <div class="sidebar-header">
+        <span class="section-title">FILES & CONTEXT</span>
+        <div class="sidebar-actions">
+          <button class="icon-action-btn" id="new-file-btn" title="Create New File">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+          </button>
+          <button class="icon-action-btn" id="reset-template-btn" title="Reset to Quantum 144Hz Template">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
           </button>
         </div>
-      </section>
+      </div>
 
-      <div class="resizer" id="resizer-1"></div>
+      <!-- Context Ingestion Status Pill -->
+      <div class="context-pill-banner">
+        <div class="context-pill-info">
+          <span class="context-dot"></span>
+          <span id="context-injected-count">3 files injected</span>
+        </div>
+        <span class="token-estimate-badge" id="context-token-badge">~840 tok</span>
+      </div>
 
-      <!-- Spalte 2: Code-Editor -->
-      <section class="panel panel-editor" id="panel-editor">
-        <div class="panel-header">
-          <div class="editor-tabs" id="editor-tabs-container">
-            <button class="tab-btn active">index.html</button>
-          </div>
-          <div class="editor-actions">
-            <button id="btn-copy" class="btn-icon">Kopieren</button>
-            <button id="btn-clear" class="btn-icon">Leeren</button>
+      <!-- File Tree Listing -->
+      <div class="file-tree-container" id="file-tree-list"></div>
+
+      <!-- Template Presets Selector -->
+      <div class="preset-section">
+        <span class="preset-label">HIGH-PERF PRESETS</span>
+        <div class="preset-grid">
+          <button class="preset-btn" data-preset="quantum-warp">🌌 144Hz Warp</button>
+          <button class="preset-btn" data-preset="neural-mesh">🕸️ Neural Graph</button>
+          <button class="preset-btn" data-preset="glsl-fluid">🌊 GLSL Fluid</button>
+          <button class="preset-btn" data-preset="cyber-matrix">🟩 Cyber Matrix</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER SPLIT: CODE EDITOR & LIVE VIEWPORT -->
+    <section class="main-split-area" id="split-area">
+      <!-- LEFT EDITOR PANE -->
+      <div class="editor-pane" id="editor-pane">
+        <div class="editor-tab-bar" id="editor-tab-bar"></div>
+
+        <div class="editor-subbar">
+          <span class="current-file-badge" id="active-file-indicator">index.html</span>
+          <div class="subbar-actions">
+            <span class="char-count" id="editor-char-count">0 chars</span>
+            <button class="subbar-btn" id="format-code-btn" title="Beautify / Format">✨ Format</button>
+            <button class="subbar-btn" id="clear-code-btn" title="Clear Editor">🗑️ Clear</button>
           </div>
         </div>
-        <div class="panel-body editor-wrapper">
+
+        <div class="code-editor-wrapper">
           <div class="line-numbers" id="line-numbers">1</div>
-          <textarea id="code-editor" class="code-textarea" spellcheck="false"></textarea>
+          <textarea class="code-textarea" id="code-editor" spellcheck="false" autocomplete="off" wrap="off"></textarea>
         </div>
-        <div class="panel-footer editor-status">
-          <span id="cursor-position">Zeile 1, Spalte 1</span>
-          <span id="model-attribution" class="editor-attribution">Bereit</span>
-        </div>
-      </section>
+      </div>
 
-      <div class="resizer" id="resizer-2"></div>
+      <!-- RESIZABLE SPLIT DIVIDER -->
+      <div class="split-divider" id="split-divider" title="Drag to resize"></div>
 
-      <!-- Spalte 3: Sandbox Vorschau (100% Dark) -->
-      <section class="panel panel-preview" id="panel-preview">
-        <div class="panel-header">
-          <span class="panel-title">Vorschau</span>
-          <div class="preview-actions">
-            <input type="text" id="export-filename" class="export-input" placeholder="app-name">
-            <button id="btn-export" class="btn btn-icon">Export</button>
-            <button id="btn-auto-heal" class="btn btn-heal">Auto-Heal</button>
-            <button id="btn-reload-preview" class="btn-icon">Neu</button>
+      <!-- RIGHT VIEWPORT PANE -->
+      <div class="viewport-pane" id="viewport-pane">
+        <div class="viewport-header">
+          <div class="viewport-url-bar">
+            <span class="security-lock">🔒</span>
+            <span class="virtual-url">aetherspace://isolated-sandbox/preview</span>
+          </div>
+
+          <div class="viewport-metrics">
+            <div class="fps-meter-badge" id="hud-fps-badge" title="Uncapped Native RAF Frame Rate">
+              <span class="fps-pulse"></span>
+              <span id="hud-fps-text">144 FPS</span>
+            </div>
+            <div class="latency-badge" id="hud-lat-badge" title="Frame Render Latency">6.9 ms</div>
+            <div class="watchdog-badge" id="hud-watchdog-badge" title="Heartbeat Watchdog (0% Thread Freeze)">
+              <span class="watchdog-dot"></span>
+              <span>Watchdog OK</span>
+            </div>
+          </div>
+
+          <div class="viewport-controls">
+            <div class="device-switcher">
+              <button class="device-btn active" data-size="100%" title="Desktop Mode">🖥️</button>
+              <button class="device-btn" data-size="768px" title="Tablet Mode">📱</button>
+              <button class="device-btn" data-size="375px" title="Mobile Mode">📲</button>
+            </div>
+            <button class="icon-action-btn" id="popout-btn" title="Open in New Standalone Window">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+            </button>
+            <button class="icon-action-btn" id="reload-viewport-btn" title="Hard-Reset Sandbox">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+            </button>
           </div>
         </div>
-        <div class="panel-body preview-wrapper">
-          <iframe id="sandbox-frame" sandbox="allow-scripts allow-modals" title="Sandbox Output"></iframe>
+
+        <!-- Sandboxed Live Viewport Frame -->
+        <div class="iframe-container" id="iframe-container">
+          <iframe id="preview-frame" sandbox="allow-scripts allow-modals allow-pointer-lock allow-same-origin" src="about:blank"></iframe>
         </div>
-      </section>
 
-    </main>
+        <!-- BOTTOM CONSOLE / RUNTIME DIAGNOSTIC DRAWER -->
+        <div class="console-drawer" id="console-drawer">
+          <div class="console-header" id="console-header-toggle">
+            <div class="console-title">
+              <span class="console-icon">⌨️</span>
+              <span>Runtime Diagnostics & Logs</span>
+              <span class="console-count-pill" id="console-count">0</span>
+            </div>
+            <div class="console-actions">
+              <button class="subbar-btn" id="clear-console-btn">Clear</button>
+              <button class="subbar-btn" id="toggle-console-size-btn">▲</button>
+            </div>
+          </div>
+          <div class="console-logs" id="console-logs-list">
+            <div class="log-entry system">[System] AetherSpace 144Hz Realtime Bridge Initialized. Zero errors.</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <div class="footer-left"><span>AetherSpace Studio</span></div>
-      <div class="footer-right"><span>RAM: <strong>&lt; 15 MB</strong></span></div>
-    </footer>
-  </div>
+    <!-- RIGHT RUN-SETTINGS SIDEBAR (Google AI Studio Synthesis) -->
+    <aside class="sidebar-settings" id="settings-sidebar">
+      <div class="settings-header">
+        <div class="settings-title">
+          <span class="gear-icon">⚙️</span>
+          <span>Run Settings (SOTA)</span>
+        </div>
+        <button class="icon-action-btn" id="close-settings-btn">✕</button>
+      </div>
 
-  <!-- MULTI-KEY TRESOR MODAL (Google AI Studio Dashboard Style) -->
-  <div id="vault-modal" class="modal-backdrop hidden">
-    <div class="modal-card vault-studio-card">
+      <div class="settings-content">
+        <div class="setting-group">
+          <label class="setting-label">AI ENGINE MODEL</label>
+          <select id="model-select" class="setting-select">
+            <option value="gemini-2.5-pro">Google Gemini 2.5 Pro (Ultra Reasoning)</option>
+            <option value="gemini-2.5-flash">Google Gemini 2.5 Flash (Sub-50ms Ultra-Fast)</option>
+            <option value="gemini-1.5-pro">Google Gemini 1.5 Pro (2M Context Window)</option>
+            <option value="llama-3.3-70b-groq">Groq Cloud - Llama 3.3 70B Versatile ($0)</option>
+            <option value="deepseek-v3-free">DeepSeek V3 / R1 Distill ($0 FOSS)</option>
+            <option value="openrouter-auto">OpenRouter SOTA Auto-Mesh ($0 Free Tier)</option>
+          </select>
+          <span class="setting-hint">Dynamic discovery replaces deprecated models automatically.</span>
+        </div>
+
+        <div class="setting-group">
+          <div class="setting-label-row">
+            <label class="setting-label">THINKING BUDGET LEVEL</label>
+            <span class="badge-accent" id="thinking-badge-text">High (16,384 tok)</span>
+          </div>
+          <div class="tier-pill-selector">
+            <button class="tier-pill-btn active" data-level="high">🧠 High</button>
+            <button class="tier-pill-btn" data-level="medium">⚡ Medium</button>
+            <button class="tier-pill-btn" data-level="fast">🚀 Fast (0)</button>
+          </div>
+          <span class="setting-hint">Higher budget allocates dedicated tokens for complex code logic.</span>
+        </div>
+
+        <div class="setting-group">
+          <div class="toggle-row">
+            <div>
+              <label class="setting-label">LIVE SEARCH GROUNDING</label>
+              <div class="setting-hint">Augment prompt with real-time web facts & SOTA documentation.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="search-grounding-toggle" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <div class="setting-label-row">
+            <label class="setting-label">MAX OUTPUT LENGTH</label>
+            <span class="value-display" id="max-tokens-val">32,768</span>
+          </div>
+          <input type="range" id="max-tokens-slider" min="1024" max="65536" step="1024" value="32768" class="range-slider">
+          <div class="range-ticks">
+            <span>1k</span>
+            <span>16k</span>
+            <span>32k</span>
+            <span>65k</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <div class="setting-label-row">
+            <label class="setting-label">TEMPERATURE</label>
+            <span class="value-display" id="temperature-val">0.70</span>
+          </div>
+          <input type="range" id="temperature-slider" min="0" max="2" step="0.05" value="0.7" class="range-slider">
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">SYSTEM INSTRUCTION / PERSONA</label>
+          <textarea id="system-prompt-input" class="setting-textarea" rows="3">You are AetherSpace SOTA Senior Code Architect. You generate complete, production-grade, bug-free web applications with 144Hz high-fps canvas/webgl capabilities, zero placeholders, and zero-trust security standards.</textarea>
+        </div>
+
+        <div class="setting-group">
+          <div class="setting-label-row">
+            <label class="setting-label">EXHAUSTIVE KEY-POOL (3 KEYS)</label>
+            <span class="badge-secure">AES-GCM-256 Encrypted</span>
+          </div>
+          <div class="key-pool-container">
+            <div class="key-input-row">
+              <span class="key-num">#1</span>
+              <input type="password" class="key-input" id="api-key-1" placeholder="Primary Google AI Studio Key...">
+              <span class="key-status-dot active" title="Active Key"></span>
+            </div>
+            <div class="key-input-row">
+              <span class="key-num">#2</span>
+              <input type="password" class="key-input" id="api-key-2" placeholder="Secondary Fallback Key...">
+              <span class="key-status-dot" title="Standby Key"></span>
+            </div>
+            <div class="key-input-row">
+              <span class="key-num">#3</span>
+              <input type="password" class="key-input" id="api-key-3" placeholder="Tertiary Fallback Key...">
+              <span class="key-status-dot" title="Standby Key"></span>
+            </div>
+          </div>
+          <button class="btn btn-secondary w-full mt-2" id="save-keys-btn">🔒 Save & Encrypt to Local Vault</button>
+          <span class="setting-hint">Keys never leave client unencrypted. Auto-rotates on 429/Rate-Limits.</span>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">HARDWARE SAFEGUARD ($0 / &lt;50MB RAM)</label>
+          <div class="stat-card">
+            <div class="stat-row">
+              <span>Client RAM Target:</span>
+              <span class="text-emerald font-mono">15 - 50 MB</span>
+            </div>
+            <div class="stat-row">
+              <span>Heavy Compute Load:</span>
+              <span class="text-indigo font-mono">100% Cloud Serverless</span>
+            </div>
+            <div class="stat-row">
+              <span>Local Machine Thermal:</span>
+              <span class="text-emerald font-mono">0% Fan Spin (Cold)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- 1. CLOUD STAGING MODAL -->
+  <div class="modal-backdrop" id="staging-modal">
+    <div class="modal-box">
       <div class="modal-header">
-        <div>
-          <h3>API Keys Dashboard</h3>
-          <span style="font-size:11px; color:#8892b0;">Google AI Studio & Cloud Key Pools</span>
+        <div class="modal-title">
+          <span>🚀 1-Click Cloud Staging</span>
+          <span class="badge-accent">0% Local Load</span>
         </div>
-        <button id="btn-vault-close" class="modal-close">&times;</button>
+        <button class="modal-close-btn" data-close="staging-modal">✕</button>
       </div>
       <div class="modal-body">
-        <div class="vault-toolbar">
-          <div class="vault-tabs">
-            <button class="vault-tab-btn active" data-provider="gemini">Google AI Studio</button>
-            <button class="vault-tab-btn" data-provider="groq">Groq Cloud</button>
-            <button class="vault-tab-btn" data-provider="hf">Hugging Face</button>
-          </div>
-          <button id="btn-vault-create-key" class="btn btn-primary btn-sm">+ Create API Key</button>
-        </div>
-        <div class="vault-table-container">
-          <table class="vault-table">
-            <thead>
-              <tr><th>Key Preview</th><th>Project</th><th>Created</th><th>Tier</th><th>Status</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="vault-keys-tbody"></tbody>
-          </table>
-        </div>
-        <div id="vault-add-box" class="vault-add-box hidden">
-          <input type="password" id="new-key-input" class="text-input" placeholder="Google AI Studio API-Key einfügen (AIzaSy...)...">
-          <input type="text" id="new-key-label" class="text-input" placeholder="Project: Default Gemini Project">
-          <div style="display:flex; gap:6px;">
-            <button id="btn-save-new-key" class="btn btn-primary btn-sm">Speichern & Verifizieren</button>
-            <button id="btn-cancel-new-key" class="btn btn-outline btn-sm">Abbrechen</button>
-          </div>
-        </div>
-        <div class="modal-footer-actions">
-          <button id="btn-modal-done" class="btn btn-secondary btn-full">Schließen</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- AUTH MODAL: 1-KLICK GOOGLE ACCOUNT CONNECTOR (Material Design 3) -->
-  <div id="auth-modal" class="modal-backdrop hidden">
-    <div class="modal-card auth-modal-card">
-      <div class="modal-header">
-        <h3>Google-Konto verknüpfen</h3>
-        <button id="btn-auth-close" class="modal-close">&times;</button>
-      </div>
-      <div class="modal-body auth-modal-body">
+        <p class="modal-desc">Instantly dispatch the current multi-file workspace to high-performance cloud playgrounds without installing dependencies or consuming laptop memory.</p>
         
-        <!-- Aktives Profil -->
-        <div class="profile-card">
-          <div class="profile-avatar avatar-google-large" id="logged-avatar-icon">L</div>
-          <div class="profile-details">
-            <strong id="profile-name-text">lolqs5014</strong>
-            <small id="profile-email-text">lolqs5014@gmail.com</small>
-            <span class="micro-badge badge-valid">✓ Google Konto Verknüpft</span>
+        <div class="staging-cards-grid">
+          <div class="staging-card" id="stage-codepen-btn">
+            <div class="staging-icon codepen">📐</div>
+            <div class="staging-info">
+              <h4>CodePen Playground</h4>
+              <p>Direct POST injection of HTML, CSS, and JS bundle into live editable Pen.</p>
+            </div>
+            <button class="btn btn-small">Stage Now →</button>
+          </div>
+
+          <div class="staging-card" id="stage-hf-btn">
+            <div class="staging-icon hf">🤗</div>
+            <div class="staging-info">
+              <h4>Hugging Face Spaces</h4>
+              <p>Prepares ready-to-deploy static web application bundle with zero local overhead.</p>
+            </div>
+            <button class="btn btn-small">Generate Space →</button>
+          </div>
+
+          <div class="staging-card" id="stage-stackblitz-btn">
+            <div class="staging-icon stackblitz">⚡</div>
+            <div class="staging-info">
+              <h4>StackBlitz WebContainer</h4>
+              <p>Spins up full-featured browser VM playground with live hot reload.</p>
+            </div>
+            <button class="btn btn-small">Launch WebContainer →</button>
           </div>
         </div>
-
-        <div class="auth-divider"><span>1-Klick Kontowechsel / Hinzufügen</span></div>
-
-        <!-- Google One-Tap Account Selector Liste -->
-        <div class="google-account-selector-stack" id="google-accounts-stack">
-          <!-- Dynamische 1-Klick Google Kontokarten -->
-        </div>
-
-        <div class="auth-email-form" style="margin-top:10px;">
-          <input type="email" id="add-google-email-input" class="text-input" placeholder="Weiteres Google-Konto hinzufügen (z. B. name@gmail.com)...">
-          <button id="btn-add-google-account" class="btn btn-primary btn-full" style="margin-top:6px;">+ Google-Konto zu AetherSpace hinzufügen</button>
-        </div>
-
-        <div style="margin-top:8px;">
-          <button id="btn-auth-signout" class="btn btn-outline btn-full">Aktuelles Konto abmelden</button>
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- SHARE MODAL -->
-  <div id="share-modal" class="modal-backdrop hidden">
-    <div class="modal-card">
+  <!-- 2. SMART EXPORT MODAL -->
+  <div class="modal-backdrop" id="export-modal">
+    <div class="modal-box">
       <div class="modal-header">
-        <h3>Projekt teilen</h3>
-        <button id="btn-share-close" class="modal-close">&times;</button>
+        <div class="modal-title">
+          <span>📦 Smart Workspace Export</span>
+        </div>
+        <button class="modal-close-btn" data-close="export-modal">✕</button>
       </div>
       <div class="modal-body">
-        <p class="modal-subtitle">Teile dein Projekt per Web-Link oder direkt auf WhatsApp:</p>
-        <div class="share-actions-group">
-          <button id="btn-share-whatsapp" class="btn btn-whatsapp btn-full">💬 Auf WhatsApp teilen</button>
-          <button id="btn-copy-share-url" class="btn btn-outline btn-full">📋 Link kopieren</button>
+        <div class="setting-group">
+          <label class="setting-label">EXPORT PROJECT NAME</label>
+          <input type="text" id="export-filename-input" class="setting-input" value="AetherSpace-Build">
+        </div>
+
+        <div class="export-options-grid">
+          <div class="export-card" id="export-single-html-btn">
+            <div class="export-icon">📄</div>
+            <h4>Single-File Standalone (.html)</h4>
+            <p>Inlines all CSS, JS, and HTML into a 100% self-contained file you can open or host anywhere.</p>
+            <button class="btn btn-primary w-full mt-3">Download .html</button>
+          </div>
+
+          <div class="export-card" id="export-zip-btn">
+            <div class="export-icon">🗂️</div>
+            <h4>Complete Multi-File (.zip)</h4>
+            <p>Generates standard clean project archive via browser zero-dependency ZIP packer.</p>
+            <button class="btn btn-secondary w-full mt-3">Download .zip</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- 3. ENTERPRISE AUTH MODAL -->
+  <div class="modal-backdrop" id="auth-modal">
+    <div class="modal-box auth-modal-box">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🛡️ Enterprise Zero-Trust Auth</span>
+        </div>
+        <button class="modal-close-btn" data-close="auth-modal">✕</button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="modal-desc">Sign in with zero-knowledge encrypted credentials. Session state stays 100% client-side.</p>
+        
+        <div class="auth-btn-stack">
+          <button class="btn btn-oauth" id="auth-google-btn">
+            <svg class="oauth-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <span>Continue with Google Enterprise</span>
+          </button>
+
+          <button class="btn btn-oauth" id="auth-ms-btn">
+            <svg class="oauth-icon" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
+            <span>Continue with Microsoft 365</span>
+          </button>
+        </div>
+
+        <div class="auth-divider"><span>OR UNIVERSAL PASSKEY</span></div>
+
+        <div class="auth-form">
+          <input type="email" id="auth-email-input" class="setting-input mb-3" placeholder="name@enterprise-domain.com">
+          <button class="btn btn-primary w-full" id="auth-magic-btn">Send Client-Encrypted Magic Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. POLYGLOT AUTO-HEAL NOTIFICATION OVERLAY -->
+  <div class="heal-toast" id="heal-toast">
+    <div class="toast-content">
+      <span class="toast-icon">⚡</span>
+      <div class="toast-text">
+        <strong id="heal-toast-title">Autonomous Healer Engaged</strong>
+        <p id="heal-toast-msg">Synthesizing patch across HTML, CSS & JS...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- SCRIPTS -->
   <script src="app.js"></script>
 </body>
 </html>
