@@ -1,5 +1,5 @@
 ﻿/**
- * AETHERSPACE ENTERPRISE SOTA 2026 ENGINE (v5.2.0 LTS)
+ * AETHERSPACE ENTERPRISE SOTA 2026 ENGINE (v5.5.0 LTS)
  * Real Multi-Agent Cloud-AI Pipeline | 144Hz Sandbox | AES-GCM-256 Vault | Enterprise Auth
  * Zero-Backtick Deterministic JavaScript Engine | Dynamic Fallback Cascade
  */
@@ -306,7 +306,7 @@
   };
 
   /* ==========================================================================
-     4. REAL CLOUD-AI API CLIENT & RESILIENT 5-TIER CASCADE
+     4. REAL CLOUD-AI API CLIENT & RESILIENT 4-TIER CASCADE
      ========================================================================== */
   const AIClient = {
     async callGemini(prompt, systemInstruction, key, searchGrounding = true, modelOverride = null) {
@@ -387,7 +387,7 @@
     },
 
     async callHuggingFace(prompt, systemInstruction, key) {
-      const url = 'https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
+      const url = 'https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-V3';
       const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -470,19 +470,6 @@
       return await res.text();
     },
 
-    generateAutonomousSynthesis(userPrompt) {
-      // TIER 5: Autonomer In-Browser Synthesizer (Erzeugt echten, spielbaren 144Hz Canvas-Code ohne statische Karten)
-      const t = String.fromCharCode(96).repeat(3);
-
-      let html = '<!DOCTYPE html>\n<html lang="de">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>' + STATE.projectName + '</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <div id="game-container">\n    <div class="hud">\n      <div>SCORE: <span id="score-display">0</span></div>\n      <div>FPS: <span id="speed-display">144</span></div>\n    </div>\n    <canvas id="stage-canvas"></canvas>\n    <div class="instructions">Pfeiltasten oder A/D zum Steuern | Leertaste: Boost</div>\n  </div>\n  <script src="app.js"></script>\n</body>\n</html>';
-
-      let css = '* { margin: 0; padding: 0; box-sizing: border-box; }\nbody {\n  background: #0b0e14;\n  color: #f8fafc;\n  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  height: 100vh;\n  overflow: hidden;\n}\n#game-container {\n  position: relative;\n  width: 100%;\n  max-width: 500px;\n  height: 90vh;\n  background: #06080c;\n  border: 1px solid #1e293b;\n  border-radius: 12px;\n  overflow: hidden;\n  box-shadow: 0 10px 30px rgba(0,0,0,0.8);\n}\n.hud {\n  position: absolute;\n  top: 15px;\n  left: 15px;\n  right: 15px;\n  display: flex;\n  justify-content: space-between;\n  font-family: monospace;\n  font-size: 14px;\n  font-weight: bold;\n  color: #38bdf8;\n  z-index: 10;\n  text-shadow: 0 2px 4px rgba(0,0,0,0.8);\n}\ncanvas {\n  width: 100%;\n  height: 100%;\n  display: block;\n}\n.instructions {\n  position: absolute;\n  bottom: 12px;\n  width: 100%;\n  text-align: center;\n  font-size: 11px;\n  color: #64748b;\n}';
-
-      let js = '(function() {\n  const canvas = document.getElementById("stage-canvas");\n  const ctx = canvas.getContext("2d");\n  const scoreEl = document.getElementById("score-display");\n\n  function resize() {\n    canvas.width = canvas.parentElement.clientWidth;\n    canvas.height = canvas.parentElement.clientHeight;\n  }\n  window.addEventListener("resize", resize);\n  resize();\n\n  let score = 0;\n  let player = { x: canvas.width / 2, y: canvas.height - 80, width: 36, height: 60, speed: 6, vx: 0 };\n  let obstacles = [];\n  let keys = {};\n\n  window.addEventListener("keydown", function(e) { keys[e.key] = true; });\n  window.addEventListener("keyup", function(e) { keys[e.key] = false; });\n\n  function spawnObstacle() {\n    if (Math.random() < 0.035) {\n      obstacles.push({\n        x: Math.random() * (canvas.width - 40),\n        y: -60,\n        width: 32,\n        height: 50,\n        speed: 4 + Math.random() * 3,\n        color: ["#f43f5e", "#fbbf24", "#a855f7"][Math.floor(Math.random() * 3)]\n      });\n    }\n  }\n\n  function update() {\n    if (keys["ArrowLeft"] || keys["a"] || keys["A"]) player.x -= player.speed;\n    if (keys["ArrowRight"] || keys["d"] || keys["D"]) player.x += player.speed;\n    player.x = Math.max(10, Math.min(canvas.width - player.width - 10, player.x));\n\n    spawnObstacle();\n\n    for (let i = obstacles.length - 1; i >= 0; i--) {\n      let o = obstacles[i];\n      o.y += o.speed;\n      if (\n        player.x < o.x + o.width &&\n        player.x + player.width > o.x &&\n        player.y < o.y + o.height &&\n        player.y + player.height > o.y\n      ) {\n        score = Math.max(0, score - 50);\n        obstacles.splice(i, 1);\n      } else if (o.y > canvas.height) {\n        obstacles.splice(i, 1);\n        score += 10;\n        scoreEl.textContent = score;\n      }\n    }\n  }\n\n  function render() {\n    ctx.fillStyle = "#06080c";\n    ctx.fillRect(0, 0, canvas.width, canvas.height);\n\n    // Road stripes\n    ctx.fillStyle = "#1e293b";\n    for (let y = (Date.now() / 8) % 40; y < canvas.height; y += 40) {\n      ctx.fillRect(canvas.width / 2 - 2, y, 4, 20);\n    }\n\n    // Player Car\n    ctx.fillStyle = "#38bdf8";\n    ctx.shadowBlur = 12;\n    ctx.shadowColor = "#38bdf8";\n    ctx.fillRect(player.x, player.y, player.width, player.height);\n    ctx.shadowBlur = 0;\n\n    // Obstacles\n    for (let i = 0; i < obstacles.length; i++) {\n      let o = obstacles[i];\n      ctx.fillStyle = o.color;\n      ctx.fillRect(o.x, o.y, o.width, o.height);\n    }\n  }\n\n  function loop() {\n    update();\n    render();\n    requestAnimationFrame(loop);\n  }\n  requestAnimationFrame(loop);\n})();';
-
-      return t + 'html\n' + html + '\n' + t + '\n\n' + t + 'css\n' + css + '\n' + t + '\n\n' + t + 'javascript\n' + js + '\n' + t;
-    },
-
     async dispatchAgent(stage, prompt, context, systemPersona) {
       const fullPrompt = 'PROMPT:\n' + prompt + '\n\nDATEIKONTEXT:\n' + context;
       const provider = stage.provider;
@@ -537,16 +524,11 @@
         } catch (e) {}
       }
 
-      // TIER 3: CORS-Free Edge Router
-      try {
-        const edgeRes = await this.callZeroKeyEdgeRouter(fullPrompt, systemPersona);
-        if (edgeRes && edgeRes.trim().length > 20) return edgeRes;
-      } catch (e) {
-        console.warn('[Dispatch] Edge Router fehlgeschlagen, starte In-Browser Synthesizer...');
-      }
+      // TIER 3: CORS-Free Serverless Edge Router (100% Echte KI-Synthese)
+      const edgeRes = await this.callZeroKeyEdgeRouter(fullPrompt, systemPersona);
+      if (edgeRes && edgeRes.trim().length > 20) return edgeRes;
 
-      // TIER 4: Autonome In-Browser Fallback Engine (100% Erfolgsgarantie)
-      return this.generateAutonomousSynthesis(prompt);
+      throw new Error('Alle Cloud-KI-Endpunkte und Edge-Router waren nicht erreichbar. Bitte ueberpruefe deine Netzwerkverbindung oder hinterlege einen gueltigen API-Key im Key-Vault.');
     }
   };
 
@@ -723,9 +705,9 @@
           
           let stagePrompt = '';
           if (isLastStage) {
-            stagePrompt = 'Synthetisiere nun den finalen, produktionsreifen Code für "' + userPrompt + '" basierend auf den vorherigen Stufen. Gib den Code in html, css und javascript Codeblöcken aus.\n\nBISHERIGER VERLAUF:\n' + accumulatedContext;
+            stagePrompt = 'Synthetisiere nun den finalen, vollstaendigen und produktionsreifen Code fuer folgende Anforderung: "' + userPrompt + '".\n\nGib den vollstaendigen Code in getrennten html, css und javascript Markdown-Codebloecken aus.\n\nBISHERIGER VERLAUF:\n' + accumulatedContext;
           } else {
-            stagePrompt = 'Führe deine Aufgabe (' + currentStage.role + ') für folgende Anforderung aus: "' + userPrompt + '".\n\nBISHERIGER VERLAUF:\n' + accumulatedContext;
+            stagePrompt = 'Fuehre deine Aufgabe (' + currentStage.role + ') fuer folgende Anforderung aus: "' + userPrompt + '".\n\nBISHERIGER VERLAUF:\n' + accumulatedContext;
           }
 
           const stageResponse = await AIClient.dispatchAgent(currentStage, stagePrompt, contextStr, STATE.settings.systemPrompt);
