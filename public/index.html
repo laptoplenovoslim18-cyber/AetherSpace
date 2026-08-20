@@ -29,7 +29,7 @@
           </defs>
         </svg>
         <span class="brand-title">AetherSpace</span>
-        <span class="version-tag">2026 PRO</span>
+        <span class="version-tag">2026 SOTA</span>
       </div>
 
       <!-- Einklappbarer Dateibaum Umschalter -->
@@ -317,16 +317,17 @@
     </div>
 
     <div class="settings-content">
-      <!-- Model Selector -->
+      <!-- Model Selector (Aktive SOTA 2026 Endpunkte) -->
       <div class="setting-group">
         <label class="setting-label">PRIMARY CLOUD MODEL</label>
         <select id="settings-model-select" class="setting-input">
-          <option value="gemini-2.0-flash">Google Gemini 2.0 Flash (Default SOTA)</option>
-          <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
-          <option value="gemini-1.5-pro">Google Gemini 1.5 Pro</option>
+          <option value="gemini-3.6-flash">Google Gemini 3.6 Flash (Empfohlen / Schnell)</option>
+          <option value="gemini-3.7-flash">Google Gemini 3.7 Flash (SOTA Coding)</option>
+          <option value="gemini-1.5-flash">Google Gemini 1.5 Flash (Stabil)</option>
           <option value="llama-3.3-70b-versatile">Groq Llama 3.3 70B (Ultra-Speed)</option>
-          <option value="deepseek-r1">DeepSeek R1 (Reasoning Master)</option>
-          <option value="hf-qwen-32b">Hugging Face Qwen 2.5 Coder 32B</option>
+          <option value="deepseek-r1-distill-llama-70b">Groq DeepSeek R1 Distill 70B</option>
+          <option value="hf-deepseek-v3">Hugging Face DeepSeek V3</option>
+          <option value="deepseek-r1">OpenRouter DeepSeek R1</option>
         </select>
       </div>
 

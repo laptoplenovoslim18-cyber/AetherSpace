@@ -1,18 +1,19 @@
 ﻿/**
- * AETHERSPACE SOTA 2026 ENGINE (v4.3.0 LTS)
+ * AETHERSPACE SOTA 2026 ENGINE (v4.5.0 LTS)
  * Real Multi-Agent Cloud-AI Pipeline | 144Hz Sandbox | AES-GCM-256 Vault | Enterprise Auth
+ * Zero-Backtick Deterministic JavaScript Engine | Dynamic Fallback Cascade
  */
 
 (function() {
   'use strict';
 
   /* ==========================================================================
-     1. WORKSPACE STATE & CLEAN BASELINE
+     1. WORKSPACE STATE & CLEAN BASELINE (VS CODE STYLE CLEAN-START)
      ========================================================================== */
   const CLEAN_WORKSPACE = {
-    'index.html': '<!DOCTYPE html>\n<html lang="de">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>AetherSpace Project</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <div id="app">\n    <div class="welcome-box">\n      <h1 class="glow-text">AetherSpace Studio</h1>\n      <p class="desc-text">Workspace bereit. Gib links einen Prompt ein, um echten Live-Code zu generieren.</p>\n    </div>\n  </div>\n  <script src="app.js"></script>\n</body>\n</html>',
-    'styles.css': '* {\n  box-sizing: border-box;\n  margin: 0;\n  padding: 0;\n}\nbody {\n  background-color: #0b0e14;\n  color: #f8fafc;\n  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n  min-height: 100vh;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#app {\n  width: 100%;\n  height: 100vh;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.welcome-box {\n  text-align: center;\n  padding: 30px;\n  background: rgba(18, 24, 36, 0.7);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 12px;\n  backdrop-filter: blur(12px);\n}\n.glow-text {\n  font-size: 2rem;\n  font-weight: 700;\n  background: linear-gradient(135deg, #fff, #a5b4fc, #38bdf8);\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  margin-bottom: 8px;\n}\n.desc-text {\n  color: #94a3b8;\n  font-size: 0.9rem;\n}',
-    'app.js': '// AetherSpace Runtime Engine\nconsole.log("AetherSpace Sandbox initialisiert (144Hz Uncapped).");\n'
+    'index.html': '',
+    'styles.css': '',
+    'app.js': ''
   };
 
   const STATE = {
@@ -25,12 +26,12 @@
       'app.js': true
     },
     stages: [
-      { id: 1, name: 'Principal Architect', provider: 'gemini', model: 'Google Gemini 2.5 Flash', role: 'Entwurf' },
+      { id: 1, name: 'Principal Architect', provider: 'gemini', model: 'Google Gemini 3.6 Flash', role: 'Entwurf' },
       { id: 2, name: 'Security & Perf Auditor', provider: 'groq', model: 'Groq Llama 3.3 70B', role: 'Audit' },
-      { id: 3, name: 'Code Synthesizer', provider: 'openrouter', model: 'DeepSeek R1 / Gemini', role: 'Synthese' }
+      { id: 3, name: 'Code Synthesizer', provider: 'gemini', model: 'Google Gemini 3.7 Flash', role: 'Synthese' }
     ],
     settings: {
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.6-flash',
       thinkingLevel: 'high',
       searchGrounding: true,
       autoPilot: true,
@@ -98,7 +99,7 @@
       combined.set(salt, 0);
       combined.set(iv, salt.length);
       combined.set(new Uint8Array(cipher), salt.length + iv.length);
-      return btoa(String.fromCharCode(...combined));
+      return btoa(String.fromCharCode.apply(null, Array.from(combined)));
     },
 
     async decrypt(encryptedBase64, passphrase = 'aetherspace-vault-2026') {
@@ -184,7 +185,8 @@
 
     getKey(provider) {
       const pool = STATE.settings.vault[provider] || [];
-      for (const k of pool) {
+      for (let i = 0; i < pool.length; i++) {
+        const k = pool[i];
         if (k && k.trim()) return k.trim();
       }
       return null;
@@ -192,7 +194,7 @@
   };
 
   /* ==========================================================================
-     3. NATIVE CLIENT-SIDE ZIP BUILDER
+     3. NATIVE CLIENT-SIDE ZIP BUILDER (RFC 1951 / ZERO-DEPENDENCY)
      ========================================================================== */
   const NativeZip = {
     crcTable: (function() {
@@ -222,7 +224,8 @@
       const centralHeaders = [];
       let offset = 0;
 
-      for (const file of fileEntries) {
+      for (let i = 0; i < fileEntries.length; i++) {
+        const file = fileEntries[i];
         const nameBytes = enc.encode(file.name);
         const dataBytes = enc.encode(file.content);
         const crc = this.crc32(dataBytes);
@@ -249,15 +252,15 @@
         const cView = new DataView(centralHeader.buffer);
         cView.setUint32(0, 0x02014b50, true);
         cView.setUint16(4, 20, true);
-        cView.setUint16(6, 20, true);
-        cView.setUint16(8, 0x0800, true);
-        cView.setUint16(10, 0, true);
+        cView.setUint16(6, 0x0800, true);
+        cView.setUint16(8, 0, true);
+        cView.setUint16(10, 0x546b, true);
         cView.setUint16(12, 0x546b, true);
-        cView.setUint16(14, 0x546b, true);
-        cView.setUint32(16, crc, true);
-        cView.setUint32(20, size, true);
-        cView.setUint32(24, size, true);
-        cView.setUint16(28, nameBytes.length, true);
+        cView.setUint32(14, crc, true);
+        cView.setUint32(18, size, true);
+        cView.setUint32(22, size, true);
+        cView.setUint16(26, nameBytes.length, true);
+        cView.setUint16(28, 0, true);
         cView.setUint16(30, 0, true);
         cView.setUint16(32, 0, true);
         cView.setUint16(34, 0, true);
@@ -272,7 +275,7 @@
 
       const centralDirOffset = offset;
       let centralDirSize = 0;
-      for (const ch of centralHeaders) centralDirSize += ch.length;
+      for (let j = 0; j < centralHeaders.length; j++) centralDirSize += centralHeaders[j].length;
 
       const eocd = new Uint8Array(22);
       const eView = new DataView(eocd.buffer);
@@ -288,13 +291,13 @@
       const totalSize = offset + centralDirSize + 22;
       const finalZip = new Uint8Array(totalSize);
       let cur = 0;
-      for (const lh of localHeaders) {
-        finalZip.set(lh, cur);
-        cur += lh.length;
+      for (let k = 0; k < localHeaders.length; k++) {
+        finalZip.set(localHeaders[k], cur);
+        cur += localHeaders[k].length;
       }
-      for (const ch of centralHeaders) {
-        finalZip.set(ch, cur);
-        cur += ch.length;
+      for (let m = 0; m < centralHeaders.length; m++) {
+        finalZip.set(centralHeaders[m], cur);
+        cur += centralHeaders[m].length;
       }
       finalZip.set(eocd, cur);
 
@@ -303,44 +306,58 @@
   };
 
   /* ==========================================================================
-     4. REAL CLOUD-AI API CLIENT (GEMINI, GROQ, HUGGING FACE, OPENROUTER)
+     4. REAL CLOUD-AI API CLIENT & AUSFALLSICHERE CASCADE
      ========================================================================== */
   const AIClient = {
     async callGemini(prompt, systemInstruction, key, searchGrounding = true, modelOverride = null) {
-      const targetModel = modelOverride || STATE.settings.model || 'gemini-2.0-flash';
-      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + targetModel + ':generateContent?key=' + key;
-      const payload = {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: STATE.settings.temperature,
-          maxOutputTokens: STATE.settings.maxOutputTokens
+      const modelsToTry = modelOverride ? [modelOverride, 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-1.5-flash'] : ['gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-1.5-flash'];
+      let lastErr = null;
+
+      for (let i = 0; i < modelsToTry.length; i++) {
+        const targetModel = modelsToTry[i];
+        try {
+          const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + targetModel + ':generateContent?key=' + key;
+          const payload = {
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: STATE.settings.temperature,
+              maxOutputTokens: STATE.settings.maxOutputTokens
+            }
+          };
+
+          if (systemInstruction) {
+            payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+          }
+
+          if (searchGrounding) {
+            payload.tools = [{ googleSearch: {} }];
+          }
+
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error('Gemini API Error (' + targetModel + ' - ' + res.status + '): ' + errText);
+          }
+
+          const data = await res.json();
+          if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+            return data.candidates[0].content.parts[0].text;
+          }
+        } catch (err) {
+          lastErr = err;
+          console.warn('[Cascade Fallback] ' + targetModel + ' fehlgeschlagen. Probiere naechstes Modell...', err.message);
         }
-      };
-
-      if (systemInstruction) {
-        payload.systemInstruction = { parts: [{ text: systemInstruction }] };
       }
-
-      if (searchGrounding) {
-        payload.tools = [{ googleSearch: {} }];
-      }
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error('Gemini API Error (' + res.status + '): ' + errText);
-      }
-
-      const data = await res.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      throw lastErr || new Error('Alle Gemini-Modell-Endpunkte fehlgeschlagen.');
     },
 
-    async callGroq(prompt, systemInstruction, key) {
+    async callGroq(prompt, systemInstruction, key, modelOverride = null) {
+      const targetModel = modelOverride || 'llama-3.3-70b-versatile';
       const url = 'https://api.groq.com/openai/v1/chat/completions';
       const messages = [];
       if (systemInstruction) messages.push({ role: 'system', content: systemInstruction });
@@ -353,7 +370,7 @@
           'Authorization': 'Bearer ' + key
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: targetModel,
           messages: messages,
           temperature: STATE.settings.temperature,
           max_tokens: Math.min(STATE.settings.maxOutputTokens, 8192)
@@ -366,7 +383,7 @@
       }
 
       const data = await res.json();
-      return data.choices?.[0]?.message?.content || '';
+      return data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
     },
 
     async callHuggingFace(prompt, systemInstruction, key) {
@@ -389,7 +406,7 @@
       }
 
       const data = await res.json();
-      if (Array.isArray(data) && data[0]?.generated_text) {
+      if (Array.isArray(data) && data[0] && data[0].generated_text) {
         return data[0].generated_text.replace(/<assistant>/g, '').trim();
       }
       return typeof data === 'string' ? data : JSON.stringify(data);
@@ -422,7 +439,7 @@
       }
 
       const data = await res.json();
-      return data.choices?.[0]?.message?.content || '';
+      return data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
     },
 
     async dispatchAgent(stage, prompt, context, systemPersona) {
@@ -430,27 +447,56 @@
       const provider = stage.provider;
       const key = Vault.getKey(provider);
 
+      // Primärer Pfad
       if (provider === 'gemini' && key) {
-        return await this.callGemini(fullPrompt, systemPersona, key, STATE.settings.searchGrounding);
+        try {
+          return await this.callGemini(fullPrompt, systemPersona, key, STATE.settings.searchGrounding, STATE.settings.model);
+        } catch (e) {
+          console.warn('[Dispatch] Gemini primär fehlgeschlagen, starte Kaskade...');
+        }
       } else if (provider === 'groq' && key) {
-        return await this.callGroq(fullPrompt, systemPersona, key);
+        try {
+          return await this.callGroq(fullPrompt, systemPersona, key);
+        } catch (e) {
+          console.warn('[Dispatch] Groq primär fehlgeschlagen, starte Kaskade...');
+        }
       } else if (provider === 'hf' && key) {
-        return await this.callHuggingFace(fullPrompt, systemPersona, key);
+        try {
+          return await this.callHuggingFace(fullPrompt, systemPersona, key);
+        } catch (e) {
+          console.warn('[Dispatch] HF primär fehlgeschlagen, starte Kaskade...');
+        }
       } else if (provider === 'openrouter' && key) {
-        return await this.callOpenRouter(fullPrompt, systemPersona, key);
+        try {
+          return await this.callOpenRouter(fullPrompt, systemPersona, key);
+        } catch (e) {
+          console.warn('[Dispatch] OpenRouter primär fehlgeschlagen, starte Kaskade...');
+        }
       }
 
-      // Exhaustive Fallback Cascade
+      // Exhaustive Fallback Cascade (Key 1 -> Key 2 -> Key 3 -> OpenRouter Free Mesh)
       const geminiKey = Vault.getKey('gemini');
-      if (geminiKey) return await this.callGemini(fullPrompt, systemPersona, geminiKey, STATE.settings.searchGrounding);
+      if (geminiKey) {
+        try {
+          return await this.callGemini(fullPrompt, systemPersona, geminiKey, STATE.settings.searchGrounding, 'gemini-3.6-flash');
+        } catch (e) {}
+      }
 
       const groqKey = Vault.getKey('groq');
-      if (groqKey) return await this.callGroq(fullPrompt, systemPersona, groqKey);
+      if (groqKey) {
+        try {
+          return await this.callGroq(fullPrompt, systemPersona, groqKey);
+        } catch (e) {}
+      }
 
       const hfKey = Vault.getKey('hf');
-      if (hfKey) return await this.callHuggingFace(fullPrompt, systemPersona, hfKey);
+      if (hfKey) {
+        try {
+          return await this.callHuggingFace(fullPrompt, systemPersona, hfKey);
+        } catch (e) {}
+      }
 
-      // OpenRouter Free Mesh
+      // OpenRouter Free Mesh Fallback
       return await this.callOpenRouter(fullPrompt, systemPersona, Vault.getKey('openrouter'));
     }
   };
@@ -495,13 +541,14 @@
         '      error: { message: "Unhandled Promise: " + event.reason, line: 0, col: 0, stack: event.reason ? event.reason.stack : "" }' +
         '    }, "*");' +
         '  });' +
-        '  ["log", "info", "warn", "error"].forEach(level => {' +
+        '  ["log", "info", "warn", "error"].forEach(function(level) {' +
         '    const original = console[level];' +
-        '    console[level] = function(...args) {' +
+        '    console[level] = function() {' +
+        '      const args = Array.prototype.slice.call(arguments);' +
         '      window.parent.postMessage({' +
         '        type: "AETHER_CONSOLE",' +
         '        level: level,' +
-        '        message: args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ")' +
+        '        message: args.map(function(a) { return typeof a === "object" ? JSON.stringify(a) : String(a); }).join(" ")' +
         '      }, "*");' +
         '      original.apply(console, args);' +
         '    };' +
@@ -620,14 +667,14 @@
       try {
         // Phase 1: Entwurf (Principal Architect)
         UI.addDebateMessage(STATE.stages[0].model, 'Architektur-Entwurf & State-Modellierung wird berechnet...', 'Entwurf', 'architect');
-        const archPrompt = 'Entwirf die Software-Architektur für: "' + userPrompt + '". Plane Performance für 144Hz Uncapped RAF, DOM-Struktur und State-Lifecycle.';
+        const archPrompt = 'Entwirf die Software-Architektur für: "' + userPrompt + '". Plane Performance für 144Hz Uncapped RAF, Canvas/WebGL Lifecycle und Steuerung.';
         const archResponse = await AIClient.dispatchAgent(STATE.stages[0], archPrompt, contextStr, STATE.settings.systemPrompt);
         UI.addDebateMessage(STATE.stages[0].model, archResponse, 'Entwurf Abgeschlossen', 'architect');
 
         // Phase 2: Audit (Security & Perf Auditor)
         UI.addDebateMessage(STATE.stages[1].model, 'Führe Sicherheits- & Performance-Audit durch...', 'Audit', 'auditor');
-        const auditPrompt = 'Überprüfe folgenden Architekturentwurf auf Schwachstellen und Memory-Leaks:\n\n' + archResponse;
-        const auditResponse = await AIClient.dispatchAgent(STATE.stages[1], auditPrompt, contextStr, 'Du bist der Sicherheits- und Performance-Auditor. Prüfe auf 144Hz Effizienz, Zero-Trust und WCAG AAA.');
+        const auditPrompt = 'Überprüfe folgenden Architekturentwurf auf Schwachstellen, Kollisionsgenauigkeit und Memory-Leaks:\n\n' + archResponse;
+        const auditResponse = await AIClient.dispatchAgent(STATE.stages[1], auditPrompt, contextStr, 'Du bist der Sicherheits- und Performance-Auditor. Prüfe auf 144Hz Effizienz, Zero-Trust und saubere Steuerung.');
         UI.addDebateMessage(STATE.stages[1].model, auditResponse, 'Audit Abgeschlossen', 'auditor');
 
         // Phase 3: Synthese (Code Synthesizer)
@@ -676,7 +723,7 @@
   const Healer = {
     async heal() {
       if (STATE.runtime.errors.length === 0) {
-        Toast.show('✨ Keine Fehler vorhanden. Codebasis ist in perfektem Zustand.');
+        Toast.show('✨ Keine Fehler vorhanden. Codebasis ist in fehlerfreiem Zustand.');
         return;
       }
 
@@ -689,13 +736,13 @@
         toast.classList.add('active');
       }
 
-      const errorReport = STATE.runtime.errors.map(e => 'Fehler: ' + e.message + ' in Zeile ' + e.line).join('\n');
+      const errorReport = STATE.runtime.errors.map(function(e) { return 'Fehler: ' + e.message + ' in Zeile ' + e.line; }).join('\n');
       const healPrompt = 'Behebe folgende Laufzeitfehler:\n\nFEHLERBERICHT:\n' + errorReport + '\n\nAktueller Code:\nindex.html:\n' + STATE.files['index.html'] + '\n\nstyles.css:\n' + STATE.files['styles.css'] + '\n\napp.js:\n' + STATE.files['app.js'] + '\n\nGib den reparierten Code in html, css, javascript Blöcken aus.';
 
       try {
         const healedResponse = await AIClient.dispatchAgent(STATE.stages[2], healPrompt, '', 'Du bist der Polyglot Healer. Repariere Fehler ohne funktionale Regressionen.');
         const extracted = Pipeline.extractCodeBlocks(healedResponse);
-        ['index.html', 'styles.css', 'app.js'].forEach(fn => {
+        ['index.html', 'styles.css', 'app.js'].forEach(function(fn) {
           if (extracted[fn]) STATE.files[fn] = extracted[fn];
         });
 
@@ -708,7 +755,7 @@
         if (toast) {
           toastTitle.textContent = 'Code erfolgreich geheilt';
           toastMsg.textContent = 'Patch angewendet. Sandbox neu geladen.';
-          setTimeout(() => toast.classList.remove('active'), 2500);
+          setTimeout(function() { toast.classList.remove('active'); }, 2500);
         }
         Toast.show('🛡️ Code autonom repariert.');
       } catch (e) {
@@ -778,12 +825,14 @@
         'project[files][index.js]': STATE.files['app.js'] || ''
       };
 
-      for (const [key, val] of Object.entries(fileData)) {
-        const inp = document.createElement('input');
-        inp.type = 'hidden';
-        inp.name = key;
-        inp.value = val;
-        form.appendChild(inp);
+      for (const key in fileData) {
+        if (fileData.hasOwnProperty(key)) {
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = key;
+          inp.value = fileData[key];
+          form.appendChild(inp);
+        }
       }
 
       document.body.appendChild(form);
@@ -815,7 +864,9 @@
 
     exportZip() {
       const name = this.getExportName();
-      const entries = Object.entries(STATE.files).map(([fileName, content]) => ({ name: fileName, content }));
+      const entries = Object.keys(STATE.files).map(function(fileName) {
+        return { name: fileName, content: STATE.files[fileName] };
+      });
       entries.push({
         name: 'README.md',
         content: '# ' + name + '\n\nErstellt mit dem AetherSpace 3-Spalten Multi-KI Studio.\n\nEinfach index.html im Browser öffnen.'
@@ -853,7 +904,7 @@
       if (!container) return;
       container.innerHTML = '';
 
-      STATE.stages.forEach((stage, idx) => {
+      STATE.stages.forEach(function(stage, idx) {
         const card = document.createElement('div');
         card.className = 'stage-card';
         card.innerHTML = '<div class="stage-info">' +
@@ -869,13 +920,13 @@
       if (!list) return;
       list.innerHTML = '';
 
-      Object.keys(STATE.files).forEach(filename => {
+      Object.keys(STATE.files).forEach(function(filename) {
         const item = document.createElement('div');
         item.className = 'filetree-item ' + (filename === STATE.activeFile ? 'active' : '');
         const icon = filename.endsWith('.html') ? '🌐' : filename.endsWith('.css') ? '🎨' : filename.endsWith('.js') ? '📜' : '📄';
         item.innerHTML = '<span>' + icon + ' ' + filename + '</span>' +
           '<span style="font-size:10px; color:#64748b;">' + STATE.files[filename].length + ' B</span>';
-        item.addEventListener('click', () => {
+        item.addEventListener('click', function() {
           UI.switchFile(filename);
         });
         list.appendChild(item);
@@ -887,13 +938,13 @@
       if (!container) return;
       container.innerHTML = '';
 
-      Object.keys(STATE.files).forEach(filename => {
+      Object.keys(STATE.files).forEach(function(filename) {
         const label = document.createElement('label');
         label.className = 'context-file-item';
         const isChecked = !!STATE.inContextFiles[filename];
         label.innerHTML = '<input type="checkbox" data-ctx-file="' + filename + '" ' + (isChecked ? 'checked' : '') + '>' +
           '<span>' + filename + '</span>';
-        label.querySelector('input').addEventListener('change', (e) => {
+        label.querySelector('input').addEventListener('change', function(e) {
           STATE.inContextFiles[filename] = e.target.checked;
           UI.updateContextCount();
         });
@@ -906,7 +957,7 @@
       if (!bar) return;
       bar.innerHTML = '';
 
-      Object.keys(STATE.files).forEach(filename => {
+      Object.keys(STATE.files).forEach(function(filename) {
         const tab = document.createElement('div');
         tab.className = 'editor-tab ' + (filename === STATE.activeFile ? 'active' : '');
         const icon = filename.endsWith('.html') ? '🌐' : filename.endsWith('.css') ? '🎨' : filename.endsWith('.js') ? '📜' : '📄';
@@ -914,7 +965,7 @@
           '<span>' + filename + '</span>' +
           '<span class="tab-close-btn" data-close-tab="' + filename + '">✕</span>';
 
-        tab.addEventListener('click', (e) => {
+        tab.addEventListener('click', function(e) {
           if (e.target.classList.contains('tab-close-btn')) {
             e.stopPropagation();
             UI.deleteFile(filename);
@@ -930,7 +981,7 @@
       addBtn.className = 'btn-mini';
       addBtn.style.marginLeft = '4px';
       addBtn.textContent = '+ Datei';
-      addBtn.addEventListener('click', () => UI.addNewFile());
+      addBtn.addEventListener('click', function() { UI.addNewFile(); });
       bar.appendChild(addBtn);
     },
 
@@ -957,8 +1008,8 @@
       const editor = document.getElementById('code-editor');
       const linesEl = document.getElementById('line-numbers');
       if (!editor || !linesEl) return;
-      const count = editor.value.split('\n').length;
-      linesEl.innerHTML = Array.from({ length: count }, (_, i) => i + 1).join('<br>');
+      const count = Math.max(1, editor.value.split('\n').length);
+      linesEl.innerHTML = Array.from({ length: count }, function(_, i) { return i + 1; }).join('<br>');
     },
 
     updateCharCount() {
@@ -971,9 +1022,10 @@
     updateContextCount() {
       const tokenEl = document.getElementById('context-tokens-badge');
       if (!tokenEl) return;
-      const activeList = Object.keys(STATE.inContextFiles).filter(k => STATE.inContextFiles[k]);
+      const activeList = Object.keys(STATE.inContextFiles).filter(function(k) { return STATE.inContextFiles[k]; });
       let totalChars = 0;
-      for (const k of activeList) {
+      for (let i = 0; i < activeList.length; i++) {
+        const k = activeList[i];
         if (STATE.files[k]) totalChars += STATE.files[k].length;
       }
       const tokEstimate = Math.round(totalChars / 3.8);
@@ -983,8 +1035,8 @@
     updateVaultLabel() {
       const lbl = document.getElementById('key-vault-count-label');
       if (!lbl) return;
-      const totalKeys = ['gemini', 'groq', 'hf', 'openrouter'].reduce((acc, p) => {
-        return acc + (STATE.settings.vault[p] ? STATE.settings.vault[p].filter(k => k && k.trim()).length : 0);
+      const totalKeys = ['gemini', 'groq', 'hf', 'openrouter'].reduce(function(acc, p) {
+        return acc + (STATE.settings.vault[p] ? STATE.settings.vault[p].filter(function(k) { return k && k.trim(); }).length : 0);
       }, 0);
       lbl.textContent = totalKeys > 0 ? totalKeys + ' Keys Aktiv' : 'Free Mesh Aktiv';
     },
@@ -1005,7 +1057,7 @@
       if (name && name.trim()) {
         const cleanName = name.trim();
         if (!STATE.files[cleanName]) {
-          STATE.files[cleanName] = '// ' + cleanName + '\n';
+          STATE.files[cleanName] = '';
           STATE.inContextFiles[cleanName] = true;
           this.renderTabs();
           this.renderFileTree();
@@ -1041,10 +1093,11 @@
 
       const msg = document.createElement('div');
       msg.className = 'agent-msg ' + type;
+      const cleanText = text.replace(new RegExp(String.fromCharCode(96), 'g'), '');
       msg.innerHTML = '<div class="agent-msg-header">' +
         '<span class="agent-name">' + sender + '</span>' +
         '<span class="agent-phase-badge">' + phase + '</span>' +
-        '</div><p>' + text.replace(/`/g, '') + '</p>';
+        '</div><p>' + cleanText + '</p>';
       feed.appendChild(msg);
       feed.scrollTop = feed.scrollHeight;
     },
@@ -1060,7 +1113,7 @@
       list.appendChild(entry);
       list.scrollTop = list.scrollHeight;
 
-      STATE.runtime.logs.push({ level, msg });
+      STATE.runtime.logs.push({ level: level, msg: msg });
       if (countPill) countPill.textContent = STATE.runtime.logs.length;
     },
 
@@ -1070,7 +1123,7 @@
         try {
           STATE.user = JSON.parse(stored);
           const av = document.getElementById('user-avatar-initials');
-          if (av) av.textContent = STATE.user.name.charAt(0).toUpperCase();
+          if (av && STATE.user && STATE.user.name) av.textContent = STATE.user.name.charAt(0).toUpperCase();
         } catch (e) {}
       }
     },
@@ -1080,32 +1133,32 @@
       const toggleTreeBtn = document.getElementById('toggle-filetree-btn');
       const treeDrawer = document.getElementById('filetree-drawer');
       if (toggleTreeBtn && treeDrawer) {
-        toggleTreeBtn.addEventListener('click', () => {
+        toggleTreeBtn.addEventListener('click', function() {
           treeDrawer.classList.toggle('open');
         });
       }
 
       const explorerAddBtn = document.getElementById('explorer-add-file-btn');
       if (explorerAddBtn) {
-        explorerAddBtn.addEventListener('click', () => UI.addNewFile());
+        explorerAddBtn.addEventListener('click', function() { UI.addNewFile(); });
       }
 
       // Editor Input
       const editor = document.getElementById('code-editor');
       if (editor) {
-        editor.addEventListener('input', () => {
+        editor.addEventListener('input', function() {
           STATE.files[STATE.activeFile] = editor.value;
           UI.updateLineNumbers();
           UI.updateCharCount();
           UI.updateContextCount();
         });
 
-        editor.addEventListener('scroll', () => {
+        editor.addEventListener('scroll', function() {
           const lines = document.getElementById('line-numbers');
           if (lines) lines.scrollTop = editor.scrollTop;
         });
 
-        editor.addEventListener('keydown', (e) => {
+        editor.addEventListener('keydown', function(e) {
           if (e.key === 'Tab') {
             e.preventDefault();
             const start = editor.selectionStart;
@@ -1120,7 +1173,7 @@
       // Launch Pipeline Button & Input
       const launchBtn = document.getElementById('launch-pipeline-btn');
       const promptInput = document.getElementById('pipeline-prompt-input');
-      const triggerPipeline = () => {
+      const triggerPipeline = function() {
         if (promptInput) {
           const val = promptInput.value.trim();
           if (val) {
@@ -1132,7 +1185,7 @@
       if (launchBtn) launchBtn.addEventListener('click', triggerPipeline);
 
       if (promptInput) {
-        promptInput.addEventListener('keydown', (e) => {
+        promptInput.addEventListener('keydown', function(e) {
           if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             triggerPipeline();
@@ -1143,7 +1196,7 @@
       // Clear Debate Feed
       const clearDebate = document.getElementById('clear-debate-btn');
       if (clearDebate) {
-        clearDebate.addEventListener('click', () => {
+        clearDebate.addEventListener('click', function() {
           const feed = document.getElementById('debate-messages-feed');
           if (feed) feed.innerHTML = '';
         });
@@ -1152,7 +1205,7 @@
       // Project Title Input
       const titleInput = document.getElementById('project-title-input');
       if (titleInput) {
-        titleInput.addEventListener('change', () => {
+        titleInput.addEventListener('change', function() {
           STATE.projectName = titleInput.value.trim() || 'AetherSpace-Project';
           const exportInput = document.getElementById('live-export-name');
           if (exportInput) exportInput.value = STATE.projectName;
@@ -1164,10 +1217,10 @@
       const copyBtn = document.getElementById('copy-code-btn');
       const clearCodeBtn = document.getElementById('clear-code-btn');
       if (formatBtn) {
-        formatBtn.addEventListener('click', () => Toast.show('✨ Code formatiert'));
+        formatBtn.addEventListener('click', function() { Toast.show('✨ Code formatiert'); });
       }
       if (copyBtn) {
-        copyBtn.addEventListener('click', () => {
+        copyBtn.addEventListener('click', function() {
           if (editor) {
             navigator.clipboard.writeText(editor.value);
             Toast.show('📋 In Zwischenablage kopiert');
@@ -1175,7 +1228,7 @@
         });
       }
       if (clearCodeBtn) {
-        clearCodeBtn.addEventListener('click', () => {
+        clearCodeBtn.addEventListener('click', function() {
           if (editor) {
             editor.value = '';
             STATE.files[STATE.activeFile] = '';
@@ -1187,7 +1240,7 @@
 
       // Auto-Heal Trigger
       const healBtn = document.getElementById('auto-heal-btn');
-      if (healBtn) healBtn.addEventListener('click', () => Healer.heal());
+      if (healBtn) healBtn.addEventListener('click', function() { Healer.heal(); });
 
       // Master Pills & Drawer Toggles
       const settingsToggle = document.getElementById('settings-drawer-toggle');
@@ -1198,11 +1251,11 @@
       const keyVaultTrigger = document.getElementById('key-vault-trigger');
       const autopilotPill = document.getElementById('autopilot-pill-trigger');
 
-      if (settingsToggle) settingsToggle.addEventListener('click', () => settingsSidebar.classList.toggle('open'));
-      if (closeSettings) closeSettings.addEventListener('click', () => settingsSidebar.classList.remove('open'));
+      if (settingsToggle) settingsToggle.addEventListener('click', function() { settingsSidebar.classList.toggle('open'); });
+      if (closeSettings) closeSettings.addEventListener('click', function() { settingsSidebar.classList.remove('open'); });
 
       if (thinkingPill) {
-        thinkingPill.addEventListener('click', () => {
+        thinkingPill.addEventListener('click', function() {
           const levels = ['high', 'medium', 'fast'];
           let curIdx = levels.indexOf(STATE.settings.thinkingLevel);
           STATE.settings.thinkingLevel = levels[(curIdx + 1) % levels.length];
@@ -1211,7 +1264,7 @@
       }
 
       if (groundingPill) {
-        groundingPill.addEventListener('click', () => {
+        groundingPill.addEventListener('click', function() {
           STATE.settings.searchGrounding = !STATE.settings.searchGrounding;
           groundingPill.classList.toggle('toggle-active', STATE.settings.searchGrounding);
           const lbl = document.getElementById('grounding-label');
@@ -1222,7 +1275,7 @@
       }
 
       if (autopilotPill) {
-        autopilotPill.addEventListener('click', () => {
+        autopilotPill.addEventListener('click', function() {
           STATE.settings.autoPilot = !STATE.settings.autoPilot;
           autopilotPill.classList.toggle('toggle-active', STATE.settings.autoPilot);
           const lbl = document.getElementById('autopilot-label');
@@ -1233,7 +1286,7 @@
       // Drawer Settings Listeners
       const modelSelect = document.getElementById('settings-model-select');
       if (modelSelect) {
-        modelSelect.addEventListener('change', () => {
+        modelSelect.addEventListener('change', function() {
           STATE.settings.model = modelSelect.value;
           Toast.show('Primäres Modell: ' + modelSelect.options[modelSelect.selectedIndex].text);
         });
@@ -1242,7 +1295,7 @@
       const maxTokSlider = document.getElementById('max-tokens-slider');
       const maxTokVal = document.getElementById('max-tokens-val');
       if (maxTokSlider && maxTokVal) {
-        maxTokSlider.addEventListener('input', () => {
+        maxTokSlider.addEventListener('input', function() {
           STATE.settings.maxOutputTokens = parseInt(maxTokSlider.value, 10);
           maxTokVal.textContent = STATE.settings.maxOutputTokens.toLocaleString();
         });
@@ -1251,7 +1304,7 @@
       const tempSlider = document.getElementById('temperature-slider');
       const tempVal = document.getElementById('temperature-val');
       if (tempSlider && tempVal) {
-        tempSlider.addEventListener('input', () => {
+        tempSlider.addEventListener('input', function() {
           STATE.settings.temperature = parseFloat(tempSlider.value);
           tempVal.textContent = STATE.settings.temperature.toFixed(2);
         });
@@ -1259,14 +1312,14 @@
 
       const sysPromptInp = document.getElementById('system-prompt-input');
       if (sysPromptInp) {
-        sysPromptInp.addEventListener('input', () => {
+        sysPromptInp.addEventListener('input', function() {
           STATE.settings.systemPrompt = sysPromptInp.value;
         });
       }
 
       // Drawer Tier Pills
-      document.querySelectorAll('.tier-pill-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+      document.querySelectorAll('.tier-pill-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
           STATE.settings.thinkingLevel = btn.dataset.level;
           UI.updateThinkingUI();
         });
@@ -1279,7 +1332,7 @@
       const authModal = document.getElementById('auth-modal');
       const shareModal = document.getElementById('share-modal');
 
-      if (keyVaultTrigger) keyVaultTrigger.addEventListener('click', () => {
+      if (keyVaultTrigger) keyVaultTrigger.addEventListener('click', function() {
         vaultModal.classList.add('active');
         Vault.renderTable();
       });
@@ -1288,11 +1341,11 @@
       const authBtn = document.getElementById('auth-btn');
       const shareBtn = document.getElementById('share-modal-btn');
 
-      if (stagingModalBtn) stagingModalBtn.addEventListener('click', () => stagingModal.classList.add('active'));
-      if (exportModalBtn) exportModalBtn.addEventListener('click', () => exportModal.classList.add('active'));
-      if (shareBtn) shareBtn.addEventListener('click', () => shareModal.classList.add('active'));
+      if (stagingModalBtn) stagingModalBtn.addEventListener('click', function() { stagingModal.classList.add('active'); });
+      if (exportModalBtn) exportModalBtn.addEventListener('click', function() { exportModal.classList.add('active'); });
+      if (shareBtn) shareBtn.addEventListener('click', function() { shareModal.classList.add('active'); });
       if (authBtn) {
-        authBtn.addEventListener('click', () => {
+        authBtn.addEventListener('click', function() {
           authModal.classList.add('active');
           if (STATE.user) {
             document.getElementById('auth-main-view').style.display = 'none';
@@ -1309,18 +1362,18 @@
         });
       }
 
-      document.querySelectorAll('.modal-close-btn, .modal-backdrop').forEach(el => {
-        el.addEventListener('click', (e) => {
+      document.querySelectorAll('.modal-close-btn, .modal-backdrop').forEach(function(el) {
+        el.addEventListener('click', function(e) {
           if (e.target === el) {
-            document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('.modal-backdrop').forEach(function(m) { m.classList.remove('active'); });
           }
         });
       });
 
       // Vault Tabs
-      document.querySelectorAll('.vault-tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.vault-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.vault-tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.vault-tab-btn').forEach(function(b) { b.classList.remove('active'); });
           btn.classList.add('active');
           STATE.settings.vaultTab = btn.dataset.vtab;
           Vault.renderTable();
@@ -1330,7 +1383,7 @@
       // Save Vault Keys
       const saveVaultBtn = document.getElementById('save-vault-btn');
       if (saveVaultBtn) {
-        saveVaultBtn.addEventListener('click', () => {
+        saveVaultBtn.addEventListener('click', function() {
           Vault.saveVault();
           vaultModal.classList.remove('active');
         });
@@ -1344,12 +1397,12 @@
       const sHf = document.getElementById('stage-hf-btn');
       const sSb = document.getElementById('stage-stackblitz-btn');
 
-      if (qPen) qPen.addEventListener('click', () => CloudStaging.stageCodePen());
-      if (qHf) qHf.addEventListener('click', () => CloudStaging.stageHuggingFace());
-      if (qSb) qSb.addEventListener('click', () => CloudStaging.stageStackBlitz());
-      if (sPen) sPen.addEventListener('click', () => CloudStaging.stageCodePen());
-      if (sHf) sHf.addEventListener('click', () => CloudStaging.stageHuggingFace());
-      if (sSb) sSb.addEventListener('click', () => CloudStaging.stageStackBlitz());
+      if (qPen) qPen.addEventListener('click', function() { CloudStaging.stageCodePen(); });
+      if (qHf) qHf.addEventListener('click', function() { CloudStaging.stageHuggingFace(); });
+      if (qSb) qSb.addEventListener('click', function() { CloudStaging.stageStackBlitz(); });
+      if (sPen) sPen.addEventListener('click', function() { CloudStaging.stageCodePen(); });
+      if (sHf) sHf.addEventListener('click', function() { CloudStaging.stageHuggingFace(); });
+      if (sSb) sSb.addEventListener('click', function() { CloudStaging.stageStackBlitz(); });
 
       // Smart Export Triggers
       const qHtml = document.getElementById('quick-html-export-btn');
@@ -1357,23 +1410,23 @@
       const expHtml = document.getElementById('export-single-html-btn');
       const expZip = document.getElementById('export-zip-btn');
 
-      if (qHtml) qHtml.addEventListener('click', () => SmartExport.exportSingleHTML());
-      if (qZip) qZip.addEventListener('click', () => SmartExport.exportZip());
-      if (expHtml) expHtml.addEventListener('click', () => SmartExport.exportSingleHTML());
-      if (expZip) expZip.addEventListener('click', () => SmartExport.exportZip());
+      if (qHtml) qHtml.addEventListener('click', function() { SmartExport.exportSingleHTML(); });
+      if (qZip) qZip.addEventListener('click', function() { SmartExport.exportZip(); });
+      if (expHtml) expHtml.addEventListener('click', function() { SmartExport.exportSingleHTML(); });
+      if (expZip) expZip.addEventListener('click', function() { SmartExport.exportZip(); });
 
       // Share Triggers
       const shareWa = document.getElementById('share-whatsapp-btn');
       const shareLink = document.getElementById('share-copy-link-btn');
       if (shareWa) {
-        shareWa.addEventListener('click', () => {
+        shareWa.addEventListener('click', function() {
           const text = encodeURIComponent('Schau dir mein AetherSpace Projekt "' + STATE.projectName + '" an: https://aetherspace.pages.dev');
           window.open('https://api.whatsapp.com/send?text=' + text, '_blank');
           shareModal.classList.remove('active');
         });
       }
       if (shareLink) {
-        shareLink.addEventListener('click', () => {
+        shareLink.addEventListener('click', function() {
           navigator.clipboard.writeText('https://aetherspace.pages.dev');
           Toast.show('🔗 Live-Link in Zwischenablage kopiert');
           shareModal.classList.remove('active');
@@ -1393,32 +1446,32 @@
       const signupTab = document.getElementById('auth-tab-signup');
 
       if (loginTab && signupTab) {
-        loginTab.addEventListener('click', () => {
+        loginTab.addEventListener('click', function() {
           loginTab.classList.add('active');
           signupTab.classList.remove('active');
           document.getElementById('auth-email-submit-btn').textContent = 'Anmelde-Code anfordern';
         });
-        signupTab.addEventListener('click', () => {
+        signupTab.addEventListener('click', function() {
           signupTab.classList.add('active');
           loginTab.classList.remove('active');
           document.getElementById('auth-email-submit-btn').textContent = 'Registrierungs-Code anfordern';
         });
       }
 
-      const handleSocialAuth = (provider) => {
+      const handleSocialAuth = function(provider) {
         STATE.user = { name: provider + ' Architect', verified: true };
         localStorage.setItem('aetherspace_user_session', JSON.stringify(STATE.user));
         document.getElementById('user-avatar-initials').textContent = provider.charAt(0);
-        document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('active'));
+        document.querySelectorAll('.modal-backdrop').forEach(function(m) { m.classList.remove('active'); });
         Toast.show('🛡️ Authentifiziert via ' + provider + ' (✓ Persistent Verifiziert)');
       };
 
-      if (googleAuth) googleAuth.addEventListener('click', () => handleSocialAuth('Google'));
-      if (msAuth) msAuth.addEventListener('click', () => handleSocialAuth('Microsoft'));
-      if (appleAuth) appleAuth.addEventListener('click', () => handleSocialAuth('Apple'));
+      if (googleAuth) googleAuth.addEventListener('click', function() { handleSocialAuth('Google'); });
+      if (msAuth) msAuth.addEventListener('click', function() { handleSocialAuth('Microsoft'); });
+      if (appleAuth) appleAuth.addEventListener('click', function() { handleSocialAuth('Apple'); });
 
       if (emailSubmit) {
-        emailSubmit.addEventListener('click', () => {
+        emailSubmit.addEventListener('click', function() {
           const email = document.getElementById('auth-email-input').value.trim();
           if (!email || !email.includes('@')) {
             Toast.show('⚠️ Bitte eine gültige E-Mail-Adresse eingeben.');
@@ -1432,7 +1485,7 @@
       }
 
       if (backToAuth) {
-        backToAuth.addEventListener('click', () => {
+        backToAuth.addEventListener('click', function() {
           document.getElementById('auth-verify-view').style.display = 'none';
           document.getElementById('auth-main-view').style.display = 'block';
           document.getElementById('auth-tab-bar').style.display = 'flex';
@@ -1440,30 +1493,30 @@
       }
 
       if (confirmVerify) {
-        confirmVerify.addEventListener('click', () => {
+        confirmVerify.addEventListener('click', function() {
           const email = document.getElementById('verify-email-display').textContent || 'Entwickler';
           STATE.user = { name: email.split('@')[0], verified: true };
           localStorage.setItem('aetherspace_user_session', JSON.stringify(STATE.user));
           document.getElementById('user-avatar-initials').textContent = STATE.user.name.charAt(0).toUpperCase();
-          document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('active'));
+          document.querySelectorAll('.modal-backdrop').forEach(function(m) { m.classList.remove('active'); });
           Toast.show('🛡️ E-Mail erfolgreich bestätigt (✓ Persistent Verifiziert)');
         });
       }
 
       if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
+        logoutBtn.addEventListener('click', function() {
           STATE.user = null;
           localStorage.removeItem('aetherspace_user_session');
           document.getElementById('user-avatar-initials').textContent = 'AS';
-          document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('active'));
+          document.querySelectorAll('.modal-backdrop').forEach(function(m) { m.classList.remove('active'); });
           Toast.show('Abgemeldet');
         });
       }
 
       // Responsive Device Switcher
-      document.querySelectorAll('.device-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.device-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.device-btn').forEach(function(b) { b.classList.remove('active'); });
           btn.classList.add('active');
           const frame = document.getElementById('preview-frame');
           if (frame) frame.style.width = btn.dataset.size;
@@ -1474,7 +1527,7 @@
       const popBtn = document.getElementById('popout-btn');
       const reloadBtn = document.getElementById('reload-sandbox-btn');
       if (popBtn) {
-        popBtn.addEventListener('click', () => {
+        popBtn.addEventListener('click', function() {
           const win = window.open('', '_blank');
           if (win) {
             win.document.write(Sandbox.bundleCode());
@@ -1482,14 +1535,14 @@
           }
         });
       }
-      if (reloadBtn) reloadBtn.addEventListener('click', () => Sandbox.execute());
+      if (reloadBtn) reloadBtn.addEventListener('click', function() { Sandbox.execute(); });
 
       // Console Controls
       const clearConsole = document.getElementById('clear-console-btn');
       const consoleHeader = document.getElementById('console-header-toggle');
       const consoleDrawer = document.getElementById('console-drawer');
       if (clearConsole) {
-        clearConsole.addEventListener('click', (e) => {
+        clearConsole.addEventListener('click', function(e) {
           e.stopPropagation();
           const list = document.getElementById('console-logs-list');
           if (list) list.innerHTML = '';
@@ -1499,11 +1552,11 @@
         });
       }
       if (consoleHeader) {
-        consoleHeader.addEventListener('click', () => consoleDrawer.classList.toggle('minimized'));
+        consoleHeader.addEventListener('click', function() { consoleDrawer.classList.toggle('minimized'); });
       }
 
       // Global Shortcuts
-      window.addEventListener('keydown', (e) => {
+      window.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
           e.preventDefault();
           Sandbox.execute();
@@ -1516,9 +1569,9 @@
       });
 
       // PostMessage Sandbox Listener
-      window.addEventListener('message', (event) => {
+      window.addEventListener('message', function(event) {
         if (!event.data || typeof event.data !== 'object') return;
-        const { type } = event.data;
+        const type = event.data.type;
 
         if (type === 'AETHER_HEARTBEAT') {
           STATE.runtime.lastHeartbeat = Date.now();
@@ -1548,7 +1601,7 @@
       if (pillLabel) pillLabel.textContent = budgetMap[lvl];
       if (badgeText) badgeText.textContent = lvl.toUpperCase() + ' (' + (lvl === 'high' ? '16,384' : lvl === 'medium' ? '8,192' : '0') + ' tok)';
 
-      document.querySelectorAll('.tier-pill-btn').forEach(btn => {
+      document.querySelectorAll('.tier-pill-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.level === lvl);
       });
     }
@@ -1562,17 +1615,17 @@
       toast.className = 'toast';
       toast.textContent = message;
       container.appendChild(toast);
-      setTimeout(() => {
+      setTimeout(function() {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(10px)';
         toast.style.transition = 'all 0.2s ease';
-        setTimeout(() => toast.remove(), 200);
+        setTimeout(function() { toast.remove(); }, 200);
       }, duration);
     }
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => UI.init());
+    document.addEventListener('DOMContentLoaded', function() { UI.init(); });
   } else {
     UI.init();
   }

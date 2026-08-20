@@ -54,10 +54,10 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`\n======================================================`);
-  console.log(`  🚀 AetherSpace Local Studio: http://127.0.0.1:${PORT}`);
-  console.log(`  ⚡ Auto-Sync Watcher & 144Hz Sandbox Active`);
-  console.log(`======================================================\n`);
+  console.log("\n======================================================");
+  console.log("  AetherSpace Local Studio: http://127.0.0.1:" + PORT);
+  console.log("  Auto-Sync Watcher & 144Hz Sandbox Active");
+  console.log("======================================================\n");
 });
 
 // Auto-Sync Watcher (2.5s Debounce)
@@ -67,7 +67,7 @@ if (fs.existsSync(PUBLIC_DIR)) {
     if (filename && (filename.endsWith('.html') || filename.endsWith('.css') || filename.endsWith('.js'))) {
       clearTimeout(syncTimeout);
       syncTimeout = setTimeout(() => {
-        console.log(`[Auto-Sync] Datei geändert: ${filename}. Führe Git Auto-Commit & Push aus...`);
+        console.log("[Auto-Sync] Datei geaendert: " + filename + ". Fuehre Git Auto-Commit & Push aus...");
         exec('git add -A && git commit -m "auto-sync: workspace update" && git push origin main', { cwd: BASE_DIR }, (err, stdout) => {
           if (err) {
             console.error('[Auto-Sync] Fehler bei Git Sync:', err.message);
