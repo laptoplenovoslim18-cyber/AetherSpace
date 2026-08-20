@@ -1,5 +1,5 @@
 ﻿/**
- * AETHERSPACE SOTA 2026 ENGINE (v4.9.0 LTS)
+ * AETHERSPACE SOTA 2026 ENGINE (v5.1.0 LTS)
  * Real Multi-Agent Cloud-AI Pipeline | 144Hz Sandbox | AES-GCM-256 Vault | Enterprise Auth
  * Zero-Backtick Deterministic JavaScript Engine | Dynamic Fallback Cascade
  */
