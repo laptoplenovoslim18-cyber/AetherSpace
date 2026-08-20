@@ -1,5 +1,5 @@
 ﻿/**
- * AETHERSPACE SOTA 2026 ENGINE (v5.1.0 LTS)
+ * AETHERSPACE ENTERPRISE SOTA 2026 ENGINE (v5.2.0 LTS)
  * Real Multi-Agent Cloud-AI Pipeline | 144Hz Sandbox | AES-GCM-256 Vault | Enterprise Auth
  * Zero-Backtick Deterministic JavaScript Engine | Dynamic Fallback Cascade
  */
@@ -26,9 +26,9 @@
       'app.js': true
     },
     stages: [
-      { id: 1, name: 'Principal Architect', provider: 'gemini', model: 'Google Gemini 3.7 Flash', role: 'Entwurf' },
-      { id: 2, name: 'Security & Perf Auditor', provider: 'groq', model: 'Groq Llama 3.3 70B', role: 'Audit' },
-      { id: 3, name: 'Code Synthesizer', provider: 'gemini', model: 'Google Gemini 3.6 Flash', role: 'Synthese' }
+      { id: 1, name: 'Principal Architect', provider: 'gemini', model: 'gemini-3.7-flash', role: 'Entwurf' },
+      { id: 2, name: 'Security & Perf Auditor', provider: 'groq', model: 'llama-3.3-70b-versatile', role: 'Audit' },
+      { id: 3, name: 'Code Synthesizer', provider: 'gemini', model: 'gemini-3.6-flash', role: 'Synthese' }
     ],
     settings: {
       model: 'gemini-3.7-flash',
@@ -491,13 +491,13 @@
       // TIER 1: Primärer Konfigurierter Pfad
       if (provider === 'gemini' && key) {
         try {
-          return await this.callGemini(fullPrompt, systemPersona, key, STATE.settings.searchGrounding, STATE.settings.model);
+          return await this.callGemini(fullPrompt, systemPersona, key, STATE.settings.searchGrounding, stage.model || STATE.settings.model);
         } catch (e) {
           console.warn('[Dispatch] Gemini primär fehlgeschlagen, starte Kaskade...');
         }
       } else if (provider === 'groq' && key) {
         try {
-          return await this.callGroq(fullPrompt, systemPersona, key);
+          return await this.callGroq(fullPrompt, systemPersona, key, stage.model);
         } catch (e) {
           console.warn('[Dispatch] Groq primär fehlgeschlagen, starte Kaskade...');
         }
@@ -714,44 +714,46 @@
       const contextStr = this.getContextString();
 
       try {
-        // Phase 1: Entwurf (Principal Architect)
-        UI.addDebateMessage(STATE.stages[0].model, 'Architektur-Entwurf & State-Modellierung wird berechnet...', 'Entwurf', 'architect');
-        const archPrompt = 'Entwirf die Software-Architektur für: "' + userPrompt + '". Plane Performance für 144Hz Uncapped RAF, Canvas/WebGL Lifecycle und Steuerung.';
-        const archResponse = await AIClient.dispatchAgent(STATE.stages[0], archPrompt, contextStr, STATE.settings.systemPrompt);
-        UI.addDebateMessage(STATE.stages[0].model, archResponse, 'Entwurf Abgeschlossen', 'architect');
-
-        // Phase 2: Audit (Security & Perf Auditor)
-        UI.addDebateMessage(STATE.stages[1].model, 'Führe Sicherheits- & Performance-Audit durch...', 'Audit', 'auditor');
-        const auditPrompt = 'Überprüfe folgenden Architekturentwurf auf Schwachstellen, Kollisionsgenauigkeit und Memory-Leaks:\n\n' + archResponse;
-        const auditResponse = await AIClient.dispatchAgent(STATE.stages[1], auditPrompt, contextStr, 'Du bist der Sicherheits- und Performance-Auditor. Prüfe auf 144Hz Effizienz, Zero-Trust und saubere Steuerung.');
-        UI.addDebateMessage(STATE.stages[1].model, auditResponse, 'Audit Abgeschlossen', 'auditor');
-
-        // Phase 3: Synthese (Code Synthesizer)
-        UI.addDebateMessage(STATE.stages[2].model, 'Synthetisiere vollständige index.html, styles.css und app.js...', 'Synthese', 'synthesizer');
-        const synthPrompt = 'Generiere vollständigen, produktionsreifen Code für "' + userPrompt + '". Gib den Code in separaten Codeblöcken für index.html, styles.css und app.js aus:\n\nARCHITEKTUR:\n' + archResponse + '\n\nAUDIT-VORGABEN:\n' + auditResponse;
-        const synthResponse = await AIClient.dispatchAgent(STATE.stages[2], synthPrompt, contextStr, 'Du bist der Lead Synthesizer. Gib ausnahmslos vollständigen Code für html, css und javascript aus. Keine Platzhalter.');
-        UI.addDebateMessage(STATE.stages[2].model, 'Code erfolgreich generiert und synchronisiert.', 'Synthese Fertig', 'synthesizer');
-
-        // Apply Code to Workspace
-        const extracted = this.extractCodeBlocks(synthResponse);
-        let updatedCount = 0;
-        ['index.html', 'styles.css', 'app.js'].forEach(fn => {
-          if (extracted[fn]) {
-            STATE.files[fn] = extracted[fn];
-            updatedCount++;
+        let accumulatedContext = '';
+        for (let sIdx = 0; sIdx < STATE.stages.length; sIdx++) {
+          const currentStage = STATE.stages[sIdx];
+          const isLastStage = (sIdx === STATE.stages.length - 1);
+          
+          UI.addDebateMessage(currentStage.name + ' (' + currentStage.model + ')', 'Berechne Stufe #' + (sIdx + 1) + ' [' + currentStage.role + ']...', currentStage.role, 'architect');
+          
+          let stagePrompt = '';
+          if (isLastStage) {
+            stagePrompt = 'Synthetisiere nun den finalen, produktionsreifen Code für "' + userPrompt + '" basierend auf den vorherigen Stufen. Gib den Code in html, css und javascript Codeblöcken aus.\n\nBISHERIGER VERLAUF:\n' + accumulatedContext;
+          } else {
+            stagePrompt = 'Führe deine Aufgabe (' + currentStage.role + ') für folgende Anforderung aus: "' + userPrompt + '".\n\nBISHERIGER VERLAUF:\n' + accumulatedContext;
           }
-        });
 
-        if (updatedCount > 0) {
-          UI.renderTabs();
-          UI.renderFileTree();
-          UI.updateEditor();
-          UI.updateContextCount();
-          Sandbox.execute();
-          Toast.show('✨ ' + updatedCount + ' Dateien live aktualisiert und gerendert');
-        } else {
-          Sandbox.execute();
-          Toast.show('⚡ Pipeline erfolgreich abgeschlossen');
+          const stageResponse = await AIClient.dispatchAgent(currentStage, stagePrompt, contextStr, STATE.settings.systemPrompt);
+          accumulatedContext += '\n--- STUFE ' + (sIdx + 1) + ' (' + currentStage.name + ') ---\n' + stageResponse + '\n';
+          UI.addDebateMessage(currentStage.name, stageResponse, currentStage.role + ' Fertig', isLastStage ? 'synthesizer' : 'auditor');
+
+          if (isLastStage) {
+            const extracted = this.extractCodeBlocks(stageResponse);
+            let updatedCount = 0;
+            ['index.html', 'styles.css', 'app.js'].forEach(fn => {
+              if (extracted[fn]) {
+                STATE.files[fn] = extracted[fn];
+                updatedCount++;
+              }
+            });
+
+            if (updatedCount > 0) {
+              UI.renderTabs();
+              UI.renderFileTree();
+              UI.updateEditor();
+              UI.updateContextCount();
+              Sandbox.execute();
+              Toast.show('✨ ' + updatedCount + ' Dateien live aktualisiert und gerendert');
+            } else {
+              Sandbox.execute();
+              Toast.show('⚡ Pipeline erfolgreich abgeschlossen');
+            }
+          }
         }
 
       } catch (err) {
@@ -789,7 +791,8 @@
       const healPrompt = 'Behebe folgende Laufzeitfehler:\n\nFEHLERBERICHT:\n' + errorReport + '\n\nAktueller Code:\nindex.html:\n' + STATE.files['index.html'] + '\n\nstyles.css:\n' + STATE.files['styles.css'] + '\n\napp.js:\n' + STATE.files['app.js'] + '\n\nGib den reparierten Code in html, css, javascript Blöcken aus.';
 
       try {
-        const healedResponse = await AIClient.dispatchAgent(STATE.stages[2], healPrompt, '', 'Du bist der Polyglot Healer. Repariere Fehler ohne funktionale Regressionen.');
+        const lastStage = STATE.stages[STATE.stages.length - 1] || { provider: 'gemini', model: 'gemini-3.6-flash' };
+        const healedResponse = await AIClient.dispatchAgent(lastStage, healPrompt, '', 'Du bist der Polyglot Healer. Repariere Fehler ohne funktionale Regressionen.');
         const extracted = Pipeline.extractCodeBlocks(healedResponse);
         ['index.html', 'styles.css', 'app.js'].forEach(function(fn) {
           if (extracted[fn]) STATE.files[fn] = extracted[fn];
@@ -956,10 +959,45 @@
       STATE.stages.forEach(function(stage, idx) {
         const card = document.createElement('div');
         card.className = 'stage-card';
-        card.innerHTML = '<div class="stage-info">' +
+        card.innerHTML = '<div class="stage-card-top">' +
+          '<div class="stage-info">' +
           '<span class="stage-num">#' + (idx + 1) + '</span>' +
-          '<span class="stage-role">' + stage.name + '</span>' +
-          '</div><span class="stage-model-badge">' + stage.model + '</span>';
+          '<input type="text" class="stage-role-input" data-stage-idx="' + idx + '" value="' + stage.name + '" placeholder="Stufenname...">' +
+          '</div>' +
+          '<button class="btn-mini" data-remove-stage="' + idx + '" title="Stufe entfernen">✕</button>' +
+          '</div>' +
+          '<div class="stage-card-bottom">' +
+          '<select class="stage-model-select" data-model-stage="' + idx + '">' +
+          '<option value="gemini-3.7-flash" ' + (stage.model === 'gemini-3.7-flash' ? 'selected' : '') + '>Gemini 3.7 Flash</option>' +
+          '<option value="gemini-3.6-flash" ' + (stage.model === 'gemini-3.6-flash' ? 'selected' : '') + '>Gemini 3.6 Flash</option>' +
+          '<option value="llama-3.3-70b-versatile" ' + (stage.model === 'llama-3.3-70b-versatile' ? 'selected' : '') + '>Groq Llama 3.3 70B</option>' +
+          '<option value="hf-deepseek-v3" ' + (stage.model === 'hf-deepseek-v3' ? 'selected' : '') + '>HF DeepSeek V3</option>' +
+          '<option value="deepseek-r1" ' + (stage.model === 'deepseek-r1' ? 'selected' : '') + '>OpenRouter R1</option>' +
+          '</select>' +
+          '</div>';
+
+        card.querySelector('.stage-role-input').addEventListener('input', function(e) {
+          STATE.stages[idx].name = e.target.value;
+        });
+
+        card.querySelector('.stage-model-select').addEventListener('change', function(e) {
+          const m = e.target.value;
+          STATE.stages[idx].model = m;
+          if (m.startsWith('gemini')) STATE.stages[idx].provider = 'gemini';
+          else if (m.includes('llama')) STATE.stages[idx].provider = 'groq';
+          else if (m.startsWith('hf')) STATE.stages[idx].provider = 'hf';
+          else if (m.startsWith('deepseek')) STATE.stages[idx].provider = 'openrouter';
+        });
+
+        card.querySelector('[data-remove-stage]').addEventListener('click', function() {
+          if (STATE.stages.length <= 1) {
+            Toast.show('⚠️ Mindestens eine Pipeline-Stufe ist erforderlich.');
+            return;
+          }
+          STATE.stages.splice(idx, 1);
+          UI.renderStages();
+        });
+
         container.appendChild(card);
       });
     },
@@ -1190,6 +1228,23 @@
       const explorerAddBtn = document.getElementById('explorer-add-file-btn');
       if (explorerAddBtn) {
         explorerAddBtn.addEventListener('click', function() { UI.addNewFile(); });
+      }
+
+      // Add Stage Button
+      const addStageBtn = document.getElementById('add-stage-btn');
+      if (addStageBtn) {
+        addStageBtn.addEventListener('click', function() {
+          const newId = STATE.stages.length + 1;
+          STATE.stages.push({
+            id: newId,
+            name: 'Agent #' + newId,
+            provider: 'gemini',
+            model: 'gemini-3.7-flash',
+            role: 'Optimierung'
+          });
+          UI.renderStages();
+          Toast.show('Neue Stufe #' + newId + ' hinzugefügt');
+        });
       }
 
       // Editor Input

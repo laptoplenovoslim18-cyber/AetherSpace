@@ -405,7 +405,7 @@ body {
   color: var(--text-primary);
 }
 
-/* Multi-Tunnel Configurator */
+/* Multi-Agent Stufen-Konfigurator mit freier Rollen- & Modellwahl */
 .tunnel-configurator {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-subtle);
@@ -431,22 +431,29 @@ body {
 .tunnel-stages-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
 }
 .stage-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   background: var(--bg-surface-raised);
   border: 1px solid var(--border-subtle);
-  padding: 4px 8px;
+  padding: 6px 8px;
   border-radius: var(--radius-sm);
-  font-size: 11px;
+  gap: 4px;
+}
+.stage-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .stage-info {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: 1;
 }
 .stage-num {
   font-family: var(--font-mono);
@@ -457,11 +464,35 @@ body {
   padding: 1px 4px;
   border-radius: 3px;
 }
-.stage-role { font-weight: 600; color: var(--text-primary); }
-.stage-model-badge {
+.stage-role-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 11px;
+  outline: none;
+  width: 140px;
+}
+.stage-role-input:focus {
+  border-bottom-color: var(--accent-indigo);
+}
+.stage-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.stage-model-select {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-sky);
   font-family: var(--font-mono);
   font-size: 10px;
-  color: var(--accent-sky);
+  padding: 2px 4px;
+  border-radius: 3px;
+  outline: none;
 }
 
 /* Context Injector Dateibaum */
