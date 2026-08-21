@@ -23,14 +23,14 @@ function triggerGitSync() {
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
   console.log(`[Auto-Sync] Debounce elapsed. Executing Git sync...`);
-  exec(cmd, { cwd: __dirname }, (error, stdout) => {
+  exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
       console.warn(`[Auto-Sync Info] Git notice: ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Pipeline deployed successfully.');
+    console.log('[Auto-Sync] Pipeline executed successfully.');
   });
 }
 
@@ -140,5 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
+  console.log(`[Server] Online: http://127.0.0.1:${PORT}`);
 });

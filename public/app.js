@@ -2,21 +2,28 @@
   'use strict';
 
   const state = {
-    files: new Map(),
+    currentMode: 'editor', // 'editor' | 'chat'
+    files: new Map(), // filename -> { content: string, inContext: boolean }
     activeFile: null,
+    chatHistory: [],
     runSettings: {
       model: 'gemini-3.7-flash',
-      systemInstructions: 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.',
+      systemInstructions: 'You are AetherSpace Principal AI Architect. Generate clean, complete, working production code with zero placeholders.',
       thinkingBudget: 4096,
       searchGrounding: false,
       autoCascade: true,
       maxOutputTokens: 8192,
       temperature: 0.70
     },
-    keys: { gemini: [], groq: [], openrouter: [], hf: [] }
+    keys: { gemini: [], groq: [], openrouter: [] }
   };
 
   const dom = {
+    btnModeEditor: document.getElementById('btn-mode-editor'),
+    btnModeChat: document.getElementById('btn-mode-chat'),
+    viewEditor: document.getElementById('view-editor'),
+    viewChat: document.getElementById('view-chat'),
+
     fileTreeEmptyState: document.getElementById('file-tree-empty-state'),
     fileListItems: document.getElementById('file-list-items'),
     btnNewFile: document.getElementById('btn-new-file'),
@@ -38,6 +45,12 @@
     statusDot: document.getElementById('status-dot'),
     statusText: document.getElementById('status-text'),
     keyCountBadge: document.getElementById('key-count-badge'),
+    headerModelLabel: document.getElementById('header-model-label'),
+
+    chatMessages: document.getElementById('chat-messages'),
+    chatInput: document.getElementById('chat-input'),
+    btnSendChat: document.getElementById('btn-send-chat'),
+    btnClearChat: document.getElementById('btn-clear-chat'),
 
     btnCodepenExport: document.getElementById('btn-codepen-export'),
     btnExportBundle: document.getElementById('btn-export-bundle'),
@@ -72,9 +85,9 @@
   function loadKeys() {
     try {
       const raw = localStorage.getItem('aetherspace_vault_keys');
-      if (raw) state.keys = Object.assign({ gemini: [], groq: [], openrouter: [], hf: [] }, JSON.parse(raw));
+      if (raw) state.keys = Object.assign({ gemini: [], groq: [], openrouter: [] }, JSON.parse(raw));
     } catch (e) {
-      console.warn('Key storage parse error', e);
+      console.warn('Key storage error', e);
     }
     updateKeyBadge();
   }
@@ -87,6 +100,21 @@
   function updateKeyBadge() {
     const total = Object.values(state.keys).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
+  }
+
+  function setMode(mode) {
+    state.currentMode = mode;
+    if (mode === 'editor') {
+      dom.btnModeEditor.classList.add('active');
+      dom.btnModeChat.classList.remove('active');
+      dom.viewEditor.style.display = 'flex';
+      dom.viewChat.style.display = 'none';
+    } else {
+      dom.btnModeChat.classList.add('active');
+      dom.btnModeEditor.classList.remove('active');
+      dom.viewChat.style.display = 'flex';
+      dom.viewEditor.style.display = 'none';
+    }
   }
 
   function renderFiles() {
@@ -137,7 +165,6 @@
 
       li.appendChild(left);
       li.appendChild(del);
-
       li.addEventListener('click', () => selectFile(filename));
       dom.fileListItems.appendChild(li);
     });
@@ -226,33 +253,19 @@
     state.files.forEach((f, name) => {
       if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
-    return contextStr ? `WORKSPACE CODE CONTEXT:\n${contextStr}\nTASK INSTRUCTION:\n${instruction}` : instruction;
+    return contextStr ? `WORKSPACE CONTEXT:\n${contextStr}\nTASK SPECIFICATION:\n${instruction}` : instruction;
   }
 
-  // DIRECT CODEPEN EXPORT API VIA POST
   function exportToCodePen() {
-    if (state.files.size === 0) {
-      alert('Workspace is empty. Create HTML/CSS/JS files first.');
-      return;
-    }
-
-    let htmlCode = '';
-    let cssCode = '';
-    let jsCode = '';
-
+    if (state.files.size === 0) return alert('Workspace is empty.');
+    let htmlCode = '', cssCode = '', jsCode = '';
     state.files.forEach((f, name) => {
       if (name.endsWith('.html')) htmlCode += f.content + '\n';
       else if (name.endsWith('.css')) cssCode += f.content + '\n';
       else if (name.endsWith('.js')) jsCode += f.content + '\n';
     });
 
-    const payload = {
-      title: 'AetherSpace Export',
-      html: htmlCode,
-      css: cssCode,
-      js: jsCode
-    };
-
+    const payload = { title: 'AetherSpace Export', html: htmlCode, css: cssCode, js: jsCode };
     const form = document.createElement('form');
     form.action = 'https://codepen.io/pen/define';
     form.method = 'POST';
@@ -269,7 +282,7 @@
     document.body.removeChild(form);
   }
 
-  // GEMINI 3.7 / 3.5 / 3.1 REST GENERATION CALL
+  // GEMINI 3.7 / 3.5 / 3.1 REST API CALL
   async function callGemini(apiKey, model, systemPrompt, userPrompt, config) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const body = {
@@ -340,13 +353,7 @@
     return data.choices[0].message.content;
   }
 
-  async function synthesize() {
-    const prompt = dom.promptInput.value.trim();
-    if (!prompt) {
-      alert('Please enter a synthesis instruction.');
-      return;
-    }
-
+  async function executeCloudRouting(userPrompt) {
     state.runSettings.model = dom.settingModel.value;
     state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
     state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
@@ -357,60 +364,111 @@
 
     let provider = 'gemini';
     const model = state.runSettings.model;
-    if (model.startsWith('llama') || model.startsWith('deepseek')) provider = 'groq';
+    if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
     else if (model.includes(':free')) provider = 'openrouter';
-    else if (model.includes('/')) provider = 'hf';
 
     const keys = state.keys[provider] || [];
     if (keys.length === 0) {
-      alert(`No API Key found for provider: ${provider.toUpperCase()}. Open Key Vault to enter one.`);
+      alert(`No API Key configured for [${provider.toUpperCase()}]. Please open Key Vault to add one.`);
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
-      return;
+      throw new Error('Missing API Key');
     }
-
-    dom.btnExecutePrompt.disabled = true;
-    dom.statusDot.className = 'status-indicator busy';
-    dom.statusText.textContent = `Routing request to ${model}...`;
-
-    const fullPrompt = buildPromptPayload(prompt);
-    let output = null;
-    let success = false;
 
     for (let i = 0; i < keys.length; i++) {
       try {
-        dom.statusText.textContent = `Executing on Key ${i + 1}/${keys.length} (${provider})...`;
+        dom.statusText.textContent = `Routing to ${model} (Key ${i + 1}/${keys.length})...`;
         if (provider === 'gemini') {
-          output = await callGemini(keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          return await callGemini(keys[i].key, model, state.runSettings.systemInstructions, userPrompt, state.runSettings);
         } else if (provider === 'groq') {
-          output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          return await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, userPrompt, state.runSettings);
         } else if (provider === 'openrouter') {
-          output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          return await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, userPrompt, state.runSettings);
         }
-        success = true;
-        break;
       } catch (err) {
-        console.warn(`[Failover] Key ${i} failed:`, err.message);
+        console.warn(`[Failover] Key index ${i} failed:`, err.message);
         if (!state.runSettings.autoCascade || i === keys.length - 1) {
-          dom.statusDot.className = 'status-indicator error';
-          dom.statusText.textContent = `Error: ${err.message}`;
-          alert(`Inference failed: ${err.message}`);
-          break;
+          throw err;
         }
       }
     }
+  }
 
-    dom.btnExecutePrompt.disabled = false;
+  async function synthesizeFromWorkbench() {
+    const prompt = dom.promptInput.value.trim();
+    if (!prompt) return alert('Please enter a synthesis instruction.');
 
-    if (success && output) {
+    dom.btnExecutePrompt.disabled = true;
+    dom.statusDot.className = 'status-indicator busy';
+
+    try {
+      const fullPayload = buildPromptPayload(prompt);
+      const output = await executeCloudRouting(fullPayload);
       dom.statusDot.className = 'status-indicator ready';
       dom.statusText.textContent = 'Synthesis complete. 0 local weight maintained.';
-      applyOutput(output);
+      applyOutputToFiles(output);
       dom.promptInput.value = '';
+    } catch (err) {
+      dom.statusDot.className = 'status-indicator error';
+      dom.statusText.textContent = `Synthesis failed: ${err.message}`;
+      alert(`Inference failed: ${err.message}`);
+    } finally {
+      dom.btnExecutePrompt.disabled = false;
     }
   }
 
-  function applyOutput(text) {
+  async function sendChatMessage() {
+    const text = dom.chatInput.value.trim();
+    if (!text) return;
+
+    appendChatMessage('user', text);
+    dom.chatInput.value = '';
+    dom.btnSendChat.disabled = true;
+
+    try {
+      const fullPayload = buildPromptPayload(text);
+      const output = await executeCloudRouting(fullPayload);
+      appendChatMessage('assistant', output);
+    } catch (err) {
+      appendChatMessage('assistant', `⚠️ Execution Error: ${err.message}`);
+    } finally {
+      dom.btnSendChat.disabled = false;
+    }
+  }
+
+  function appendChatMessage(role, content) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-message ${role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+
+    const strong = document.createElement('strong');
+    strong.textContent = role === 'user' ? 'You' : state.runSettings.model;
+    bubble.appendChild(strong);
+
+    const bodyP = document.createElement('p');
+    bodyP.textContent = content;
+    bubble.appendChild(bodyP);
+
+    if (role === 'assistant' && content.includes('<file path=')) {
+      const applyBtn = document.createElement('button');
+      applyBtn.className = 'btn-xs primary-outline';
+      applyBtn.style.marginTop = '8px';
+      applyBtn.textContent = 'Apply Code to Workspace';
+      applyBtn.addEventListener('click', () => {
+        applyOutputToFiles(content);
+        alert('Files updated in workspace.');
+      });
+      bubble.appendChild(applyBtn);
+    }
+
+    msgDiv.appendChild(bubble);
+    dom.chatMessages.appendChild(msgDiv);
+    dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+  }
+
+  function applyOutputToFiles(text) {
     const fileRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
     let match;
     let found = 0;
@@ -441,7 +499,7 @@
     dom.vaultKeysTbody.innerHTML = '';
     if (keys.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys configured for ${provider.toUpperCase()}.</td>`;
+      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys stored for ${provider.toUpperCase()}.</td>`;
       dom.vaultKeysTbody.appendChild(tr);
       return;
     }
@@ -466,6 +524,9 @@
   }
 
   function initEvents() {
+    dom.btnModeEditor.addEventListener('click', () => setMode('editor'));
+    dom.btnModeChat.addEventListener('click', () => setMode('chat'));
+
     dom.codeEditor.addEventListener('input', () => {
       if (state.activeFile) state.files.get(state.activeFile).content = dom.codeEditor.value;
       updateGutter();
@@ -488,7 +549,7 @@
     });
 
     dom.btnNewFile.addEventListener('click', () => {
-      const name = prompt('Enter filename (e.g. index.html, styles.css):');
+      const name = prompt('Enter filename (e.g. index.html, app.js):');
       if (name && name.trim()) {
         addOrUpdateFile(name.trim(), '', true);
         selectFile(name.trim());
@@ -526,12 +587,24 @@
       dom.hiddenFileInput.value = '';
     });
 
-    dom.btnExecutePrompt.addEventListener('click', synthesize);
+    dom.btnExecutePrompt.addEventListener('click', synthesizeFromWorkbench);
     dom.promptInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        synthesize();
+        synthesizeFromWorkbench();
       }
+    });
+
+    dom.btnSendChat.addEventListener('click', sendChatMessage);
+    dom.chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+
+    dom.btnClearChat.addEventListener('click', () => {
+      dom.chatMessages.innerHTML = '';
     });
 
     dom.btnCodepenExport.addEventListener('click', exportToCodePen);
@@ -585,22 +658,24 @@
       }
     });
 
+    dom.settingModel.addEventListener('change', () => {
+      dom.headerModelLabel.textContent = dom.settingModel.options[dom.settingModel.selectedIndex].text.split('(')[0].trim();
+    });
+
     dom.toggleRunSettingsBtn.addEventListener('click', () => dom.settingsSlideout.classList.toggle('open'));
     dom.btnCloseSettings.addEventListener('click', () => dom.settingsSlideout.classList.remove('open'));
 
     dom.settingOutputLength.addEventListener('input', () => dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value);
     dom.settingTemp.addEventListener('input', () => dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2));
     dom.btnResetSysInst.addEventListener('click', () => {
-      dom.settingSystemInstructions.value = 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.';
+      dom.settingSystemInstructions.value = 'You are AetherSpace Principal AI Architect. Generate clean, complete, working production code with zero placeholders.';
     });
 
     dom.openKeyVaultBtn.addEventListener('click', () => {
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
     });
-    dom.btnCloseVault.addEventListener('click', () => {
-      dom.keyVaultModal.style.display = 'none';
-    });
+    dom.btnCloseVault.addEventListener('click', () => dom.keyVaultModal.style.display = 'none');
 
     dom.vaultTabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
