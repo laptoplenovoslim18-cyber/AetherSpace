@@ -1,83 +1,74 @@
-﻿const http = require("http");
-const fs = require("fs");
-const path = require("path");
-const { exec } = require("child_process");
+﻿const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
 
-const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.join(__dirname, "public");
+const PORT = 3000;
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
 const MIME_TYPES = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".svg": "image/svg+xml",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".ico": "image/x-icon"
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.txt': 'text/plain; charset=utf-8'
 };
 
-// HTTP Static Server
 const server = http.createServer((req, res) => {
-  let reqUrl = req.url.split("?")[0];
-  let safePath = path.normalize(reqUrl).replace(/^(\.\.[\/\\])+/, "");
-  let filePath = path.join(PUBLIC_DIR, safePath === "/" ? "index.html" : safePath);
+  let reqUrl = req.url.split('?')[0];
+  if (reqUrl === '/' || reqUrl === '') reqUrl = '/index.html';
 
-  fs.stat(filePath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end("404 Not Found: AetherSpace Resource Missing");
-      return;
+  if (reqUrl === '/api/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', time: new Date().toISOString() }));
+    return;
+  }
+
+  const filePath = path.join(PUBLIC_DIR, reqUrl);
+  const ext = path.extname(filePath).toLowerCase();
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('404 Not Found');
+      } else {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end(`500 Internal Server Error: ${err.code}`);
+      }
+    } else {
+      res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
+      res.end(content);
     }
-
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || "application/octet-stream";
-
-    res.writeHead(200, {
-      "Content-Type": contentType,
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      "X-Content-Type-Options": "nosniff",
-      "X-Frame-Options": "SAMEORIGIN"
-    });
-
-    const stream = fs.createReadStream(filePath);
-    stream.pipe(res);
   });
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`\x1b[36m[AetherSpace Local Engine]\x1b[0m Running at http://127.0.0.1:${PORT}`);
-  console.log(`\x1b[35m[AetherSpace Edge Live]\x1b[0m Target: https://aetherspace.pages.dev`);
-  console.log(`\x1b[32m[Auto-Sync Active]\x1b[0m Watching ${PUBLIC_DIR} for changes...`);
-});
-
-// Git Watcher mit 2500ms Debounce
-let syncTimer = null;
-let isSyncing = false;
-
-function triggerEdgeSync(filename) {
-  if (isSyncing) return;
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => {
-    isSyncing = true;
-    const timestamp = new Date().toISOString().replace(/T/, " ").replace(/\..+/, "");
-    console.log(`\x1b[33m[Auto-Sync]\x1b[0m Ändere: ${filename} -> Starte Git-Push...`);
-    
-    exec("git add . && git commit -m \"Auto-sync: " + timestamp + "\" && git push origin main", (err, stdout, stderr) => {
-      isSyncing = false;
-      if (err) {
-        console.error(`\x1b[31m[Sync Error]\x1b[0m ${err.message}`);
-        return;
-      }
-      console.log(`\x1b[32m[Sync Complete]\x1b[0m Edge-Deployment getriggert.`);
-    });
-  }, 2500);
-}
-
+// Automatic 2.5s Git-Watcher Engine
+let syncTimeout = null;
 if (fs.existsSync(PUBLIC_DIR)) {
   fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
-    if (filename && !filename.includes(".git")) {
-      triggerEdgeSync(filename);
-    }
+    if (!filename) return;
+    if (syncTimeout) clearTimeout(syncTimeout);
+
+    syncTimeout = setTimeout(() => {
+      console.log(`[Auto-Sync] Datei-Änderung in public/ erkannt (${filename}). Synchronisiere mit Git...`);
+      exec('git add . && git commit -m "Auto-sync: ' + new Date().toISOString() + '" && git push origin main', (err, stdout, stderr) => {
+        if (err) {
+          console.warn('[Auto-Sync Status]', stderr || err.message);
+        } else {
+          console.log('[Auto-Sync] Erfolgreich zu GitHub und Cloudflare Pages übertragen.');
+        }
+      });
+    }, 2500);
   });
 }
+
+server.listen(PORT, '127.0.0.1', () => {
+  console.log('====================================================');
+  console.log(` AetherSpace Server läuft unter: http://127.0.0.1:${PORT}`);
+  console.log(` Live Cloudflare Edge: https://aetherspace.pages.dev`);
+  console.log(' 2.5s Git-Watcher: Aktiv');
+  console.log('====================================================');
+});

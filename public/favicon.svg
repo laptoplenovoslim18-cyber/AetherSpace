@@ -1,12 +1,6 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="aetherGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="50%" stop-color="#818cf8"/>
-      <stop offset="100%" stop-color="#c084fc"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="8" fill="#06080c"/>
-  <path d="M16 4 L28 26 L16 21 L4 26 Z" fill="url(#aetherGlow)"/>
-  <circle cx="16" cy="14" r="3" fill="#ffffff" filter="drop-shadow(0 0 4px #38bdf8)"/>
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="6" fill="#06080c"/>
+  <polygon points="16 4 4 10 16 16 28 10 16 4" fill="none" stroke="#38bdf8" stroke-width="2"/>
+  <polyline points="4 22 16 28 28 22" fill="none" stroke="#38bdf8" stroke-width="2"/>
+  <polyline points="4 16 16 22 28 16" fill="none" stroke="#2563eb" stroke-width="2"/>
 </svg>

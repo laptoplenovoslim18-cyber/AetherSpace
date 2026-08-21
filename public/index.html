@@ -3,250 +3,417 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | Enterprise Cloud IDE & Agent Mesh</title>
+  <title>AetherSpace | Enterprise Cloud AI Edge Workspace</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="obsidian-theme">
+  <!-- TOP HEADER -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <div class="brand-glow"></div>
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <span class="brand-name">AetherSpace</span>
+        <span class="brand-version">v2.6 Enterprise</span>
+      </div>
 
-  <!-- TOP HEADER WITH TWO-TIER CONTROLS -->
-  <header class="top-header">
-    <div class="brand-section">
-      <img src="favicon.svg" alt="AetherSpace" class="brand-logo">
-      <span class="brand-title">AetherSpace</span>
-      <span class="brand-badge">SOTA 2026</span>
+      <!-- TWO-TIER MASTER PILLS -->
+      <nav class="master-pills">
+        <!-- PILL 1: AUTO-PILOT -->
+        <div class="pill-dropdown-wrapper">
+          <button class="master-pill" id="pill-autopilot" onclick="aetherApp.togglePillDropdown('autopilot')">
+            <span class="pill-dot dot-active"></span>
+            <span class="pill-label">&#x26A1; Auto-Pilot</span>
+            <span class="pill-arrow">&#x25BE;</span>
+          </button>
+          <div class="pill-dropdown-content" id="dropdown-autopilot">
+            <div class="dropdown-header">Auto-Pilot Kontrollmatrix</div>
+            <label class="control-toggle">
+              <span>Key-Kaskade (Failover)</span>
+              <input type="checkbox" id="cfg-cascade-active" checked onchange="aetherApp.saveGlobalConfig()">
+              <span class="toggle-switch"></span>
+            </label>
+            <label class="control-toggle">
+              <span>Polyglot Auto-Healer</span>
+              <input type="checkbox" id="cfg-healer-active" checked onchange="aetherApp.saveGlobalConfig()">
+              <span class="toggle-switch"></span>
+            </label>
+            <label class="control-toggle">
+              <span>Google Search Grounding</span>
+              <input type="checkbox" id="cfg-grounding-active" onchange="aetherApp.saveGlobalConfig()">
+              <span class="toggle-switch"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- PILL 2: HARDWARE GOVERNOR -->
+        <div class="pill-dropdown-wrapper">
+          <button class="master-pill" id="pill-governor" onclick="aetherApp.togglePillDropdown('governor')">
+            <span class="pill-dot dot-green"></span>
+            <span class="pill-label">&#x1F6E1;&#xFE0F; Zero-Load Governor</span>
+            <span class="pill-arrow">&#x25BE;</span>
+          </button>
+          <div class="pill-dropdown-content" id="dropdown-governor">
+            <div class="dropdown-header">Hardware Invariante (&lt; 50 MB)</div>
+            <div class="stat-row">
+              <span>RAM Budget:</span>
+              <span class="stat-value text-green" id="ram-budget-display">100% Cloud-Offloaded</span>
+            </div>
+            <div class="stat-row">
+              <span>Lokale KI-Last:</span>
+              <span class="stat-value text-cyan">0% (Zero Local Weight)</span>
+            </div>
+            <div class="stat-row">
+              <span>Context Cache:</span>
+              <span class="stat-value" id="stat-context-tokens">0 Tokens</span>
+            </div>
+            <button class="btn btn-xs btn-outline mt-2" onclick="aetherApp.triggerMemoryCleanup()">&#x1F9F9; DOM & Context Flush</button>
+          </div>
+        </div>
+
+        <!-- PILL 3: CLOUD-STAGING -->
+        <div class="pill-dropdown-wrapper">
+          <button class="master-pill" id="pill-staging" onclick="aetherApp.togglePillDropdown('staging')">
+            <span class="pill-dot dot-blue"></span>
+            <span class="pill-label">&#x1F310; Cloud-Staging</span>
+            <span class="pill-arrow">&#x25BE;</span>
+          </button>
+          <div class="pill-dropdown-content" id="dropdown-staging">
+            <div class="dropdown-header">Edge Distribution</div>
+            <div class="staging-link-item">
+              <span class="link-title">Cloudflare Pages Edge (Live):</span>
+              <a href="https://aetherspace.pages.dev" target="_blank" class="staging-url">aetherspace.pages.dev &#x2197;</a>
+            </div>
+            <div class="staging-link-item">
+              <span class="link-title">GitHub Pages Mirror:</span>
+              <a href="https://laptoplenovoslim18-cyber.github.io/AetherSpace/public/" target="_blank" class="staging-url">laptoplenovoslim18-cyber.github.io &#x2197;</a>
+            </div>
+            <div class="staging-actions mt-2">
+              <button class="btn btn-xs btn-primary" onclick="aetherApp.exportWorkspaceZip()">&#x1F4E6; Smart Export (.zip)</button>
+              <button class="btn btn-xs btn-outline" onclick="aetherApp.exportSingleHtml()">&#x1F4C4; Standalone .html</button>
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
 
-    <div class="toggle-pills">
-      <button class="pill-button active" title="Autonome Multi-Agent Synthese">
-        <span class="pill-indicator"></span>
-        <span>⚡ Auto-Pilot</span>
+    <!-- HEADER RIGHT CONTROLS -->
+    <div class="header-right">
+      <button class="header-btn" id="btn-vault" onclick="aetherApp.openKeyVault()">
+        <span class="btn-icon">&#x1F511;</span>
+        <span>Schnittstellen-Tresor</span>
+        <span class="key-count-badge" id="key-count-badge">0</span>
       </button>
-      <button class="pill-button" title="Zero Local Weight Governor (RAM &lt; 50MB)">
-        <span class="pill-indicator"></span>
-        <span>🛡️ Hardware Offload</span>
-      </button>
-      <button class="pill-button" id="btnOpenVault" title="Cloud API Key Tresor (Google, Groq, OpenRouter)">
-        <span>🔑 API Vault</span>
-      </button>
-    </div>
 
-    <div class="header-actions">
-      <button class="action-btn" id="btnRunSettings">
-        <span>⚙️ Run Settings</span>
+      <button class="header-btn" id="btn-settings-toggle" onclick="aetherApp.toggleRunSettings()">
+        <span class="btn-icon">&#x2699;&#xFE0F;</span>
+        <span>Run Settings</span>
       </button>
-      <button class="action-btn" id="btnOpenAuth">
-        <span>👤 Account</span>
-      </button>
-      <button class="action-btn primary" id="btnDeployEdge">
-        <span>🚀 Edge Deploy</span>
+
+      <button class="header-btn btn-auth" id="btn-auth-trigger" onclick="aetherApp.openAuthModal()">
+        <span class="btn-icon">&#x1F464;</span>
+        <span id="auth-btn-label">Anmelden</span>
       </button>
     </div>
   </header>
 
-  <!-- 3-COLUMN WORKSPACE GRID -->
-  <main class="workspace-grid">
-    <!-- COL 1: COLLAPSIBLE FILE EXPLORER WITH CONTEXT CHECKBOXES -->
-    <aside class="col-files">
-      <div class="panel-header">
-        <span>Explorer</span>
-        <span style="font-size: 10px; color: var(--accent-cyan);">Context Select</span>
+  <!-- MAIN 2-COLUMN WORKSPACE WITH SLIDE-OUT RUN SETTINGS DRAWER -->
+  <main class="workspace-layout">
+    <!-- LEFT COLUMN: VS-CODE FILE TREE (COLLAPSIBLE, ZERO MOCK FILES) -->
+    <aside class="sidebar-filetree" id="sidebar-filetree">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <svg class="icon-tree" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>DATEIBAUM</span>
+        </div>
+        <div class="tree-actions">
+          <button class="icon-btn" title="Neue Datei" onclick="aetherApp.createFilePrompt()">&#x2795; Datei</button>
+          <button class="icon-btn" title="Dateien hochladen" onclick="document.getElementById('file-upload-input').click()">&#x1F4E4; Upload</button>
+          <input type="file" id="file-upload-input" multiple style="display:none" onchange="aetherApp.handleFileUpload(event)">
+        </div>
       </div>
-      <div class="file-tree">
-        <div class="file-item active" data-file="public/index.html">
-          <input type="checkbox" class="file-context-chk" checked title="In Prompt Context einbinden">
-          <span class="file-icon">📄</span>
-          <span class="file-label">public/index.html</span>
+
+      <!-- FILE LIST: COMPLETELY EMPTY BY DEFAULT (CLEAN SLATE) -->
+      <div class="filetree-content" id="filetree-content">
+        <div class="empty-state-card" id="filetree-empty-state">
+          <div class="empty-icon">&#x1F4C1;</div>
+          <div class="empty-title">Keine Dateien im Workspace</div>
+          <div class="empty-desc">Erstelle eine neue Datei oder lade Projektdateien per Drag & Drop hoch.</div>
+          <button class="btn btn-sm btn-primary mt-2" onclick="aetherApp.createFilePrompt()">+ Erste Datei anlegen</button>
         </div>
-        <div class="file-item" data-file="public/styles.css">
-          <input type="checkbox" class="file-context-chk" title="In Prompt Context einbinden">
-          <span class="file-icon">🎨</span>
-          <span class="file-label">public/styles.css</span>
+        <ul class="file-list" id="file-list" style="display:none;"></ul>
+      </div>
+
+      <!-- CONTEXT INJECTION FOOTER -->
+      <div class="sidebar-footer">
+        <div class="context-counter">
+          <span>KI-Kontext:</span>
+          <span class="context-token-pill" id="context-selected-tokens">0 Tokens</span>
         </div>
-        <div class="file-item" data-file="public/app.js">
-          <input type="checkbox" class="file-context-chk" title="In Prompt Context einbinden">
-          <span class="file-icon">⚡</span>
-          <span class="file-label">public/app.js</span>
-        </div>
-        <div class="file-item" data-file="package.json">
-          <input type="checkbox" class="file-context-chk" title="In Prompt Context einbinden">
-          <span class="file-icon">📦</span>
-          <span class="file-label">package.json</span>
+        <div class="context-bulk-actions">
+          <button class="btn-link" onclick="aetherApp.toggleSelectAllContext(true)">Alle Kontext</button>
+          <span class="sep">&bull;</span>
+          <button class="btn-link" onclick="aetherApp.toggleSelectAllContext(false)">Entfernen</button>
         </div>
       </div>
     </aside>
 
-    <!-- COL 2: MULTI-TAB CODE EDITOR -->
-    <section class="col-editor">
-      <div class="editor-tabs">
-        <div class="editor-tab active" data-file="public/index.html">
-          <span>index.html</span>
+    <!-- MIDDLE COLUMN: VS-CODE MULTI-TAB EDITOR & CLOUD AI PROMPT MATRIX -->
+    <section class="editor-workspace" id="editor-workspace">
+      <!-- MULTI-TAB HEADER BAR -->
+      <div class="editor-tabs-bar" id="editor-tabs-bar">
+        <div class="tabs-container" id="tabs-container">
+          <!-- Dynamically populated tabs -->
         </div>
-        <div class="editor-tab" data-file="public/styles.css">
-          <span>styles.css</span>
+        <button class="tab-add-btn" title="Neuer Tab" onclick="aetherApp.createFilePrompt()">&#x2B;</button>
+      </div>
+
+      <!-- CODE SURFACE WITH LINE NUMBERS -->
+      <div class="editor-main-surface" id="editor-main-surface">
+        <div class="editor-empty-overlay" id="editor-empty-overlay">
+          <div class="empty-editor-box">
+            <svg class="empty-editor-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            <h3>Keine Datei geöffnet</h3>
+            <p>Wähle eine Datei aus dem linken Dateibaum oder erstelle ein neues Dokument.</p>
+            <button class="btn btn-primary" onclick="aetherApp.createFilePrompt()">+ Neues Dokument anlegen</button>
+          </div>
         </div>
-        <div class="editor-tab" data-file="public/app.js">
-          <span>app.js</span>
+
+        <div class="editor-gutter" id="editor-gutter">1</div>
+        <textarea class="editor-textarea" id="editor-textarea" spellcheck="false" placeholder="// Code hier eingeben..." oninput="aetherApp.handleEditorInput()" onkeydown="aetherApp.handleEditorKeyDown(event)" style="display:none;"></textarea>
+      </div>
+
+      <!-- EDITOR STATUS BAR -->
+      <div class="editor-status-bar">
+        <div class="status-left">
+          <span class="status-item" id="status-line-col">Zeile 1, Spalte 1</span>
+          <span class="status-item" id="status-file-type">Plaintext</span>
+          <span class="status-item" id="status-file-size">0 Bytes</span>
+        </div>
+        <div class="status-right">
+          <span class="status-item status-sync text-green">&#x25CF; Cloudflare Edge Ready</span>
+          <span class="status-item">UTF-8</span>
         </div>
       </div>
-      <div class="editor-surface">
-        <div class="line-numbers" id="lineNumbers">1</div>
-        <textarea class="code-textarea" id="codeEditor" spellcheck="false" placeholder="// Write code or let AetherSpace synthesize..."></textarea>
+
+      <!-- BOTTOM AI COMMAND DOCK -->
+      <div class="ai-command-dock">
+        <div class="ai-dock-header">
+          <div class="dock-meta-left">
+            <span class="dock-pill text-cyan" id="dock-active-model">&#x2728; Gemini 2.5 Flash</span>
+            <span class="dock-pill" id="dock-active-tokens">Kontext: 0 Tokens</span>
+          </div>
+          <div class="dock-meta-right">
+            <button class="btn-dock-action" onclick="aetherApp.autoHealActiveCode()" title="Bereinigt Syntax- und Markdown-Fragmente">&#x2728; Auto-Healer</button>
+            <button class="btn-dock-action" onclick="aetherApp.clearEditorContent()" title="Editor leeren">&#x1F5D1;&#xFE0F; Leeren</button>
+          </div>
+        </div>
+        <div class="ai-input-row">
+          <textarea class="ai-prompt-input" id="ai-prompt-input" placeholder="Beschreibe die gewünschte Funktion, Architektur oder Refaktorisierung... (Strg+Enter zum Senden)" rows="2" onkeydown="aetherApp.handlePromptKeyDown(event)"></textarea>
+          <button class="btn-generate-ai" id="btn-generate-ai" onclick="aetherApp.executeUnifiedGeneration()">
+            <span class="btn-sparkle">&#x26A1;</span>
+            <span id="btn-generate-text">Generieren</span>
+          </button>
+        </div>
+        <div class="ai-execution-banner" id="ai-execution-banner" style="display:none;">
+          <div class="banner-spinner"></div>
+          <span class="banner-text" id="ai-banner-text">Cloud-Inferenz aktiv...</span>
+        </div>
       </div>
     </section>
 
-    <!-- COL 3: 144HZ+ UNCAPPED DARK SANDBOX -->
-    <section class="col-sandbox">
-      <div class="sandbox-toolbar">
-        <div class="sandbox-indicators">
-          <span class="fps-counter" id="fpsDisplay">144 FPS</span>
-          <span class="watchdog-status">🛡️ Heartbeat Watchdog Active</span>
+    <!-- RIGHT SLIDE-OUT PANEL: RUN SETTINGS (AI STUDIO STANDARD) -->
+    <aside class="run-settings-panel" id="run-settings-panel">
+      <div class="settings-panel-header">
+        <div class="settings-title">
+          <span class="icon">&#x2699;&#xFE0F;</span>
+          <span>Run Settings (Google AI Studio)</span>
         </div>
-        <div style="display: flex; gap: 6px;">
-          <button class="action-btn" style="padding: 3px 8px; font-size: 11px;" onclick="document.getElementById('sandboxFrame').src = document.getElementById('sandboxFrame').src">⟳ Refresh</button>
+        <button class="close-panel-btn" onclick="aetherApp.toggleRunSettings()">&#x2715;</button>
+      </div>
+
+      <div class="settings-panel-body">
+        <!-- PROVIDER & MODEL -->
+        <div class="setting-group">
+          <label class="setting-label" for="setting-model-select">Cloud Inferenz Modell</label>
+          <select class="setting-select" id="setting-model-select" onchange="aetherApp.handleModelChange()">
+            <optgroup label="Google AI Studio (Free Tier)">
+              <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Ultra-Fast & Free)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning)</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro (1M Context)</option>
+            </optgroup>
+            <optgroup label="Groq Cloud (LPU Instant Inferenz)">
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Free Tier)</option>
+              <option value="mixtral-8x7b-32768">Mixtral 8x7B (32k Context)</option>
+            </optgroup>
+            <optgroup label="OpenRouter Free Tier">
+              <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free Reasoning)</option>
+              <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (Free)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- SYSTEM INSTRUCTION -->
+        <div class="setting-group">
+          <label class="setting-label" for="setting-system-prompt">System Instruction</label>
+          <textarea class="setting-textarea" id="setting-system-prompt" rows="3" placeholder="Du bist ein hochpräziser Full-Stack Architekt. Schreibe sauberen, standardkonformen und fehlerfreien Code..."></textarea>
+        </div>
+
+        <!-- THINKING LEVEL -->
+        <div class="setting-group">
+          <label class="setting-label" for="setting-thinking-level">Thinking Level (Gemini Reasoning)</label>
+          <select class="setting-select" id="setting-thinking-level">
+            <option value="high">High (Maximum Reasoning Depth)</option>
+            <option value="medium" selected>Medium (Ausgewogen)</option>
+            <option value="fast">Fast (Minimale Latenz)</option>
+            <option value="off">Off (Standard Inferenz)</option>
+          </select>
+        </div>
+
+        <!-- SEARCH GROUNDING -->
+        <div class="setting-group">
+          <label class="control-toggle">
+            <span>Live Google Search Grounding</span>
+            <input type="checkbox" id="setting-search-grounding">
+            <span class="toggle-switch"></span>
+          </label>
+          <div class="setting-hint">Holt aktuelle Fakten und 2026 API-Spezifikationen in Echtzeit.</div>
+        </div>
+
+        <!-- TEMPERATURE SLIDER -->
+        <div class="setting-group">
+          <div class="slider-header">
+            <label class="setting-label" for="setting-temperature">Temperature</label>
+            <span class="slider-value" id="val-temperature">0.20</span>
+          </div>
+          <input type="range" class="setting-slider" id="setting-temperature" min="0" max="2" step="0.05" value="0.2" oninput="document.getElementById('val-temperature').innerText = parseFloat(this.value).toFixed(2)">
+        </div>
+
+        <!-- MAX OUTPUT TOKENS SLIDER -->
+        <div class="setting-group">
+          <div class="slider-header">
+            <label class="setting-label" for="setting-max-tokens">Max Output Tokens</label>
+            <span class="slider-value" id="val-max-tokens">8192</span>
+          </div>
+          <input type="range" class="setting-slider" id="setting-max-tokens" min="256" max="65536" step="256" value="8192" oninput="document.getElementById('val-max-tokens').innerText = this.value">
         </div>
       </div>
-      <div class="sandbox-frame-container">
-        <iframe id="sandboxFrame" class="sandbox-iframe" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
-      </div>
-    </section>
+    </aside>
   </main>
 
-  <!-- SLIDE-OUT RUN SETTINGS (AI STUDIO DESIGN) -->
-  <aside class="settings-drawer" id="settingsDrawer">
-    <div class="drawer-header">
-      <span>Run Settings (Google AI Studio SOTA)</span>
-      <button class="action-btn" id="closeSettings" style="padding: 2px 6px;">✕</button>
-    </div>
-    <div class="drawer-body">
-      <div class="setting-group">
-        <label class="setting-label">Model Architecture</label>
-        <select class="setting-control" id="modelSelect">
-          <option value="gemini-2.5-flash">Google Gemini 2.5 Flash (Free Tier)</option>
-          <option value="gemini-2.5-pro">Google Gemini 2.5 Pro (Thinking)</option>
-          <option value="groq-llama-3">Groq Llama 3 70B (Ultra-Fast)</option>
-          <option value="openrouter-mesh">OpenRouter Multi-Mesh Cascade</option>
-        </select>
-      </div>
-
-      <div class="setting-group">
-        <label class="setting-label">System Instructions</label>
-        <textarea class="setting-control" rows="4" style="resize: vertical;" placeholder="You are an autonomous Principal Systems Architect..."></textarea>
-      </div>
-
-      <div class="setting-group">
-        <label class="setting-label">Thinking Level</label>
-        <select class="setting-control">
-          <option>High (Deep Multi-Agent Reasoning)</option>
-          <option>Medium (Standard Verification)</option>
-          <option>Fast (Instant Code Streaming)</option>
-        </select>
-      </div>
-
-      <div class="setting-group">
-        <label class="setting-label">Temperature: <span id="tempVal" style="color: var(--accent-cyan);">0.7</span></label>
-        <div class="slider-container">
-          <input type="range" id="tempSlider" min="0" max="2" step="0.05" value="0.7">
-        </div>
-      </div>
-
-      <div class="setting-group">
-        <label class="setting-label">Output Length: <span id="tokenVal" style="color: var(--accent-cyan);">8,192</span> Tokens</label>
-        <div class="slider-container">
-          <input type="range" id="tokenSlider" min="1024" max="65536" step="1024" value="8192">
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- KEY-TABLE VAULT MODAL -->
-  <div class="modal-backdrop" id="vaultModal">
-    <div class="modal-window">
+  <!-- MODAL: SCHNITTSTELLEN-TRESOR (GOOGLE AI STUDIO TABLE DESIGN) -->
+  <div class="modal-backdrop" id="modal-key-vault" style="display:none;">
+    <div class="modal-dialog modal-lg">
       <div class="modal-header">
-        <h3 style="font-size: 14px; font-weight: 600;">🔑 API Key Table Vault (Google AI Studio Design)</h3>
-        <button class="action-btn" id="closeVault" style="padding: 2px 6px;">✕</button>
+        <div class="modal-title-group">
+          <span class="modal-icon">&#x1F511;</span>
+          <div>
+            <h3>Schnittstellen-Tresor (API Key Vault)</h3>
+            <p class="modal-sub">Verwalte deine dauerhaft kostenlosen Cloud-Schnittstellen mit automatischer Kaskaden-Rotation.</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="aetherApp.closeKeyVault()">&#x2715;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- PROVIDER TABS -->
+        <div class="vault-tabs">
+          <button class="vault-tab active" onclick="aetherApp.switchVaultTab('google')">Google AI Studio</button>
+          <button class="vault-tab" onclick="aetherApp.switchVaultTab('groq')">Groq Cloud</button>
+          <button class="vault-tab" onclick="aetherApp.switchVaultTab('openrouter')">OpenRouter</button>
+          <button class="vault-tab" onclick="aetherApp.switchVaultTab('huggingface')">Hugging Face</button>
+        </div>
+
+        <!-- ADD KEY FORM -->
+        <div class="add-key-card">
+          <div class="add-key-inputs">
+            <input type="password" class="input-text" id="vault-key-input" placeholder="API Key einfügen (z.B. AIzaSy...)" spellcheck="false">
+            <input type="text" class="input-text input-sm" id="vault-label-input" placeholder="Label (z.B. Work Key 1)">
+            <button class="btn btn-primary" onclick="aetherApp.saveKeyFromVault()">&#x2795; Key Validieren & Speichern</button>
+          </div>
+          <div class="key-status-msg" id="vault-status-msg"></div>
+        </div>
+
+        <!-- KEYS TABLE -->
+        <div class="vault-table-wrapper">
+          <table class="vault-table">
+            <thead>
+              <tr>
+                <th>Schlüssel-Vorschau</th>
+                <th>Projekt-Label</th>
+                <th>Erstellt am</th>
+                <th>Tier-Status</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody id="vault-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- CASCADE INFO -->
+        <div class="cascade-info-card">
+          <div class="cascade-title">&#x1F504; Exhaustive Kaskaden-Logik</div>
+          <p>Bei Erreichen eines Token-Limits rotiert das System automatisch: Key 1 &#x2192; Key 2 &#x2192; Key 3 &#x2192; OpenRouter Free Tier Fallback Mesh.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ENTERPRISE AUTHENTIFIZIERUNG -->
+  <div class="modal-backdrop" id="modal-auth" style="display:none;">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3>Enterprise Authentifizierung</h3>
+        <button class="modal-close" onclick="aetherApp.closeAuthModal()">&#x2715;</button>
       </div>
       <div class="modal-body">
-        <div class="vault-tabs">
-          <div class="vault-tab active">Google AI Studio</div>
-          <div class="vault-tab">Groq Cloud</div>
-          <div class="vault-tab">Hugging Face</div>
-          <div class="vault-tab">OpenRouter Mesh</div>
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-auth-login" onclick="aetherApp.switchAuthMode('login')">Anmelden</button>
+          <button class="auth-tab" id="tab-auth-signup" onclick="aetherApp.switchAuthMode('signup')">Registrieren</button>
         </div>
 
-        <table class="key-table">
-          <thead>
-            <tr>
-              <th>Key Preview</th>
-              <th>Project Label</th>
-              <th>Created</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="key-preview">AIzaSy...VJjA</td>
-              <td>Primary Gemini 2.5</td>
-              <td>2026-08-18</td>
-              <td><span class="key-tier-badge">Free tier</span></td>
-              <td><button class="action-btn" style="padding: 2px 6px; font-size: 11px;">Copy</button></td>
-            </tr>
-            <tr>
-              <td class="key-preview">AIzaSy...9xLm</td>
-              <td>Exhaustive Backup 2</td>
-              <td>2026-08-19</td>
-              <td><span class="key-tier-badge">Free tier</span></td>
-              <td><button class="action-btn" style="padding: 2px 6px; font-size: 11px;">Copy</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="social-login-group">
+          <button class="btn-social btn-google" onclick="aetherApp.handleSocialAuth('Google')">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <span>Mit Google fortfahren</span>
+          </button>
+          <button class="btn-social btn-ms" onclick="aetherApp.handleSocialAuth('Microsoft')">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M13 1h10v10H13z"/><path fill="#00A4EF" d="M1 13h10v10H1z"/><path fill="#FFB900" d="M13 13h10v10H13z"/></svg>
+            <span>Mit Microsoft fortfahren</span>
+          </button>
+        </div>
+
+        <div class="auth-divider"><span>oder mit E-Mail</span></div>
+
+        <form onsubmit="aetherApp.handleEmailAuth(event)">
+          <div class="form-group">
+            <label class="setting-label">E-Mail-Adresse</label>
+            <input type="email" class="input-text" id="auth-email" required placeholder="name@domain.com">
+          </div>
+          <div class="form-group">
+            <label class="setting-label">Passwort</label>
+            <input type="password" class="input-text" id="auth-password" required placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block mt-3" id="auth-submit-btn">Anmelden</button>
+        </form>
       </div>
     </div>
   </div>
-
-  <!-- ENTERPRISE AUTH MODAL -->
-  <div class="modal-backdrop" id="authModal">
-    <div class="modal-window" style="width: 420px;">
-      <div class="modal-header">
-        <h3 style="font-size: 14px; font-weight: 600;">Enterprise Authentication</h3>
-        <button class="action-btn" id="closeAuth" style="padding: 2px 6px;">✕</button>
-      </div>
-      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
-        <button class="action-btn" style="width: 100%; justify-content: center; padding: 10px; background-color: #ffffff; color: #000000; font-weight: 600;">
-          <span>G</span> Mit Google One-Tap fortfahren
-        </button>
-        <button class="action-btn" style="width: 100%; justify-content: center; padding: 10px;">
-          <span>❖</span> Mit Microsoft anmelden
-        </button>
-        <div style="text-align: center; font-size: 11px; color: var(--text-dim); margin: 6px 0;">— ODER PER E-MAIL —</div>
-        <input type="email" class="setting-control" placeholder="name@company.com">
-        <button class="action-btn primary" style="width: 100%; justify-content: center; padding: 10px;">
-          Bestätigungs-Code anfordern
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- FOOTER STATUS BAR -->
-  <footer class="footer-bar">
-    <div class="footer-section">
-      <div class="status-item">
-        <span class="status-dot"></span>
-        <span>Local Watcher: Port 3000 (2.5s Sync)</span>
-      </div>
-      <div class="status-item">
-        <span>Edge: aetherspace.pages.dev</span>
-      </div>
-    </div>
-    <div class="footer-section">
-      <span>Obsidian Engine #06080c</span>
-      <span style="color: var(--accent-cyan);">Zero Local Load &lt; 50MB</span>
-    </div>
-  </footer>
 
   <script src="app.js"></script>
 </body>
