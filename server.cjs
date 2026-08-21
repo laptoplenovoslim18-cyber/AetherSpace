@@ -1,11 +1,9 @@
-﻿// AetherSpace High-Velocity Server & Auto-Sync Watcher
-const http = require('http');
+﻿const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
 const PORT = process.env.PORT || 3000;
-const BASE_DIR = __dirname;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 const MIME_TYPES = {
@@ -15,67 +13,122 @@ const MIME_TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2'
+  '.txt': 'text/plain; charset=utf-8'
 };
 
+let syncTimer = null;
+let isSyncing = false;
+
+function triggerAutoSync() {
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    if (isSyncing) return;
+    isSyncing = true;
+    const timestamp = new Date().toISOString();
+    console.log('[AUTO-SYNC] Changes detected in public folder. Syncing Git (' + timestamp + ')...');
+    exec('git add . && git commit -m "Auto-sync update (' + timestamp + ')" && git push origin main', { cwd: __dirname }, (err) => {
+      isSyncing = false;
+      if (err) {
+        console.warn('[AUTO-SYNC NOTICE]', err.message);
+      } else {
+        console.log('[AUTO-SYNC SUCCESS] Synchronized with GitHub & Cloudflare Pages.');
+      }
+    });
+  }, 2500);
+}
+
+try {
+  fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
+    if (filename && !filename.startsWith('.')) {
+      triggerAutoSync();
+    }
+  });
+  console.log('[WATCHER] Active on ' + PUBLIC_DIR + ' (2.5s debounce).');
+} catch (e) {
+  console.warn('[WATCHER] Fallback polling enabled.');
+}
+
 const server = http.createServer((req, res) => {
-  let reqPath = req.url.split('?')[0];
-  if (reqPath === '/') reqPath = '/index.html';
-  let filePath = path.join(PUBLIC_DIR, reqPath);
-  
-  if (!filePath.startsWith(PUBLIC_DIR)) {
-    res.writeHead(403);
-    res.end('Access Denied');
+  const setHeaders = (code, type) => {
+    res.writeHead(code, {
+      'Content-Type': type,
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+  };
+
+  if (req.method === 'OPTIONS') {
+    setHeaders(204, 'text/plain');
+    res.end();
     return;
   }
 
+  if (req.method === 'POST' && req.url === '/api/save') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body);
+        if (payload.filename && typeof payload.content === 'string') {
+          const safeName = path.basename(payload.filename);
+          const targetPath = path.join(PUBLIC_DIR, safeName);
+          fs.writeFileSync(targetPath, payload.content, 'utf8');
+          triggerAutoSync();
+          setHeaders(200, 'application/json; charset=utf-8');
+          res.end(JSON.stringify({ success: true, file: safeName }));
+          return;
+        }
+      } catch (err) {
+        setHeaders(400, 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ success: false, error: err.message }));
+        return;
+      }
+    });
+    return;
+  }
+
+  let reqPath = req.url.split('?')[0];
+  if (reqPath === '/' || reqPath === '') reqPath = '/index.html';
+  const filePath = path.join(PUBLIC_DIR, reqPath);
+
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      filePath = path.join(PUBLIC_DIR, 'index.html');
+      const fallback = path.join(PUBLIC_DIR, 'index.html');
+      fs.readFile(fallback, (err2, data) => {
+        if (err2) {
+          setHeaders(404, 'text/plain');
+          res.end('404 Not Found');
+        } else {
+          setHeaders(200, 'text/html; charset=utf-8');
+          res.end(data);
+        }
+      });
+      return;
     }
+
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
-    fs.readFile(filePath, (readErr, content) => {
+    fs.readFile(filePath, (readErr, data) => {
       if (readErr) {
-        res.writeHead(500);
-        res.end('Server Error');
-        return;
+        setHeaders(500, 'text/plain');
+        res.end('500 Server Error');
+      } else {
+        setHeaders(200, contentType);
+        res.end(data);
       }
-      res.writeHead(200, {
-        'Content-Type': contentType,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'X-Content-Type-Options': 'nosniff'
-      });
-      res.end(content);
     });
   });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log("\n======================================================");
-  console.log("  AetherSpace Local Studio: http://127.0.0.1:" + PORT);
-  console.log("  Auto-Sync Watcher & 144Hz Sandbox Active");
-  console.log("======================================================\n");
+server.listen(PORT, '0.0.0.0', () => {
+  console.log('==================================================================');
+  console.log(' AETHERSPACE SOTA SERVER: http://127.0.0.1:' + PORT);
+  console.log(' Target Git: https://github.com/laptoplenovoslim18-cyber/AetherSpace');
+  console.log(' 24/7 Live Edge: https://aetherspace.pages.dev');
+  console.log('==================================================================');
 });
-
-// Auto-Sync Watcher (2.5s Debounce)
-let syncTimeout = null;
-if (fs.existsSync(PUBLIC_DIR)) {
-  fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
-    if (filename && (filename.endsWith('.html') || filename.endsWith('.css') || filename.endsWith('.js'))) {
-      clearTimeout(syncTimeout);
-      syncTimeout = setTimeout(() => {
-        console.log("[Auto-Sync] Datei geaendert: " + filename + ". Fuehre Git Auto-Commit & Push aus...");
-        exec('git add -A && git commit -m "auto-sync: workspace update" && git push origin main', { cwd: BASE_DIR }, (err, stdout) => {
-          if (err) {
-            console.error('[Auto-Sync] Fehler bei Git Sync:', err.message);
-          } else {
-            console.log('[Auto-Sync] Erfolgreich synchronisiert mit GitHub & Cloudflare Pages.');
-          }
-        });
-      }, 2500);
-    }
-  });
-}

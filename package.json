@@ -1,16 +1,12 @@
 ﻿{
   "name": "aetherspace",
-  "version": "2026.8.17",
-  "description": "AetherSpace Modern Platform",
-  "main": "server.js",
-  "type": "module",
+  "version": "2.0.0",
+  "description": "AetherSpace - Autonomous High-Leverage Cloud AI IDE and Sandbox",
+  "main": "server.cjs",
+  "type": "commonjs",
   "scripts": {
-    "start": "node --max-old-space-size=24 server.js"
+    "start": "node server.cjs"
   },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "ws": "^8.18.0"
-  }
+  "author": "laptoplenovoslim18-cyber",
+  "license": "MIT"
 }

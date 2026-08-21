@@ -1,661 +1,252 @@
 ﻿<!DOCTYPE html>
-<html lang="de" class="dark">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | Enterprise Multi-KI Cloud Studio (2026 SOTA)</title>
-  <meta name="description" content="AetherSpace - Multi-Agent Orchestrator, VS-Code Editor, 144Hz Uncapped Sandbox, Zero-Trust BYOK Vault & Cloud-Staging Hub">
+  <title>AetherSpace | Enterprise Cloud AI IDE & Sandbox</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Enterprise Auth SDKs (GIS & MSAL) -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js" async defer></script>
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
-<body class="bg-obsidian text-slate-100 antialiased overflow-hidden select-none">
-  <!-- TOP APP HEADER -->
-  <header class="app-header">
-    <div class="header-left">
-      <div class="brand-badge" id="brand-home-btn" title="AetherSpace Home">
-        <svg class="brand-icon" viewBox="0 0 32 32" fill="none">
-          <path d="M16 4L27 10.5V21.5L16 28L5 21.5V10.5L16 4Z" stroke="url(#h-grad)" stroke-width="2" fill="#0b0e14"/>
-          <path d="M16 9L23 13V20L16 24L9 20V13L16 9Z" stroke="#38bdf8" stroke-width="1.2" fill="#121824"/>
-          <circle cx="16" cy="16.5" r="3" fill="url(#h-grad)"/>
-          <defs>
-            <linearGradient id="h-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="50%" stop-color="#38bdf8" />
-              <stop offset="100%" stop-color="#10b981" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <span class="brand-title">AetherSpace</span>
-        <span class="version-tag">2026 SOTA</span>
-      </div>
-
-      <!-- Collapsible File Tree Toggle -->
-      <button class="btn-icon-only" id="toggle-filetree-btn" title="VS-Code Explorer ein-/ausblenden">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
-      </button>
-
-      <div class="project-name-pill" title="Klicken zum Umbenennen des Projekts">
-        <span class="pill-icon">📁</span>
-        <input type="text" id="project-title-input" value="AetherSpace-Project" spellcheck="false">
-      </div>
+<body>
+  <header class="top-navbar">
+    <div class="brand-section">
+      <img src="favicon.svg" alt="AetherSpace Logo" class="brand-logo">
+      <span class="brand-title">AetherSpace</span>
+      <span class="brand-badge">SOTA v2.0</span>
     </div>
-
-    <!-- HIERARCHICAL MASTER PILLS (Two-Tier Controls) -->
-    <div class="header-center">
-      <div class="master-pill-group">
-        <!-- Thinking Level Pill -->
-        <div class="master-pill" id="thinking-pill-trigger" title="Thinking Level umschalten (High / Medium / Fast)">
-          <span class="pill-icon">🧠</span>
-          <span class="pill-label">Thinking:</span>
-          <span class="pill-value active-badge" id="thinking-level-label">High (16k)</span>
-        </div>
-
-        <!-- Google Search Grounding Pill -->
-        <div class="master-pill toggle-active" id="grounding-pill-trigger" title="Live Google Search Grounding">
-          <span class="pill-icon">🌐</span>
-          <span class="pill-label">Grounding:</span>
-          <span class="pill-value" id="grounding-label">ON</span>
-        </div>
-
-        <!-- Key Vault Pill -->
-        <div class="master-pill" id="key-vault-trigger" title="Multi-Key Vault Dashboard öffnen">
-          <span class="pill-indicator cascade"></span>
-          <span class="pill-label">Key-Vault:</span>
-          <span class="pill-value" id="key-vault-count-label">Tresor Öffnen</span>
-        </div>
-
-        <!-- Auto-Pilot Toggle Pill -->
-        <div class="master-pill toggle-active" id="autopilot-pill-trigger" title="Autonomer KI-Pilot Modus">
-          <span class="pill-icon">🤖</span>
-          <span class="pill-label">Auto-Pilot:</span>
-          <span class="pill-value" id="autopilot-label">ON</span>
-        </div>
+    <div class="top-actions">
+      <div id="authProfileBadge" class="master-pill" style="display:none; color: var(--accent-emerald);">
+        <span>✓ Verifiziert</span>
       </div>
-    </div>
-
-    <div class="header-right">
-      <!-- Polyglot Healer Trigger -->
-      <button class="btn btn-heal" id="auto-heal-btn" title="Autonomer Polyglot Healer (Scannt HTML, CSS, JS & WebGL)">
-        <svg class="btn-icon heal-pulse" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
-        <span>Auto-Heal</span>
-        <span class="error-counter-badge" id="error-badge" style="display:none;">0</span>
-      </button>
-
-      <!-- Cloud Staging Hub Trigger -->
-      <button class="btn btn-secondary" id="staging-modal-btn" title="1-Klick Cloud-Staging (CodePen, HF Spaces, StackBlitz)">
-        <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-        <span>Cloud-Staging</span>
-      </button>
-
-      <!-- Smart Export Modal Trigger -->
-      <button class="btn btn-secondary" id="export-modal-btn" title="Smart Export (.html standalone / .zip)">
-        <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
-        <span>Export</span>
-      </button>
-
-      <!-- Share Trigger -->
-      <button class="btn-icon-only" id="share-modal-btn" title="Projekt teilen (WhatsApp / Web-Link)">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/></svg>
-      </button>
-
-      <!-- Run-Settings Toggle (Google AI Studio Leiste) -->
-      <button class="btn-icon-only" id="settings-drawer-toggle" title="Google AI Studio Run-Settings">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
-      </button>
-
-      <!-- Enterprise Auth Button -->
-      <button class="auth-avatar-btn" id="auth-btn" title="Konto & Authentifizierung">
-        <div class="avatar-ring" id="user-avatar-initials">AS</div>
-      </button>
+      <button id="btnAuthModal" class="btn btn-sm">👤 Konto</button>
+      <button id="btnVaultModal" class="btn btn-sm">🔑 Schnittstellen-Tresor</button>
+      <button id="btnSettingsModal" class="btn btn-sm">⚙️ Run Settings</button>
+      <button id="btnAutoDeploy" class="btn btn-sm btn-emerald">⚡ Auto-Sync Active</button>
     </div>
   </header>
 
-  <!-- =========================================================================
-       3-SPALTEN WORKSPACE LAYOUT
-       ========================================================================= -->
-  <main class="workspace-3col">
-
-    <!-- SPALTE 1: KI-ORCHESTRATOR & PIPELINE (LINKS) -->
-    <section class="col-orchestrator" id="col-orchestrator">
-      <!-- Panel Header -->
-      <div class="panel-header">
-        <div class="panel-title">
-          <span class="panel-icon">⚡</span>
-          <span>KI-Pipeline & Multi-Agenten</span>
-        </div>
-        <div class="pipeline-status-badge" id="pipeline-status">BEREIT</div>
+  <nav class="pipeline-bar">
+    <div class="pipeline-pills">
+      <div id="pillAutoPilot" class="master-pill active" title="Autonome Rollen- und Modell-Zuweisung">
+        <span>⚡ Auto-Pilot:</span>
+        <span id="activeModelLabel" style="color:var(--accent-cyan)">Gemini Flash Cascade</span>
       </div>
-
-      <!-- Collapsible File Explorer -->
-      <div class="filetree-drawer open" id="filetree-drawer">
-        <div class="filetree-header">
-          <span class="sub-label">EXPLORER & DATEIEN</span>
-          <button class="btn-mini" id="explorer-add-file-btn">+ Datei</button>
-        </div>
-        <div class="filetree-list" id="filetree-list">
-          <!-- Dynamisch befüllt via JS -->
-        </div>
+      <div id="pillHardware" class="master-pill" title="Client Footprint & 144Hz WebGL Invariante">
+        <span>🛡️ Hardware:</span>
+        <span style="color:var(--accent-emerald)">Zero Local Load (&lt; 50MB)</span>
       </div>
-
-      <!-- Dynamischer Stufen-Konfigurator mit freier Rollen- und Modellauswahl -->
-      <div class="tunnel-configurator">
-        <div class="tunnel-header">
-          <span class="sub-label">AGENTEN-STUFEN (FREIE WAHL)</span>
-          <button class="btn-mini" id="add-stage-btn" title="Neue Stufe hinzufügen">+ Stufe</button>
-        </div>
-        <div class="tunnel-stages-list" id="tunnel-stages-list">
-          <!-- Dynamisch befüllt via JS -->
-        </div>
+      <div id="pillStaging" class="master-pill" title="Cloud Staging Auslagerung">
+        <span>🌐 Cloud-Staging:</span>
+        <span style="color:var(--accent-purple)">Edge Ready</span>
       </div>
+    </div>
+    <div class="pipeline-status">
+      <span><span class="status-dot"></span> Mesh: Online</span>
+      <span>Budget: $0 FOSS</span>
+      <span>Origin: Main</span>
+    </div>
+  </nav>
 
-      <!-- Dateibaum-Kontext-Injektor -->
-      <div class="context-injector-panel">
-        <div class="context-injector-header">
-          <span class="sub-label">PROMPT-KONTEXT INJEKTION</span>
-          <span class="token-count-badge" id="context-tokens-badge">~0 tok</span>
-        </div>
-        <div class="context-file-checklist" id="context-file-checklist">
-          <!-- Dynamisch befüllt via JS -->
-        </div>
+  <div id="subPanelAutoPilot" class="sub-panel-drawer">
+    <span><strong>Modell-Kaskade:</strong> Google AI Studio &rarr; Groq Cloud &rarr; Hugging Face &rarr; Pollinations Edge</span>
+    <button id="btnForceSwitchModel" class="btn btn-sm">Manuelles Modell wählen</button>
+  </div>
+
+  <div id="subPanelHardware" class="sub-panel-drawer">
+    <span><strong>Hardware-Wächter:</strong> Unbegrenzte 144Hz Bildrate aktiv | Thread-Freeze Watchdog (&gt;3s Schutz) aktiv</span>
+  </div>
+
+  <div id="subPanelStaging" class="sub-panel-drawer">
+    <span><strong>1-Klick Staging:</strong></span>
+    <button id="btnExportCodePen" class="btn btn-sm">CodePen</button>
+    <button id="btnExportStackBlitz" class="btn btn-sm">StackBlitz</button>
+    <button id="btnExportZip" class="btn btn-sm">ZIP Bundle</button>
+    <button id="btnExportHtml" class="btn btn-sm">Single-File HTML</button>
+    <button id="btnShareWhatsApp" class="btn btn-sm">WhatsApp</button>
+  </div>
+
+  <main class="workspace-grid">
+    <!-- Column 1: VS-Code File Tree & Context Injector -->
+    <aside class="explorer-sidebar">
+      <div class="explorer-header">
+        <span>Projektdateien</span>
+        <button id="btnNewFile" class="btn btn-sm" title="Neue Datei anlegen">+ Datei</button>
       </div>
-
-      <!-- Reiner Live-Chat & Debattenverlauf (Clean Baseline) -->
-      <div class="debate-stream-container">
-        <div class="debate-stream-header">
-          <span class="sub-label">AGENTEN-DEBATTE & SYNTHESE</span>
-          <button class="btn-link" id="clear-debate-btn">Leeren</button>
-        </div>
-        <div class="debate-messages-feed" id="debate-messages-feed">
-          <div class="empty-state-notice" id="empty-feed-notice">
-            <span class="empty-icon">💡</span>
-            <p>Bereit für Cloud-KI-Generierung. Gib unten deinen Prompt ein, um den Stufen-Workflow zu starten.</p>
-          </div>
-        </div>
+      <div id="explorerTreeList" class="explorer-tree"></div>
+      <div class="explorer-footer">
+        <span id="contextTokenEstimator">Kontext: 0 Tokens</span>
+        <button id="btnSelectAllContext" class="btn btn-sm" style="padding: 2px 6px;">Alle</button>
       </div>
+    </aside>
 
-      <!-- Prominente Prompt-Eingabeleiste am unteren Rand -->
-      <div class="prompt-input-dock">
-        <div class="prompt-input-wrapper">
-          <textarea id="pipeline-prompt-input" class="prompt-textarea" rows="3" placeholder="Beschreibe die gewünschte Web-App oder Shader (z.B. 'Interaktives 2D-Auto-Ausweichspiel mit Canvas und Highscore')..."></textarea>
-          <div class="prompt-bottom-bar">
-            <div class="prompt-meta-info">
-              <span class="key-hint"><kbd>Strg</kbd> + <kbd>Enter</kbd> zum Starten</span>
-            </div>
-            <button class="btn btn-primary btn-launch" id="launch-pipeline-btn">
-              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
-              <span>Pipeline starten</span>
-            </button>
-          </div>
+    <!-- Column 2: Code Editor & Prompt Studio -->
+    <section class="editor-studio">
+      <div id="editorTabBar" class="editor-tabs"></div>
+      <div class="editor-main-wrap">
+        <div id="editorLineNumbers" class="editor-lines">1</div>
+        <textarea id="mainCodeEditor" class="code-textarea" spellcheck="false" placeholder="Wähle eine Datei aus oder starte die Generierung..."></textarea>
+      </div>
+      <div class="prompt-dock">
+        <div class="prompt-bar-row">
+          <textarea id="promptInputField" class="prompt-input" placeholder="Beschreibe deine Anwendung (z. B. 2D Space Shooter mit Partikeln, Steuerung und Score-System)..."></textarea>
+          <button id="btnGeneratePrompt" class="btn btn-primary" style="height: 52px; padding: 0 18px;">✨ Generieren</button>
+        </div>
+        <div class="prompt-controls">
+          <span>Injektion: Markierte Dateien fließen als strukturierter Kontext in die Cloud-KI.</span>
+          <span id="generationStatusNotice">Bereit</span>
         </div>
       </div>
     </section>
 
-    <!-- SPALTE 2: VS-CODE STYLE CODE-EDITOR (MITTE) -->
-    <section class="col-editor" id="col-editor">
-      <!-- Multi-File Tab Bar -->
-      <div class="editor-tab-bar" id="editor-tab-bar">
-        <!-- Dynamisch befüllt via JS -->
-      </div>
-
-      <!-- Editor Subbar -->
-      <div class="editor-subbar">
-        <div class="subbar-left">
-          <span class="active-file-indicator" id="active-file-indicator">index.html</span>
-          <span class="sync-badge" title="Lokaler Node.js Server & Auto-Sync aktiv">🟢 127.0.0.1:3000 Synced</span>
-        </div>
-        <div class="subbar-right">
-          <span class="char-count" id="editor-char-count">0 Zeichen</span>
-          <button class="subbar-action-btn" id="format-code-btn" title="Code formatieren">✨ Format</button>
-          <button class="subbar-action-btn" id="copy-code-btn" title="Code in Zwischenablage kopieren">📋 Kopieren</button>
-          <button class="subbar-action-btn" id="clear-code-btn" title="Editor leeren">🗑️ Leeren</button>
-        </div>
-      </div>
-
-      <!-- Code Editor Container mit Zeilennummern -->
-      <div class="code-editor-wrapper">
-        <div class="line-numbers" id="line-numbers">1</div>
-        <textarea class="code-textarea" id="code-editor" spellcheck="false" autocomplete="off" wrap="off"></textarea>
-      </div>
-    </section>
-
-    <!-- SPALTE 3: SANDBOX VORSCHAU & CLOUD-STAGING (RECHTS) -->
-    <section class="col-sandbox" id="col-sandbox">
-      <!-- Sandbox Header & Diagnostics Bar -->
+    <!-- Column 3: 100% Dark Sandbox & Cloud Staging Hub -->
+    <section class="sandbox-preview">
       <div class="sandbox-header">
-        <div class="sandbox-url-pill">
-          <span class="lock-icon">🔒</span>
-          <span class="sandbox-url">aetherspace://preview/144hz-sandbox</span>
+        <div class="sandbox-stats">
+          <span>🎮 Live Vorschau</span>
+          <span id="fpsCounter" style="color:var(--accent-emerald)">-- FPS</span>
+          <span id="heartbeatStatus" style="color:var(--accent-cyan)">Heartbeat: OK</span>
         </div>
-
-        <div class="sandbox-metrics">
-          <div class="fps-meter-badge" id="hud-fps-badge" title="Uncapped Native RAF Bildrate">
-            <span class="fps-pulse"></span>
-            <span id="hud-fps-text">144 FPS</span>
-          </div>
-          <div class="latency-badge" id="hud-lat-badge" title="Frame Render Latency">6.9 ms</div>
-          <div class="watchdog-badge" id="hud-watchdog-badge" title="Heartbeat-Watchdog (Neutralisiert Thread-Freezes)">
-            <span class="watchdog-dot"></span>
-            <span>Watchdog OK</span>
-          </div>
-        </div>
-
-        <div class="sandbox-controls">
-          <!-- Responsive Device Switcher -->
-          <div class="device-switcher">
-            <button class="device-btn active" data-size="100%" title="Desktop Modus">🖥️</button>
-            <button class="device-btn" data-size="768px" title="Tablet Modus">📱</button>
-            <button class="device-btn" data-size="375px" title="Mobile Modus">📲</button>
-          </div>
-          <!-- Popout Window Button -->
-          <button class="icon-action-btn" id="popout-btn" title="In neuem Fenster öffnen">
-            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
-          </button>
-          <!-- Hard Reload Sandbox -->
-          <button class="icon-action-btn" id="reload-sandbox-btn" title="Sandbox neu laden">
-            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
-          </button>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="appRenameInput" class="form-control" style="padding:2px 6px; font-size:11px; width:130px;" value="AetherApp" title="App-Name für Export">
+          <button id="btnHealRuntime" class="btn btn-sm" style="color:var(--accent-amber); display:none;">🩹 Auto-Heal</button>
+          <button id="btnReloadSandbox" class="btn btn-sm">🔄 Neu laden</button>
         </div>
       </div>
-
-      <!-- 100% Dark-Mode Augenschutz Sandboxed Viewport Frame (#0b0e14) -->
-      <div class="iframe-container" id="iframe-container">
-        <iframe id="preview-frame" sandbox="allow-scripts allow-modals allow-pointer-lock allow-same-origin" src="about:blank"></iframe>
+      <div class="sandbox-viewport">
+        <iframe id="sandboxIframe" class="sandbox-iframe" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
       </div>
-
-      <!-- Bottom Cloud-Staging Hub & Smart Export Bar -->
-      <div class="sandbox-bottom-hub">
-        <div class="hub-export-group">
-          <span class="hub-label">SMART EXPORT:</span>
-          <input type="text" id="live-export-name" class="export-name-input" value="AetherSpace-Build" spellcheck="false" title="Dateiname vor Download umbenennen">
-          <button class="btn btn-small" id="quick-html-export-btn" title="Als Single-File HTML herunterladen">.html</button>
-          <button class="btn btn-small" id="quick-zip-export-btn" title="Als ZIP-Archiv herunterladen">.zip</button>
-        </div>
-
-        <div class="hub-staging-group">
-          <span class="hub-label">CLOUD-STAGING:</span>
-          <button class="btn-stage-chip" id="quick-codepen-btn" title="1-Klick Übergabe an CodePen">📐 CodePen</button>
-          <button class="btn-stage-chip" id="quick-hf-btn" title="1-Klick Hugging Face Spaces Deploy">🤗 HF Spaces</button>
-          <button class="btn-stage-chip" id="quick-sb-btn" title="1-Klick StackBlitz Launch">⚡ StackBlitz</button>
-        </div>
-      </div>
-
-      <!-- Collapsible Live Runtime Console Drawer -->
-      <div class="console-drawer" id="console-drawer">
-        <div class="console-header" id="console-header-toggle">
-          <div class="console-title">
-            <span class="console-icon">⌨️</span>
-            <span>Laufzeit-Diagnose & Logs</span>
-            <span class="console-count-pill" id="console-count">0</span>
-          </div>
-          <div class="console-actions">
-            <button class="subbar-action-btn" id="clear-console-btn">Leeren</button>
-            <button class="subbar-action-btn" id="toggle-console-size-btn">▲</button>
-          </div>
-        </div>
-        <div class="console-logs" id="console-logs-list">
-          <div class="log-entry system">[System] 144Hz Realtime Sandbox & Watchdog aktiv. 100% Dark-Mode geschützt (#0b0e14).</div>
-        </div>
+      <div id="sandboxDiagnostics" class="sandbox-diagnostics">
+        <span style="color:var(--text-dim);">[DIAGNOSTIK] Sandbox aktiv (#0b0e14). Keine Fehler erkannt.</span>
       </div>
     </section>
-
   </main>
 
-  <!-- =========================================================================
-       MODALS & SLIDE-OVER DRAWERS
-       ========================================================================= -->
-
-  <!-- 1. GOOGLE AI STUDIO RUN-SETTINGS DRAWER (RECHTS) -->
-  <aside class="sidebar-settings" id="settings-sidebar">
-    <div class="settings-header">
-      <div class="settings-title">
-        <span>⚙️ Google AI Studio Run-Settings</span>
+  <!-- Modals -->
+  <div id="settingsModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>⚙️ Google AI Studio Run-Settings</h3>
+        <button class="btn btn-sm modal-close-btn">&times;</button>
       </div>
-      <button class="icon-action-btn" id="close-settings-btn">✕</button>
-    </div>
-
-    <div class="settings-content">
-      <!-- Model Selector -->
-      <div class="setting-group">
-        <label class="setting-label">PRIMARY CLOUD MODEL</label>
-        <select id="settings-model-select" class="setting-input">
-          <option value="gemini-3.7-flash">Google Gemini 3.7 Flash (SOTA Coding)</option>
-          <option value="gemini-3.6-flash">Google Gemini 3.6 Flash (Empfohlen / Schnell)</option>
-          <option value="gemini-2.0-flash">Google Gemini 2.0 Flash (Stabil)</option>
-          <option value="llama-3.3-70b-versatile">Groq Llama 3.3 70B (Ultra-Speed)</option>
-          <option value="deepseek-r1-distill-llama-70b">Groq DeepSeek R1 Distill 70B</option>
-          <option value="hf-deepseek-v3">Hugging Face DeepSeek V3</option>
-          <option value="deepseek-r1">OpenRouter DeepSeek R1 (Auth Guard)</option>
-        </select>
-      </div>
-
-      <!-- Thinking Level Control -->
-      <div class="setting-group">
-        <div class="setting-label-row">
-          <label class="setting-label">THINKING BUDGET LEVEL</label>
-          <span class="badge-accent" id="drawer-thinking-badge">High (16,384 tok)</span>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Primäres Modell:</label>
+          <select id="settingModelSelect" class="form-control">
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash (SOTA Ultra-Fast)</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Failsafe)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Context)</option>
+            <option value="groq/llama-3.3-70b-versatile">Groq Llama 3.3 70B Versatile</option>
+            <option value="hf/deepseek-ai/DeepSeek-V3">Hugging Face DeepSeek-V3</option>
+          </select>
         </div>
-        <div class="tier-pill-selector">
-          <button class="tier-pill-btn active" data-level="high">🧠 High</button>
-          <button class="tier-pill-btn" data-level="medium">⚡ Medium</button>
-          <button class="tier-pill-btn" data-level="fast">🚀 Fast (0)</button>
+        <div class="form-group">
+          <label>System Instructions:</label>
+          <textarea id="settingSystemInstructions" class="form-control" style="height:70px;">Du bist AetherSpace Engine. Generiere vollständigen, modernen, fehlerfreien Produktions-Code (HTML/CSS/JS Canvas) ohne Platzhalter.</textarea>
         </div>
-        <span class="setting-hint">Weist dedizierte Denk-Tokens für komplexe Algorithmen und Code-Architektur zu.</span>
-      </div>
-
-      <!-- Google Search Grounding Toggle -->
-      <div class="setting-group">
-        <div class="toggle-row">
-          <div>
-            <label class="setting-label">LIVE GOOGLE SEARCH GROUNDING</label>
-            <div class="setting-hint">Echtzeit-Fakten & SOTA Dokumentation live in den Prompt einbinden.</div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="search-grounding-toggle" checked>
-            <span class="slider round"></span>
+        <div class="form-group">
+          <label>Thinking Level:</label>
+          <select id="settingThinkingLevel" class="form-control">
+            <option value="high">High (Tiefen-Audit &amp; Edge-Case Sweeps)</option>
+            <option value="medium" selected>Medium (Standard Production)</option>
+            <option value="fast">Fast (Instant Response)</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:20px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+            <input type="checkbox" id="settingSearchGrounding" checked> Live Google Search Grounding
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+            <input type="checkbox" id="settingCodeExecution" checked> Code Execution Check
           </label>
         </div>
-      </div>
-
-      <!-- Max Output Length Slider (bis 65.536 Tokens) -->
-      <div class="setting-group">
-        <div class="setting-label-row">
-          <label class="setting-label">MAX OUTPUT LENGTH</label>
-          <span class="value-display" id="max-tokens-val">32,768</span>
+        <div class="form-group">
+          <label>Max Output Tokens: <span id="settingOutputLengthLabel">16384</span></label>
+          <input type="range" id="settingOutputLength" min="2048" max="65536" step="2048" value="16384" class="form-control">
         </div>
-        <input type="range" id="max-tokens-slider" min="1024" max="65536" step="1024" value="32768" class="range-slider">
-        <div class="range-ticks">
-          <span>1k</span>
-          <span>16k</span>
-          <span>32k</span>
-          <span>65k</span>
+        <div class="form-group">
+          <label>Temperature: <span id="settingTemperatureLabel">0.7</span></label>
+          <input type="range" id="settingTemperature" min="0" max="1" step="0.05" value="0.7" class="form-control">
         </div>
-      </div>
-
-      <!-- Temperature Slider -->
-      <div class="setting-group">
-        <div class="setting-label-row">
-          <label class="setting-label">TEMPERATURE</label>
-          <span class="value-display" id="temperature-val">0.70</span>
-        </div>
-        <input type="range" id="temperature-slider" min="0" max="2" step="0.05" value="0.7" class="range-slider">
-      </div>
-
-      <!-- System Persona -->
-      <div class="setting-group">
-        <label class="setting-label">SYSTEM INSTRUCTION / PERSONA</label>
-        <textarea id="system-prompt-input" class="setting-textarea" rows="3">Du bist der AetherSpace Senior Code Architect. Du generierst saubere, fehlerfreie, produktionsreife Web-Anwendungen mit 144Hz Canvas/WebGL Fähigkeiten, null Platzhaltern und höchster Code-Eleganz.</textarea>
-      </div>
-
-      <!-- Hardware-Schutz & $0 Budget Invariante -->
-      <div class="setting-group">
-        <label class="setting-label">HARDWARE-SCHONUNG ($0 / &lt;30MB RAM)</label>
-        <div class="stat-card">
-          <div class="stat-row">
-            <span>Lokaler RAM-Bedarf:</span>
-            <span class="text-emerald font-mono">15 - 30 MB</span>
-          </div>
-          <div class="stat-row">
-            <span>Rechenlast:</span>
-            <span class="text-indigo font-mono">100% Cloud Serverless</span>
-          </div>
-          <div class="stat-row">
-            <span>Laptop-Temperatur:</span>
-            <span class="text-emerald font-mono">0% Lüfteraktivität (Kühl)</span>
-          </div>
+        <div style="display:flex; justify-content:flex-end;">
+          <button id="btnSaveSettings" class="btn btn-primary">Einstellungen Speichern</button>
         </div>
       </div>
     </div>
-  </aside>
+  </div>
 
-  <!-- 2. MULTI-KEY VAULT DASHBOARD MODAL (GOOGLE AI STUDIO TABELLEN-DESIGN) -->
-  <div class="modal-backdrop" id="vault-modal">
-    <div class="modal-box vault-modal-box">
+  <div id="vaultModal" class="modal-backdrop">
+    <div class="modal-dialog">
       <div class="modal-header">
-        <div class="modal-title">
-          <span>🔑 Multi-Key Vault Dashboard</span>
-          <span class="badge-secure">AES-GCM-256 Client-Encrypted</span>
-        </div>
-        <button class="modal-close-btn" data-close="vault-modal">✕</button>
+        <h3>🔑 Schnittstellen-Tresor (Client-Side AES-GCM Encrypted)</h3>
+        <button class="btn btn-sm modal-close-btn">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Verwalte deine API-Schlüssel-Pools mit erschöpfender Kaskade (Tier 1 Gemini Pool -> Tier 2 Groq -> Tier 3 HF -> Tier 4 Edge Router). Schlüssel werden <strong>ausschließlich lokal im Browser</strong> per AES-GCM-256 verschlüsselt und niemals in Git-Repositories übertragen.</p>
-        
-        <!-- Vault Tab Bar -->
-        <div class="vault-tab-bar">
-          <button class="vault-tab-btn active" data-vtab="gemini">Google AI Studio</button>
-          <button class="vault-tab-btn" data-vtab="groq">Groq Cloud</button>
-          <button class="vault-tab-btn" data-vtab="hf">Hugging Face</button>
-          <button class="vault-tab-btn" data-vtab="openrouter">OpenRouter Mesh</button>
+        <div class="modal-tabs">
+          <button class="modal-tab-btn active" data-provider="gemini">Google AI Studio</button>
+          <button class="modal-tab-btn" data-provider="groq">Groq Cloud</button>
+          <button class="modal-tab-btn" data-provider="hf">Hugging Face</button>
+          <button class="modal-tab-btn" data-provider="openrouter">OpenRouter</button>
         </div>
-
-        <div class="vault-table-container">
-          <table class="vault-table">
-            <thead>
-              <tr>
-                <th>SLOT</th>
-                <th>API SCHLÜSSEL (AES-GCM)</th>
-                <th>PREVIEW</th>
-                <th>TIER STATUS</th>
-                <th>AKTION</th>
-              </tr>
-            </thead>
-            <tbody id="vault-table-body">
-              <!-- Dynamisch via JS befüllt -->
-            </tbody>
-          </table>
-        </div>
-
-        <div class="modal-footer-actions">
-          <button class="btn btn-primary w-full" id="save-vault-btn">🔒 Alle Schlüssel verschlüsseln & lokal im Browser speichern</button>
+        <table class="vault-table">
+          <thead>
+            <tr>
+              <th>Schlüssel-Vorschau</th>
+              <th>Projekt-Label</th>
+              <th>Erstellt</th>
+              <th>Tier</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="vaultKeysTableBody"></tbody>
+        </table>
+        <div style="background:var(--bg-tertiary); padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:8px;">
+          <strong style="font-size:12px;">Neuen Schlüssel hinzufügen:</strong>
+          <div style="display:flex; gap:8px;">
+            <input type="password" id="vaultKeyInput" class="form-control" placeholder="API Key einfügen..." style="flex:2;">
+            <input type="text" id="vaultLabelInput" class="form-control" placeholder="Projekt-Label (z.B. Primary Key)" style="flex:1;">
+            <button id="btnAddVaultKey" class="btn btn-primary">Speichern</button>
+          </div>
+          <span style="font-size:11px; color:var(--text-dim);">Keys werden ausschließlich lokal im Browser per Web Crypto API AES-GCM verschlüsselt gespeichert.</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 3. CLOUD-STAGING MODAL -->
-  <div class="modal-backdrop" id="staging-modal">
-    <div class="modal-box">
+  <div id="authModal" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width:440px;">
       <div class="modal-header">
-        <div class="modal-title">
-          <span>🚀 1-Klick Cloud-Staging Hub</span>
-          <span class="badge-accent">0% Lokale Rechenlast</span>
-        </div>
-        <button class="modal-close-btn" data-close="staging-modal">✕</button>
+        <h3 id="authModalTitle">👤 Enterprise Authentifizierung</h3>
+        <button class="btn btn-sm modal-close-btn">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Übergib das Projekt mit einem Klick an externe Cloud-Plattformen, ohne lokale Abhängigkeiten zu installieren oder den Arbeitsspeicher deines Laptops zu belasten.</p>
-        
-        <div class="staging-cards-grid">
-          <div class="staging-card" id="stage-codepen-btn">
-            <div class="staging-icon codepen">📐</div>
-            <div class="staging-info">
-              <h4>CodePen Playground</h4>
-              <p>Direkte POST-Injektion von HTML, CSS und JS in ein sofort editierbares Live-Pen.</p>
-            </div>
-            <button class="btn btn-small">Stagen →</button>
+        <div class="modal-tabs">
+          <button id="tabAuthLogin" class="modal-tab-btn active">Anmelden</button>
+          <button id="tabAuthSignup" class="modal-tab-btn">Registrieren</button>
+        </div>
+        <div id="authFormView">
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+            <button id="btnAuthGoogle" class="btn" style="justify-content:center;">🔵 Weiter mit Google</button>
+            <button id="btnAuthMicrosoft" class="btn" style="justify-content:center;">🟦 Weiter mit Microsoft</button>
+            <button id="btnAuthApple" class="btn" style="justify-content:center;">⚪ Weiter mit Apple</button>
           </div>
-
-          <div class="staging-card" id="stage-hf-btn">
-            <div class="staging-icon hf">🤗</div>
-            <div class="staging-info">
-              <h4>Hugging Face Spaces</h4>
-              <p>Generiert ein schlüsselfertiges Deployment-Archiv für globale FOSS-Spaces.</p>
-            </div>
-            <button class="btn btn-small">Space starten →</button>
+          <div style="text-align:center; font-size:11px; color:var(--text-dim); margin-bottom:12px;">— ODER PER E-MAIL —</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>Geschäftliche E-Mail:</label>
+            <input type="email" id="authEmailInput" class="form-control" placeholder="name@unternehmen.de">
           </div>
-
-          <div class="staging-card" id="stage-stackblitz-btn">
-            <div class="staging-icon stackblitz">⚡</div>
-            <div class="staging-info">
-              <h4>StackBlitz WebContainer</h4>
-              <p>Startet eine vollständige In-Browser VM mit Live-Hot-Reload.</p>
-            </div>
-            <button class="btn btn-small">WebContainer öffnen →</button>
-          </div>
+          <button id="btnSubmitEmailAuth" class="btn btn-primary" style="width:100%;">Magic Code Anfordern</button>
+        </div>
+        <div id="authVerifyView" style="display:none; text-align:center; flex-direction:column; gap:12px;">
+          <p style="font-size:12px; color:var(--text-muted);">Ein 6-stelliger Bestätigungscode wurde simuliert an deine E-Mail gesendet:</p>
+          <input type="text" id="authCodeInput" class="form-control" style="font-size:18px; text-align:center; letter-spacing:4px;" maxlength="6" placeholder="123456">
+          <button id="btnVerifyCode" class="btn btn-emerald" style="width:100%;">✓ E-Mail Verifizieren</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 4. SMART EXPORT MODAL -->
-  <div class="modal-backdrop" id="export-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>📦 Smart Workspace Export</span>
-        </div>
-        <button class="modal-close-btn" data-close="export-modal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="setting-group mb-3">
-          <label class="setting-label">PROJEKTNAME VOR DEM DOWNLOAD</label>
-          <input type="text" id="export-filename-input" class="setting-input" value="AetherSpace-Project">
-        </div>
-
-        <div class="export-options-grid">
-          <div class="export-card" id="export-single-html-btn">
-            <div class="export-icon">📄</div>
-            <div class="export-details">
-              <h4>Single-File Standalone (.html)</h4>
-              <p>Bettet CSS, JS und HTML vollständig in eine einzige, autarke HTML-Datei ein.</p>
-            </div>
-            <button class="btn btn-primary">.html Export</button>
-          </div>
-
-          <div class="export-card" id="export-zip-btn">
-            <div class="export-icon">🗂️</div>
-            <div class="export-details">
-              <h4>Vollständiges Projekt-Archiv (.zip)</h4>
-              <p>Erstellt ein sauberes Multi-File-Archiv (index.html, styles.css, app.js, README.md) über den clientseitigen ZIP-Packer.</p>
-            </div>
-            <button class="btn btn-secondary">.zip Export</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 5. 1-KLICK SHARE MODAL (WHATSAPP & WEB-LINK) -->
-  <div class="modal-backdrop" id="share-modal">
-    <div class="modal-box auth-modal-box">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>🔗 Projekt Teilen</span>
-        </div>
-        <button class="modal-close-btn" data-close="share-modal">✕</button>
-      </div>
-      <div class="modal-body">
-        <p class="modal-desc">Teile dein Workspace-Projekt per Direktlink oder WhatsApp mit Kollegen.</p>
-        
-        <div class="auth-btn-stack">
-          <button class="btn btn-oauth" id="share-whatsapp-btn">
-            <span style="font-size:18px;">💬</span>
-            <span>Per WhatsApp teilen</span>
-          </button>
-          <button class="btn btn-oauth" id="share-copy-link-btn">
-            <span style="font-size:18px;">📋</span>
-            <span>Live-Link kopieren</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 6. ENTERPRISE AUTH MODAL (LOGIN / SIGN UP TABS & VERIFY SCREEN) -->
-  <div class="modal-backdrop" id="auth-modal">
-    <div class="modal-box auth-modal-box">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span id="auth-modal-title">🛡️ Konto & Authentifizierung</span>
-        </div>
-        <button class="modal-close-btn" data-close="auth-modal">✕</button>
-      </div>
-      <div class="modal-body">
-        <!-- Auth Tabs -->
-        <div class="auth-tab-bar" id="auth-tab-bar">
-          <button class="auth-tab-btn active" id="auth-tab-login">Anmelden</button>
-          <button class="auth-tab-btn" id="auth-tab-signup">Registrieren</button>
-        </div>
-
-        <div id="auth-main-view">
-          <div class="auth-btn-stack">
-            <button class="btn btn-oauth" id="auth-google-btn">
-              <svg class="oauth-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-              <span>Mit Google fortfahren</span>
-            </button>
-
-            <button class="btn btn-oauth" id="auth-ms-btn">
-              <svg class="oauth-icon" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
-              <span>Mit Microsoft fortfahren</span>
-            </button>
-
-            <button class="btn btn-oauth" id="auth-apple-btn">
-              <span style="font-size:16px;">🍏</span>
-              <span>Mit Apple fortfahren</span>
-            </button>
-          </div>
-
-          <div class="auth-divider"><span>ODER MIT E-MAIL</span></div>
-
-          <div class="auth-form">
-            <input type="email" id="auth-email-input" class="setting-input mb-3" placeholder="entwickler@domain.com">
-            <button class="btn btn-primary w-full" id="auth-email-submit-btn">Bestätigungs-Code anfordern</button>
-          </div>
-        </div>
-
-        <!-- Verification Screen (Cloudflare Style) -->
-        <div id="auth-verify-view" style="display:none; text-align:center;">
-          <div style="font-size:32px; margin-bottom:10px;">✉️</div>
-          <h4 style="font-size:14px; font-weight:700; margin-bottom:6px;">E-Mail Bestätigen</h4>
-          <p class="modal-desc">Wir haben einen 6-stelligen Verifizierungs-Code an <strong id="verify-email-display" class="text-sky"></strong> gesendet.</p>
-          <div style="display:flex; justify-content:center; gap:6px; margin:16px 0;">
-            <input type="text" maxlength="1" class="verify-digit-input" value="8">
-            <input type="text" maxlength="1" class="verify-digit-input" value="4">
-            <input type="text" maxlength="1" class="verify-digit-input" value="2">
-            <input type="text" maxlength="1" class="verify-digit-input" value="9">
-            <input type="text" maxlength="1" class="verify-digit-input" value="1">
-            <input type="text" maxlength="1" class="verify-digit-input" value="7">
-          </div>
-          <button class="btn btn-primary w-full" id="confirm-verify-btn">✓ Jetzt Verifizieren & Anmelden</button>
-          <button class="btn-link mt-3" id="back-to-auth-btn">← Zurück zur Auswahl</button>
-        </div>
-
-        <!-- Authenticated Profile View -->
-        <div id="auth-profile-view" style="display:none; text-align:center;">
-          <div class="avatar-ring" style="width:48px; height:48px; margin:0 auto 12px; font-size:18px;" id="profile-avatar-large">AS</div>
-          <h4 style="font-size:14px; font-weight:700;" id="profile-name-display">Entwickler</h4>
-          <span class="status-pill active mt-3" style="display:inline-block;">✓ Persistent Verifiziert</span>
-          <div class="stat-card mt-3 text-left">
-            <div class="stat-row"><span>Sitzung:</span><span class="font-mono text-emerald">AES-GCM Authentifiziert</span></div>
-            <div class="stat-row"><span>Cloud-Tier:</span><span class="font-mono text-sky">FOSS Unlimited</span></div>
-          </div>
-          <button class="btn btn-secondary w-full mt-3" id="auth-logout-btn">Abmelden</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 7. POLYGLOT HEAL OVERLAY NOTIFICATION -->
-  <div class="heal-toast" id="heal-toast">
-    <div class="toast-content">
-      <span class="toast-icon">⚡</span>
-      <div class="toast-text">
-        <strong id="heal-toast-title">Autonomer Polyglot Healer aktiv</strong>
-        <p id="heal-toast-msg">Synthetisiere Cloud-Reparatur über HTML, CSS und JavaScript...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOAST CONTAINER -->
-  <div class="toast-container" id="toast-container"></div>
-
-  <!-- SCRIPTS -->
+  <div id="toastContainer" class="toast-container"></div>
   <script src="app.js"></script>
 </body>
 </html>
