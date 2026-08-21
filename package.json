@@ -1,12 +1,13 @@
 ﻿{
   "name": "aetherspace",
-  "version": "2.5.0",
-  "description": "Enterprise Edge AI Workspace with $0 FOSS Zero-Local-Weight Cascade",
+  "version": "2.4.0",
+  "description": "AetherSpace - Zero Local Load Enterprise AI Cloud Orchestration Workspace",
   "main": "server.cjs",
+  "type": "commonjs",
   "scripts": {
     "start": "node server.cjs"
   },
-  "keywords": ["ai", "edge", "gemini", "groq", "zero-local-load", "workspace"],
-  "author": "AetherSpace Edge Lead",
+  "keywords": ["ai-studio", "cloud-mesh", "gemini-pro", "groq", "obsidian-dark"],
+  "author": "laptoplenovoslim18-cyber",
   "license": "MIT"
 }

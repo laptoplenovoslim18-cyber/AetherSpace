@@ -1,12 +1,6 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="100%" stop-color="#818cf8"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="8" fill="#06080c"/>
-  <polygon points="16,4 4,10 16,16 28,10" fill="url(#grad)" opacity="0.9"/>
-  <polygon points="4,16 16,22 28,16 28,19 16,25 4,19" fill="url(#grad)" opacity="0.7"/>
-  <polygon points="4,22 16,28 28,22 28,24 16,30 4,24" fill="url(#grad)" opacity="0.5"/>
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="14" fill="#06080c"/>
+  <polygon points="32,8 54,20 54,44 32,56 10,44 10,20" stroke="#38bdf8" stroke-width="3" fill="#0b0e14"/>
+  <polygon points="32,18 44,26 44,38 32,46 20,38 20,26" stroke="#6366f1" stroke-width="2" fill="#121722"/>
+  <circle cx="32" cy="32" r="5" fill="#38bdf8"/>
 </svg>
