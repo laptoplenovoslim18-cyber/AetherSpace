@@ -4,22 +4,19 @@
   const state = {
     files: new Map(),
     activeFile: null,
-    activeProvider: 'gemini',
-    auth: { isLoggedIn: false, user: null },
     runSettings: {
-      model: 'gemini-2.5-flash',
-      systemInstructions: 'You are AetherSpace SOTA Senior Principal Software Architect. Synthesize clean, deterministic, production-ready code with complete logic and zero placeholders.',
+      model: 'gemini-3.7-flash',
+      systemInstructions: 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.',
       thinkingBudget: 4096,
       searchGrounding: false,
       autoCascade: true,
       maxOutputTokens: 8192,
       temperature: 0.70
     },
-    keys: { gemini: [], groq: [], hf: [], openrouter: [] }
+    keys: { gemini: [], groq: [], openrouter: [], hf: [] }
   };
 
   const dom = {
-    fileTreeRoot: document.getElementById('file-tree-root'),
     fileTreeEmptyState: document.getElementById('file-tree-empty-state'),
     fileListItems: document.getElementById('file-list-items'),
     btnNewFile: document.getElementById('btn-new-file'),
@@ -40,11 +37,11 @@
     activeContextCount: document.getElementById('active-context-count'),
     statusDot: document.getElementById('status-dot'),
     statusText: document.getElementById('status-text'),
-    governorStat: document.getElementById('governor-stat'),
     keyCountBadge: document.getElementById('key-count-badge'),
 
+    btnCodepenExport: document.getElementById('btn-codepen-export'),
+    btnExportBundle: document.getElementById('btn-export-bundle'),
     btnExportZip: document.getElementById('btn-export-zip'),
-    btnExportHtml: document.getElementById('btn-export-html'),
     btnSaveServer: document.getElementById('btn-save-server'),
 
     toggleRunSettingsBtn: document.getElementById('toggle-run-settings-btn'),
@@ -69,30 +66,20 @@
     vaultLabelInput: document.getElementById('vault-label-input'),
     btnAddKey: document.getElementById('btn-add-key'),
     vaultKeysTbody: document.getElementById('vault-keys-tbody'),
-    vaultTabBtns: document.querySelectorAll('.vault-tab-btn'),
-
-    authModal: document.getElementById('auth-modal'),
-    openAuthBtn: document.getElementById('open-auth-btn'),
-    btnCloseAuth: document.getElementById('btn-close-auth'),
-    tabLogin: document.getElementById('tab-login'),
-    tabSignup: document.getElementById('tab-signup'),
-    btnSubmitAuth: document.getElementById('btn-submit-auth'),
-    authStateLabel: document.getElementById('auth-state-label')
+    vaultTabBtns: document.querySelectorAll('.vault-tab-btn')
   };
 
-  function loadStoredKeys() {
+  function loadKeys() {
     try {
       const raw = localStorage.getItem('aetherspace_vault_keys');
-      if (raw) {
-        state.keys = Object.assign({ gemini: [], groq: [], hf: [], openrouter: [] }, JSON.parse(raw));
-      }
+      if (raw) state.keys = Object.assign({ gemini: [], groq: [], openrouter: [], hf: [] }, JSON.parse(raw));
     } catch (e) {
-      console.warn('Failed to parse stored API keys', e);
+      console.warn('Key storage parse error', e);
     }
     updateKeyBadge();
   }
 
-  function saveStoredKeys() {
+  function saveKeys() {
     localStorage.setItem('aetherspace_vault_keys', JSON.stringify(state.keys));
     updateKeyBadge();
   }
@@ -102,14 +89,13 @@
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
   }
 
-  function renderFileTree() {
-    const fileCount = state.files.size;
-    if (fileCount === 0) {
+  function renderFiles() {
+    if (state.files.size === 0) {
       dom.fileTreeEmptyState.style.display = 'flex';
       dom.fileListItems.style.display = 'none';
       dom.fileListItems.innerHTML = '';
-      renderEditorTabs();
-      updateLineGutter();
+      renderTabs();
+      updateGutter();
       updateContextCounter();
       return;
     }
@@ -129,66 +115,57 @@
       checkbox.type = 'checkbox';
       checkbox.className = 'file-checkbox';
       checkbox.checked = Boolean(fileObj.inContext);
-      checkbox.title = 'Include in Prompt AI Context';
       checkbox.addEventListener('click', (e) => {
         e.stopPropagation();
         fileObj.inContext = checkbox.checked;
         updateContextCounter();
       });
 
-      const spanName = document.createElement('span');
-      spanName.textContent = filename;
+      const span = document.createElement('span');
+      span.textContent = filename;
 
       left.appendChild(checkbox);
-      left.appendChild(spanName);
+      left.appendChild(span);
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'icon-tool-btn';
-      deleteBtn.innerHTML = '&times;';
-      deleteBtn.title = 'Delete File';
-      deleteBtn.addEventListener('click', (e) => {
+      const del = document.createElement('button');
+      del.className = 'icon-tool-btn';
+      del.innerHTML = '&times;';
+      del.addEventListener('click', (e) => {
         e.stopPropagation();
         removeFile(filename);
       });
 
       li.appendChild(left);
-      li.appendChild(deleteBtn);
+      li.appendChild(del);
 
-      li.addEventListener('click', () => {
-        selectFile(filename);
-      });
-
+      li.addEventListener('click', () => selectFile(filename));
       dom.fileListItems.appendChild(li);
     });
 
-    renderEditorTabs();
+    renderTabs();
     updateContextCounter();
   }
 
-  function renderEditorTabs() {
+  function renderTabs() {
     dom.editorTabs.innerHTML = '';
     state.files.forEach((_, filename) => {
       const tab = document.createElement('div');
       tab.className = `editor-tab ${filename === state.activeFile ? 'active' : ''}`;
-      
-      const tabTitle = document.createElement('span');
-      tabTitle.textContent = filename;
-      
-      const closeBtn = document.createElement('button');
-      closeBtn.className = 'tab-close-btn';
-      closeBtn.innerHTML = '&times;';
-      closeBtn.addEventListener('click', (e) => {
+
+      const title = document.createElement('span');
+      title.textContent = filename;
+
+      const close = document.createElement('button');
+      close.className = 'tab-close-btn';
+      close.innerHTML = '&times;';
+      close.addEventListener('click', (e) => {
         e.stopPropagation();
         removeFile(filename);
       });
 
-      tab.appendChild(tabTitle);
-      tab.appendChild(closeBtn);
-
-      tab.addEventListener('click', () => {
-        selectFile(filename);
-      });
-
+      tab.appendChild(title);
+      tab.appendChild(close);
+      tab.addEventListener('click', () => selectFile(filename));
       dom.editorTabs.appendChild(tab);
     });
   }
@@ -197,20 +174,18 @@
     if (!state.files.has(filename)) return;
     state.activeFile = filename;
     dom.codeEditor.value = state.files.get(filename).content;
-    renderFileTree();
-    updateLineGutter();
+    renderFiles();
+    updateGutter();
     updateCursorPos();
   }
 
   function addOrUpdateFile(filename, content = '', inContext = true) {
     state.files.set(filename, { content, inContext });
-    if (!state.activeFile) {
-      state.activeFile = filename;
-    }
-    renderFileTree();
+    if (!state.activeFile) state.activeFile = filename;
+    renderFiles();
     if (state.activeFile === filename) {
       dom.codeEditor.value = content;
-      updateLineGutter();
+      updateGutter();
     }
   }
 
@@ -221,88 +196,84 @@
       state.activeFile = keys.length > 0 ? keys[keys.length - 1] : null;
       dom.codeEditor.value = state.activeFile ? state.files.get(state.activeFile).content : '';
     }
-    renderFileTree();
-    updateLineGutter();
-  }
-
-  function createNewFilePrompt() {
-    const filename = prompt('Enter relative file name (e.g. index.js, component.css):');
-    if (!filename || !filename.trim()) return;
-    const clean = filename.trim();
-    if (state.files.has(clean)) {
-      alert('File already exists in workspace.');
-      return;
-    }
-    addOrUpdateFile(clean, `// ${clean}\n`, true);
-    selectFile(clean);
+    renderFiles();
+    updateGutter();
   }
 
   function updateContextCounter() {
-    let count = 0;
-    let chars = 0;
-    state.files.forEach((f) => {
-      if (f.inContext) {
-        count++;
-        chars += f.content.length;
-      }
+    let count = 0, chars = 0;
+    state.files.forEach(f => {
+      if (f.inContext) { count++; chars += f.content.length; }
     });
     dom.activeContextCount.textContent = `${count} files (${chars.toLocaleString()} chars)`;
   }
 
-  function updateLineGutter() {
-    const text = dom.codeEditor.value;
-    const lineCount = text.split('\n').length;
-    let gutterStr = '';
-    for (let i = 1; i <= Math.max(lineCount, 1); i++) {
-      gutterStr += i + '\n';
-    }
-    dom.lineGutter.textContent = gutterStr;
+  function updateGutter() {
+    const lines = dom.codeEditor.value.split('\n').length;
+    let str = '';
+    for (let i = 1; i <= Math.max(lines, 1); i++) str += i + '\n';
+    dom.lineGutter.textContent = str;
   }
 
   function updateCursorPos() {
-    const text = dom.codeEditor.value;
-    const selStart = dom.codeEditor.selectionStart;
-    const lines = text.substring(0, selStart).split('\n');
-    const lineNum = lines.length;
-    const colNum = lines[lines.length - 1].length + 1;
-    dom.cursorPos.textContent = `Ln ${lineNum}, Col ${colNum}`;
+    const sel = dom.codeEditor.selectionStart;
+    const lines = dom.codeEditor.value.substring(0, sel).split('\n');
+    dom.cursorPos.textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
   }
 
-  function syncRunSettingsFromDOM() {
-    state.runSettings.model = dom.settingModel.value;
-    state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
-    state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
-    state.runSettings.searchGrounding = dom.settingSearchGrounding.checked;
-    state.runSettings.autoCascade = dom.settingAutoCascade.checked;
-    state.runSettings.maxOutputTokens = parseInt(dom.settingOutputLength.value, 10);
-    state.runSettings.temperature = parseFloat(dom.settingTemp.value);
-  }
-
-  function buildContextPayload(userPrompt) {
-    let contextBundle = '';
+  function buildPromptPayload(instruction) {
+    let contextStr = '';
     state.files.forEach((f, name) => {
-      if (f.inContext) {
-        contextBundle += `<file path="${name}">\n${f.content}\n</file>\n\n`;
-      }
+      if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
+    return contextStr ? `WORKSPACE CODE CONTEXT:\n${contextStr}\nTASK INSTRUCTION:\n${instruction}` : instruction;
+  }
 
-    if (!contextBundle) {
-      return userPrompt;
+  // DIRECT CODEPEN EXPORT API VIA POST
+  function exportToCodePen() {
+    if (state.files.size === 0) {
+      alert('Workspace is empty. Create HTML/CSS/JS files first.');
+      return;
     }
 
-    return `CURRENT WORKSPACE CONTEXT:\n${contextBundle}\nTASK SPECIFICATION:\n${userPrompt}`;
+    let htmlCode = '';
+    let cssCode = '';
+    let jsCode = '';
+
+    state.files.forEach((f, name) => {
+      if (name.endsWith('.html')) htmlCode += f.content + '\n';
+      else if (name.endsWith('.css')) cssCode += f.content + '\n';
+      else if (name.endsWith('.js')) jsCode += f.content + '\n';
+    });
+
+    const payload = {
+      title: 'AetherSpace Export',
+      html: htmlCode,
+      css: cssCode,
+      js: jsCode
+    };
+
+    const form = document.createElement('form');
+    form.action = 'https://codepen.io/pen/define';
+    form.method = 'POST';
+    form.target = '_blank';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify(payload);
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
   }
 
-  async function executeGeminiRequest(apiKey, model, systemPrompt, fullPrompt, config) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-    const bodyPayload = {
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: fullPrompt }]
-        }
-      ],
+  // GEMINI 3.7 / 3.5 / 3.1 REST GENERATION CALL
+  async function callGemini(apiKey, model, systemPrompt, userPrompt, config) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const body = {
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
       generationConfig: {
         temperature: config.temperature,
         maxOutputTokens: config.maxOutputTokens
@@ -310,48 +281,43 @@
     };
 
     if (systemPrompt && systemPrompt.trim()) {
-      bodyPayload.systemInstruction = {
-        parts: [{ text: systemPrompt }]
-      };
+      body.systemInstruction = { parts: [{ text: systemPrompt }] };
     }
 
     if (config.thinkingBudget > 0) {
-      bodyPayload.generationConfig.thinkingConfig = {
-        thinkingBudget: config.thinkingBudget
-      };
+      body.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
     }
 
     if (config.searchGrounding) {
-      bodyPayload.tools = [{ googleSearch: {} }];
+      body.tools = [{ googleSearch: {} }];
     }
 
-    const response = await fetch(endpoint, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bodyPayload)
+      body: JSON.stringify(body)
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Google AI Studio HTTP ${response.status}: ${errText}`);
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Google AI Studio HTTP ${res.status}: ${err}`);
     }
 
-    const json = await response.json();
-    if (!json.candidates || !json.candidates[0] || !json.candidates[0].content) {
-      throw new Error('Empty response candidate from Google AI Studio.');
+    const data = await res.json();
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      throw new Error('Malformed or empty candidate response.');
     }
 
-    return json.candidates[0].content.parts.map(p => p.text || '').join('');
+    return data.candidates[0].content.parts.map(p => p.text || '').join('');
   }
 
-  async function executeOpenAICompatibleRequest(endpointUrl, apiKey, model, systemPrompt, fullPrompt, config) {
+  // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER)
+  async function callOpenAICompatible(endpoint, apiKey, model, systemPrompt, userPrompt, config) {
     const messages = [];
-    if (systemPrompt && systemPrompt.trim()) {
-      messages.push({ role: 'system', content: systemPrompt });
-    }
-    messages.push({ role: 'user', content: fullPrompt });
+    if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
+    messages.push({ role: 'user', content: userPrompt });
 
-    const response = await fetch(endpointUrl, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -365,89 +331,70 @@
       })
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Provider HTTP ${response.status}: ${errText}`);
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Provider HTTP ${res.status}: ${err}`);
     }
 
-    const json = await response.json();
-    if (!json.choices || !json.choices[0] || !json.choices[0].message) {
-      throw new Error('Empty completion from provider.');
-    }
-    return json.choices[0].message.content;
+    const data = await res.json();
+    return data.choices[0].message.content;
   }
 
-  async function synthesizeCloudPrompt() {
-    const promptText = dom.promptInput.value.trim();
-    if (!promptText) {
-      alert('Please enter a prompt or instruction.');
+  async function synthesize() {
+    const prompt = dom.promptInput.value.trim();
+    if (!prompt) {
+      alert('Please enter a synthesis instruction.');
       return;
     }
 
-    syncRunSettingsFromDOM();
-    const model = state.runSettings.model;
+    state.runSettings.model = dom.settingModel.value;
+    state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
+    state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
+    state.runSettings.searchGrounding = dom.settingSearchGrounding.checked;
+    state.runSettings.autoCascade = dom.settingAutoCascade.checked;
+    state.runSettings.maxOutputTokens = parseInt(dom.settingOutputLength.value, 10);
+    state.runSettings.temperature = parseFloat(dom.settingTemp.value);
+
     let provider = 'gemini';
-
-    if (model.startsWith('llama')) provider = 'groq';
-    else if (model.includes('/') && !model.includes(':free')) provider = 'hf';
+    const model = state.runSettings.model;
+    if (model.startsWith('llama') || model.startsWith('deepseek')) provider = 'groq';
     else if (model.includes(':free')) provider = 'openrouter';
+    else if (model.includes('/')) provider = 'hf';
 
-    const keysList = state.keys[provider] || [];
-    if (keysList.length === 0) {
-      alert(`No API keys stored for ${provider.toUpperCase()}. Please open Key Vault to add a key.`);
+    const keys = state.keys[provider] || [];
+    if (keys.length === 0) {
+      alert(`No API Key found for provider: ${provider.toUpperCase()}. Open Key Vault to enter one.`);
       dom.keyVaultModal.style.display = 'flex';
+      renderVaultTable();
       return;
     }
 
     dom.btnExecutePrompt.disabled = true;
     dom.statusDot.className = 'status-indicator busy';
-    dom.statusText.textContent = `Routing to ${model} via Cloud Mesh...`;
+    dom.statusText.textContent = `Routing request to ${model}...`;
 
-    const fullPrompt = buildContextPayload(promptText);
-    let outputResult = null;
-    let executionSuccess = false;
+    const fullPrompt = buildPromptPayload(prompt);
+    let output = null;
+    let success = false;
 
-    for (let i = 0; i < keysList.length; i++) {
-      const currentKey = keysList[i].key;
+    for (let i = 0; i < keys.length; i++) {
       try {
-        dom.statusText.textContent = `Executing on Key ${i + 1}/${keysList.length} (${provider})...`;
-        
+        dom.statusText.textContent = `Executing on Key ${i + 1}/${keys.length} (${provider})...`;
         if (provider === 'gemini') {
-          outputResult = await executeGeminiRequest(
-            currentKey,
-            model,
-            state.runSettings.systemInstructions,
-            fullPrompt,
-            state.runSettings
-          );
+          output = await callGemini(keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
         } else if (provider === 'groq') {
-          outputResult = await executeOpenAICompatibleRequest(
-            'https://api.groq.com/openai/v1/chat/completions',
-            currentKey,
-            model,
-            state.runSettings.systemInstructions,
-            fullPrompt,
-            state.runSettings
-          );
+          output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
         } else if (provider === 'openrouter') {
-          outputResult = await executeOpenAICompatibleRequest(
-            'https://openrouter.ai/api/v1/chat/completions',
-            currentKey,
-            model,
-            state.runSettings.systemInstructions,
-            fullPrompt,
-            state.runSettings
-          );
+          output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
         }
-
-        executionSuccess = true;
+        success = true;
         break;
       } catch (err) {
-        console.warn(`[Cascade] Key index ${i} failed:`, err.message);
-        if (!state.runSettings.autoCascade || i === keysList.length - 1) {
+        console.warn(`[Failover] Key ${i} failed:`, err.message);
+        if (!state.runSettings.autoCascade || i === keys.length - 1) {
           dom.statusDot.className = 'status-indicator error';
-          dom.statusText.textContent = `Synthesis failed: ${err.message}`;
-          alert(`Inference failed on provider ${provider}: ${err.message}`);
+          dom.statusText.textContent = `Error: ${err.message}`;
+          alert(`Inference failed: ${err.message}`);
           break;
         }
       }
@@ -455,40 +402,38 @@
 
     dom.btnExecutePrompt.disabled = false;
 
-    if (executionSuccess && outputResult) {
+    if (success && output) {
       dom.statusDot.className = 'status-indicator ready';
-      dom.statusText.textContent = `Synthesis completed. Zero local compute weight active.`;
-      parseAndApplySynthesisResult(outputResult);
+      dom.statusText.textContent = 'Synthesis complete. 0 local weight maintained.';
+      applyOutput(output);
       dom.promptInput.value = '';
     }
   }
 
-  function parseAndApplySynthesisResult(resultText) {
-    const fileTagRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
+  function applyOutput(text) {
+    const fileRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
     let match;
-    let parsedCount = 0;
+    let found = 0;
 
-    while ((match = fileTagRegex.exec(resultText)) !== null) {
-      const filePath = match[1].trim();
-      const content = match[2].trimStart();
-      addOrUpdateFile(filePath, content, true);
-      parsedCount++;
+    while ((match = fileRegex.exec(text)) !== null) {
+      addOrUpdateFile(match[1].trim(), match[2].trimStart(), true);
+      found++;
     }
 
-    if (parsedCount > 0) {
-      renderFileTree();
+    if (found > 0) {
+      renderFiles();
       return;
     }
 
     if (state.activeFile) {
-      addOrUpdateFile(state.activeFile, resultText, true);
+      addOrUpdateFile(state.activeFile, text, true);
     } else {
-      addOrUpdateFile('synthesis_output.txt', resultText, true);
-      selectFile('synthesis_output.txt');
+      addOrUpdateFile('synthesis_result.txt', text, true);
+      selectFile('synthesis_result.txt');
     }
   }
 
-  function renderVaultKeys() {
+  function renderVaultTable() {
     const activeTab = document.querySelector('.vault-tab-btn.active');
     const provider = activeTab ? activeTab.dataset.provider : 'gemini';
     const keys = state.keys[provider] || [];
@@ -496,7 +441,7 @@
     dom.vaultKeysTbody.innerHTML = '';
     if (keys.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys stored for ${provider.toUpperCase()}. Add your key above.</td>`;
+      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys configured for ${provider.toUpperCase()}.</td>`;
       dom.vaultKeysTbody.appendChild(tr);
       return;
     }
@@ -504,104 +449,26 @@
     keys.forEach((k, idx) => {
       const tr = document.createElement('tr');
       const mask = k.key.length > 8 ? `${k.key.substring(0, 4)}...${k.key.substring(k.key.length - 4)}` : '••••••••';
-      
       tr.innerHTML = `
         <td><code>${mask}</code></td>
-        <td>${k.label || 'Default Key'}</td>
+        <td>${k.label || 'Default'}</td>
         <td><span class="badge">Free Tier</span></td>
-        <td>${k.created || 'Just now'}</td>
-        <td><button class="btn-xs" data-del-key="${idx}" style="color:var(--accent-rose);">Delete</button></td>
+        <td>${k.created}</td>
+        <td><button class="btn-xs" data-del="${idx}" style="color:var(--accent-rose);">Delete</button></td>
       `;
-
-      tr.querySelector('[data-del-key]').addEventListener('click', () => {
+      tr.querySelector('[data-del]').addEventListener('click', () => {
         keys.splice(idx, 1);
-        saveStoredKeys();
-        renderVaultKeys();
+        saveKeys();
+        renderVaultTable();
       });
-
       dom.vaultKeysTbody.appendChild(tr);
     });
   }
 
-  function exportSingleHtml() {
-    if (state.files.size === 0) {
-      alert('Workspace is empty.');
-      return;
-    }
-
-    let bundle = '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n<title>AetherSpace Export</title>\n';
-    state.files.forEach((f, name) => {
-      if (name.endsWith('.css')) bundle += `<style>/* ${name} */\n${f.content}\n</style>\n`;
-    });
-    bundle += '</head>\n<body>\n';
-    state.files.forEach((f, name) => {
-      if (name.endsWith('.html')) bundle += `<!-- ${name} -->\n${f.content}\n`;
-    });
-    state.files.forEach((f, name) => {
-      if (name.endsWith('.js')) bundle += `<script>/* ${name} */\n${f.content}\n<\/script>\n`;
-    });
-    bundle += '</body>\n</html>';
-
-    const blob = new Blob([bundle], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'aetherspace-bundle.html';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function exportZipArchive() {
-    if (state.files.size === 0) {
-      alert('Workspace is empty.');
-      return;
-    }
-
-    let manifest = 'AETHERSPACE PROJECT MANIFEST\n============================\n';
-    state.files.forEach((f, name) => {
-      manifest += `\n[FILE: ${name}]\n${f.content}\n`;
-    });
-
-    const blob = new Blob([manifest], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'aetherspace-workspace-export.txt';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function saveActiveFileToServer() {
-    if (!state.activeFile) {
-      alert('No active file selected.');
-      return;
-    }
-    const content = dom.codeEditor.value;
-    state.files.get(state.activeFile).content = content;
-
-    try {
-      dom.statusText.textContent = `Saving ${state.activeFile} to local server...`;
-      const res = await fetch('/api/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: state.activeFile, content: content })
-      });
-
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      await res.json();
-      dom.statusText.textContent = `Saved to disk. Git sync scheduled.`;
-    } catch (e) {
-      console.warn('Server save note:', e.message);
-      dom.statusText.textContent = `Saved in local browser memory.`;
-    }
-  }
-
   function initEvents() {
     dom.codeEditor.addEventListener('input', () => {
-      if (state.activeFile) {
-        state.files.get(state.activeFile).content = dom.codeEditor.value;
-      }
-      updateLineGutter();
+      if (state.activeFile) state.files.get(state.activeFile).content = dom.codeEditor.value;
+      updateGutter();
       updateCursorPos();
       updateContextCounter();
     });
@@ -616,77 +483,120 @@
         const end = dom.codeEditor.selectionEnd;
         dom.codeEditor.value = dom.codeEditor.value.substring(0, start) + '  ' + dom.codeEditor.value.substring(end);
         dom.codeEditor.selectionStart = dom.codeEditor.selectionEnd = start + 2;
-        updateLineGutter();
+        updateGutter();
       }
     });
 
-    dom.btnNewFile.addEventListener('click', createNewFilePrompt);
-    dom.btnEmptyCreate.addEventListener('click', createNewFilePrompt);
+    dom.btnNewFile.addEventListener('click', () => {
+      const name = prompt('Enter filename (e.g. index.html, styles.css):');
+      if (name && name.trim()) {
+        addOrUpdateFile(name.trim(), '', true);
+        selectFile(name.trim());
+      }
+    });
+
+    dom.btnEmptyCreate.addEventListener('click', () => dom.btnNewFile.click());
 
     dom.btnClearWorkspace.addEventListener('click', () => {
-      if (state.files.size === 0) return;
-      if (confirm('Clear all files from workspace memory?')) {
+      if (state.files.size > 0 && confirm('Clear all files in workspace?')) {
         state.files.clear();
         state.activeFile = null;
         dom.codeEditor.value = '';
-        renderFileTree();
+        renderFiles();
       }
     });
 
     dom.btnSelectAllContext.addEventListener('click', () => {
       state.files.forEach(f => f.inContext = true);
-      renderFileTree();
+      renderFiles();
     });
 
     dom.btnDeselectAllContext.addEventListener('click', () => {
       state.files.forEach(f => f.inContext = false);
-      renderFileTree();
+      renderFiles();
     });
 
     dom.btnUploadFiles.addEventListener('click', () => dom.hiddenFileInput.click());
     dom.hiddenFileInput.addEventListener('change', (e) => {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-      Array.from(files).forEach(file => {
+      Array.from(e.target.files || []).forEach(file => {
         const reader = new FileReader();
-        reader.onload = (re) => {
-          addOrUpdateFile(file.name, re.target.result, true);
-        };
+        reader.onload = (ev) => addOrUpdateFile(file.name, ev.target.result, true);
         reader.readAsText(file);
       });
       dom.hiddenFileInput.value = '';
     });
 
-    dom.btnExecutePrompt.addEventListener('click', synthesizeCloudPrompt);
+    dom.btnExecutePrompt.addEventListener('click', synthesize);
     dom.promptInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        synthesizeCloudPrompt();
+        synthesize();
       }
     });
 
-    dom.toggleRunSettingsBtn.addEventListener('click', () => {
-      dom.settingsSlideout.classList.toggle('open');
-    });
-    dom.btnCloseSettings.addEventListener('click', () => {
-      dom.settingsSlideout.classList.remove('open');
+    dom.btnCodepenExport.addEventListener('click', exportToCodePen);
+
+    dom.btnExportBundle.addEventListener('click', () => {
+      if (state.files.size === 0) return alert('Workspace is empty.');
+      let bundle = '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n';
+      state.files.forEach((f, name) => {
+        if (name.endsWith('.css')) bundle += `<style>/* ${name} */\n${f.content}\n</style>\n`;
+      });
+      bundle += '</head>\n<body>\n';
+      state.files.forEach((f, name) => {
+        if (name.endsWith('.html')) bundle += `<!-- ${name} -->\n${f.content}\n`;
+      });
+      state.files.forEach((f, name) => {
+        if (name.endsWith('.js')) bundle += `<script>/* ${name} */\n${f.content}\n<\/script>\n`;
+      });
+      bundle += '</body>\n</html>';
+
+      const blob = new Blob([bundle], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'aetherspace-bundle.html';
+      a.click();
     });
 
-    dom.settingOutputLength.addEventListener('input', () => {
-      dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value;
+    dom.btnExportZip.addEventListener('click', () => {
+      if (state.files.size === 0) return alert('Workspace is empty.');
+      let manifest = 'PROJECT MANIFEST\n================\n';
+      state.files.forEach((f, name) => manifest += `\n[FILE: ${name}]\n${f.content}\n`);
+      const blob = new Blob([manifest], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'aetherspace-project.txt';
+      a.click();
     });
 
-    dom.settingTemp.addEventListener('input', () => {
-      dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2);
+    dom.btnSaveServer.addEventListener('click', async () => {
+      if (!state.activeFile) return alert('No file active.');
+      try {
+        dom.statusText.textContent = `Saving ${state.activeFile}...`;
+        const res = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: state.activeFile, content: dom.codeEditor.value })
+        });
+        if (!res.ok) throw new Error('Save failed');
+        dom.statusText.textContent = 'Saved to disk. Git sync scheduled.';
+      } catch (err) {
+        dom.statusText.textContent = 'Preserved in browser memory.';
+      }
     });
 
+    dom.toggleRunSettingsBtn.addEventListener('click', () => dom.settingsSlideout.classList.toggle('open'));
+    dom.btnCloseSettings.addEventListener('click', () => dom.settingsSlideout.classList.remove('open'));
+
+    dom.settingOutputLength.addEventListener('input', () => dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value);
+    dom.settingTemp.addEventListener('input', () => dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2));
     dom.btnResetSysInst.addEventListener('click', () => {
-      dom.settingSystemInstructions.value = 'You are AetherSpace SOTA Senior Principal Software Architect. Synthesize clean, deterministic, production-ready code with complete logic and zero placeholders.';
+      dom.settingSystemInstructions.value = 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.';
     });
 
     dom.openKeyVaultBtn.addEventListener('click', () => {
       dom.keyVaultModal.style.display = 'flex';
-      renderVaultKeys();
+      renderVaultTable();
     });
     dom.btnCloseVault.addEventListener('click', () => {
       dom.keyVaultModal.style.display = 'none';
@@ -696,72 +606,30 @@
       btn.addEventListener('click', () => {
         dom.vaultTabBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        renderVaultKeys();
+        renderVaultTable();
       });
     });
 
     dom.btnAddKey.addEventListener('click', () => {
-      const activeTab = document.querySelector('.vault-tab-btn.active');
-      const provider = activeTab ? activeTab.dataset.provider : 'gemini';
-      const keyVal = dom.vaultKeyInput.value.trim();
-      const labelVal = dom.vaultLabelInput.value.trim() || 'Free Tier Key';
+      const active = document.querySelector('.vault-tab-btn.active');
+      const prov = active ? active.dataset.provider : 'gemini';
+      const key = dom.vaultKeyInput.value.trim();
+      const label = dom.vaultLabelInput.value.trim() || 'Key';
 
-      if (!keyVal) {
-        alert('Please enter an API key.');
-        return;
-      }
-
-      state.keys[provider] = state.keys[provider] || [];
-      state.keys[provider].push({
-        key: keyVal,
-        label: labelVal,
-        created: new Date().toLocaleDateString()
-      });
-
-      saveStoredKeys();
+      if (!key) return alert('Please enter a key.');
+      state.keys[prov] = state.keys[prov] || [];
+      state.keys[prov].push({ key, label, created: new Date().toLocaleDateString() });
+      saveKeys();
       dom.vaultKeyInput.value = '';
       dom.vaultLabelInput.value = '';
-      renderVaultKeys();
+      renderVaultTable();
     });
-
-    dom.openAuthBtn.addEventListener('click', () => {
-      dom.authModal.style.display = 'flex';
-    });
-    dom.btnCloseAuth.addEventListener('click', () => {
-      dom.authModal.style.display = 'none';
-    });
-
-    dom.tabLogin.addEventListener('click', () => {
-      dom.tabLogin.classList.add('active');
-      dom.tabSignup.classList.remove('active');
-      dom.btnSubmitAuth.textContent = 'Sign In';
-    });
-
-    dom.tabSignup.addEventListener('click', () => {
-      dom.tabSignup.classList.add('active');
-      dom.tabLogin.classList.remove('active');
-      dom.btnSubmitAuth.textContent = 'Create Account';
-    });
-
-    dom.btnSubmitAuth.addEventListener('click', () => {
-      const email = document.getElementById('auth-email').value;
-      if (email) {
-        state.auth.isLoggedIn = true;
-        state.auth.user = email;
-        dom.authStateLabel.textContent = email.split('@')[0];
-        dom.authModal.style.display = 'none';
-      }
-    });
-
-    dom.btnExportHtml.addEventListener('click', exportSingleHtml);
-    dom.btnExportZip.addEventListener('click', exportZipArchive);
-    dom.btnSaveServer.addEventListener('click', saveActiveFileToServer);
   }
 
   function init() {
-    loadStoredKeys();
+    loadKeys();
     initEvents();
-    renderFileTree();
+    renderFiles();
     dom.settingSystemInstructions.value = state.runSettings.systemInstructions;
   }
 

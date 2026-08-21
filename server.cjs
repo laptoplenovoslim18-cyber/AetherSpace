@@ -22,16 +22,15 @@ function triggerGitSync() {
   const commitMsg = `auto-sync: ${timestamp} [deploy via AetherSpace Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Debounce elapsed. Executing: ${cmd}`);
-  exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
+  console.log(`[Auto-Sync] Debounce elapsed. Executing Git sync...`);
+  exec(cmd, { cwd: __dirname }, (error, stdout) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Info] Git sync note: ${error.message}`);
+      console.warn(`[Auto-Sync Info] Git notice: ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    if (stderr) console.log(`[Git stderr]\n${stderr}`);
-    console.log('[Auto-Sync] Deploy pipeline triggered successfully.');
+    console.log('[Auto-Sync] Pipeline deployed successfully.');
   });
 }
 
@@ -45,12 +44,11 @@ function scheduleSync() {
 try {
   fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
-    console.log(`[Watcher] File modification in ${filename}. Git sync scheduled in ${DEBOUNCE_MS}ms...`);
     scheduleSync();
   });
-  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
+  console.log(`[File Watcher] Active on: ${PUBLIC_DIR}`);
 } catch (err) {
-  console.warn(`[Watcher Warning] Recursive watch unavailable: ${err.message}`);
+  console.warn(`[File Watcher Warning] Watcher error: ${err.message}`);
 }
 
 const MIME_TYPES = {
@@ -60,7 +58,6 @@ const MIME_TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
-  '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8'
 };
@@ -79,8 +76,7 @@ const server = http.createServer((req, res) => {
         rssMb: (mem.rss / (1024 * 1024)).toFixed(2),
         heapUsedMb: (mem.heapUsed / (1024 * 1024)).toFixed(2)
       },
-      syncDebounceMs: DEBOUNCE_MS,
-      syncPending: Boolean(syncTimeout)
+      syncDebounceMs: DEBOUNCE_MS
     }));
   }
 
@@ -92,7 +88,7 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body);
         if (!payload.filename || typeof payload.content !== 'string') {
           res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Missing filename or content payload' }));
+          return res.end(JSON.stringify({ error: 'Invalid payload' }));
         }
 
         const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
@@ -131,11 +127,11 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        return res.end('500 Internal Server Error');
+        return res.end('500 Server Error');
       }
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache',
         'Access-Control-Allow-Origin': '*'
       });
       res.end(content);
@@ -144,6 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Running at http://127.0.0.1:${PORT}`);
-  console.log(`[AetherSpace Server] Serving distribution from: ${PUBLIC_DIR}`);
+  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
 });

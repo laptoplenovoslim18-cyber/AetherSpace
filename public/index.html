@@ -20,60 +20,52 @@
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
           <span class="brand-title">AetherSpace</span>
-          <span class="brand-badge">SOTA v2026.1</span>
+          <span class="brand-badge">SOTA v2026.8</span>
         </div>
 
         <nav class="master-pills">
-          <div class="pill-group" id="autopilot-pill">
-            <button class="pill-btn active" data-action="toggle-autopilot">
+          <div class="pill-group">
+            <button class="pill-btn active" id="btn-status-autopilot">
               <span class="pill-indicator online"></span>
-              <span class="pill-label">Auto-Pilot</span>
+              <span class="pill-label">Cloud Mesh: Active</span>
             </button>
           </div>
-
-          <div class="pill-group" id="hardware-pill">
-            <button class="pill-btn" data-action="inspect-hardware">
-              <span class="pill-icon">🛡️</span>
+          <div class="pill-group">
+            <button class="pill-btn" id="btn-memory-governor">
+              <span class="pill-icon">⚡</span>
               <span class="pill-label" id="governor-stat">0 MB Local Load</span>
-            </button>
-          </div>
-
-          <div class="pill-group" id="staging-pill">
-            <button class="pill-btn" data-action="toggle-staging">
-              <span class="pill-icon">🌐</span>
-              <span class="pill-label">Cloud Mesh</span>
             </button>
           </div>
         </nav>
       </div>
 
       <div class="header-right">
-        <button class="action-btn key-vault-trigger" id="open-key-vault-btn" title="Open API Key Vault">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <!-- CODEPEN 1-CLICK STAGING TRANSFER -->
+        <button class="action-btn accent" id="btn-codepen-export" title="Send HTML/CSS/JS directly to CodePen">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
+          <span>Open in CodePen</span>
+        </button>
+
+        <button class="action-btn" id="open-key-vault-btn" title="Manage API Keys & Cascade">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Key Vault</span>
           <span class="badge" id="key-count-badge">0 Keys</span>
         </button>
 
-        <button class="action-btn" id="open-auth-btn">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span id="auth-state-label">Sign In</span>
-        </button>
-
-        <button class="action-btn primary" id="toggle-run-settings-btn" title="Toggle Run Settings Panel">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <button class="action-btn primary" id="toggle-run-settings-btn" title="Configure AI Model & Parameters">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Run Settings</span>
         </button>
       </div>
     </header>
 
-    <!-- WORKSPACE MAIN BODY -->
+    <!-- WORKSPACE CORE -->
     <div class="workspace-container">
-      
-      <!-- LEFT COLUMN: FILE TREE & CONTEXT SELECTOR -->
+      <!-- LEFT SIDEBAR: FILE EXPLORER & MULTI-FILE CONTEXT -->
       <aside class="sidebar-panel" id="file-sidebar">
         <div class="sidebar-header">
           <div class="sidebar-title-row">
-            <span class="panel-heading">EXPLORER</span>
+            <span class="panel-heading">WORKSPACE EXPLORER</span>
             <div class="sidebar-actions">
               <button class="icon-tool-btn" id="btn-new-file" title="New File">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
@@ -81,13 +73,13 @@
               <button class="icon-tool-btn" id="btn-upload-files" title="Upload Files">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               </button>
-              <button class="icon-tool-btn" id="btn-clear-workspace" title="Clear All Files">
+              <button class="icon-tool-btn" id="btn-clear-workspace" title="Clear All Workspace Files">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
           </div>
           <div class="context-bar">
-            <span class="context-indicator-text">Prompt Context</span>
+            <span class="context-indicator-text">AI Context Injection</span>
             <div class="context-controls">
               <button class="link-btn" id="btn-select-all-context">All</button>
               <button class="link-btn" id="btn-deselect-all-context">None</button>
@@ -96,11 +88,10 @@
         </div>
 
         <div class="file-tree-container" id="file-tree-root">
-          <!-- EMPTY STATE ON LOAD -->
           <div class="empty-state-card" id="file-tree-empty-state">
             <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-            <p class="empty-title">No files loaded</p>
-            <p class="empty-subtitle">Create a new file or upload existing code to begin synthesis.</p>
+            <p class="empty-title">Workspace is empty</p>
+            <p class="empty-subtitle">Create or upload files to begin. No dummy files pre-loaded.</p>
             <button class="btn-sm primary" id="btn-empty-create">+ Create File</button>
           </div>
           <ul class="file-list" id="file-list-items" style="display:none;"></ul>
@@ -108,11 +99,9 @@
         <input type="file" id="hidden-file-input" multiple style="display:none;">
       </aside>
 
-      <!-- CENTER COLUMN: CODE EDITOR & PROMPT WORKBENCH -->
+      <!-- CENTER: CODE EDITOR & SYNTHESIS CONSOLE -->
       <main class="editor-panel">
-        <div class="editor-tab-bar" id="editor-tabs">
-          <!-- DYNAMIC TABS -->
-        </div>
+        <div class="editor-tab-bar" id="editor-tabs"></div>
 
         <div class="editor-workspace" id="editor-workspace-view">
           <div class="editor-inner-wrapper">
@@ -121,39 +110,39 @@
           </div>
         </div>
 
-        <!-- BOTTOM SYNTHESIS CONSOLE -->
+        <!-- SYNTHESIS BAR -->
         <div class="prompt-workbench">
           <div class="prompt-header-bar">
             <div class="prompt-meta-left">
-              <span class="meta-label">Selected Context:</span>
+              <span class="meta-label">Active AI Context:</span>
               <span class="meta-val" id="active-context-count">0 files (0 chars)</span>
             </div>
             <div class="prompt-meta-right">
-              <button class="btn-xs" id="btn-export-zip">Export Project Manifest</button>
-              <button class="btn-xs" id="btn-export-html">Export Single HTML</button>
-              <button class="btn-xs" id="btn-save-server">Save to Server</button>
+              <button class="btn-xs" id="btn-export-bundle">Single HTML Bundle</button>
+              <button class="btn-xs" id="btn-export-zip">Project Manifest (.txt)</button>
+              <button class="btn-xs primary-outline" id="btn-save-server">Save to Disk</button>
             </div>
           </div>
           <div class="prompt-input-row">
-            <textarea class="prompt-textarea" id="prompt-input" rows="2" placeholder="Instruct cloud AI to synthesize architecture, edit context, or refactor code..."></textarea>
+            <textarea class="prompt-textarea" id="prompt-input" rows="2" placeholder="Instruct cloud AI to refactor code, generate multi-file architecture, or fix logic..."></textarea>
             <button class="execute-btn" id="btn-execute-prompt">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               <span>Synthesize</span>
             </button>
           </div>
-          <div class="synthesis-status-bar" id="synthesis-status-bar">
+          <div class="synthesis-status-bar">
             <span class="status-indicator ready" id="status-dot"></span>
-            <span class="status-text" id="status-text">Engine Ready. Zero local compute weight active.</span>
+            <span class="status-text" id="status-text">Engine Ready. 0 local weight active.</span>
             <span class="cursor-position" id="cursor-pos">Ln 1, Col 1</span>
           </div>
         </div>
       </main>
 
-      <!-- RIGHT SLIDE-OUT RUN SETTINGS PANEL -->
+      <!-- RIGHT: RUN SETTINGS PANEL (OFFICIAL GOOGLE AI STUDIO 2026 MATRIX) -->
       <aside class="settings-slideout" id="settings-slideout">
         <div class="slideout-header">
           <div class="slideout-title">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Run Settings</span>
           </div>
           <button class="icon-tool-btn" id="btn-close-settings">
@@ -163,24 +152,24 @@
 
         <div class="slideout-content">
           <div class="form-group">
-            <label class="form-label" for="setting-model">Model</label>
+            <label class="form-label" for="setting-model">Active Model</label>
             <select class="form-select" id="setting-model">
-              <optgroup label="Google AI Studio (Free Tier)">
-                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Ultra Fast)</option>
-                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning & SOTA Code)</option>
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash (Stable LTS)</option>
+              <optgroup label="Google AI Studio 2026">
+                <option value="gemini-3.7-flash" selected>Gemini 3.7 Flash (Coding & Agentic)</option>
+                <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite (High-Throughput)</option>
+                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (SOTA Reasoning)</option>
+                <option value="gemini-3.6-flash">Gemini 3.6 Flash (Multimodal Balanced)</option>
+                <option value="gemini-3.5-flash">Gemini 3.5 Flash (Stable LTS)</option>
               </optgroup>
-              <optgroup label="Groq Cloud (Ultra LPU Speed)">
+              <optgroup label="Groq Cloud">
                 <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
-                <option value="llama3-70b-8192">Llama 3 70B (8k)</option>
+                <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill 70B</option>
+                <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
               </optgroup>
-              <optgroup label="Hugging Face Serverless">
-                <option value="Qwen/Qwen2.5-Coder-32B-Instruct">Qwen 2.5 Coder 32B Instruct</option>
-                <option value="deepseek-ai/DeepSeek-R1">DeepSeek-R1 Distill</option>
-              </optgroup>
-              <optgroup label="OpenRouter Free Tier">
+              <optgroup label="OpenRouter & Hugging Face">
                 <option value="google/gemini-2.0-flash-lite:free">Gemini 2.0 Flash Lite (Free)</option>
                 <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B Instruct (Free)</option>
+                <option value="Qwen/Qwen2.5-Coder-32B-Instruct">Qwen 2.5 Coder 32B</option>
               </optgroup>
             </select>
           </div>
@@ -190,23 +179,23 @@
               <label class="form-label" for="setting-system-instructions">System Instructions</label>
               <button class="link-btn" id="btn-reset-sys-inst">Default</button>
             </div>
-            <textarea class="form-textarea" id="setting-system-instructions" rows="4" placeholder="System prompt to guide model logic..."></textarea>
+            <textarea class="form-textarea" id="setting-system-instructions" rows="4"></textarea>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="setting-thinking-level">Thinking Budget</label>
+            <label class="form-label" for="setting-thinking-level">Thinking Budget (Tokens)</label>
             <select class="form-select" id="setting-thinking-level">
-              <option value="0">Disabled (0 tokens)</option>
-              <option value="1024">Low (1,024 tokens)</option>
-              <option value="4096" selected>Medium (4,096 tokens)</option>
-              <option value="16384">High (16,384 tokens)</option>
+              <option value="0">0 (Disabled / Instant)</option>
+              <option value="1024">1,024 (Low)</option>
+              <option value="4096" selected>4,096 (Medium)</option>
+              <option value="16384">16,384 (Deep Thinking)</option>
             </select>
           </div>
 
           <div class="toggle-setting-row">
             <div class="toggle-info">
               <span class="toggle-title">Google Search Grounding</span>
-              <span class="toggle-desc">Live web retrieval integration.</span>
+              <span class="toggle-desc">Live web retrieval integration</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-search-grounding">
@@ -217,7 +206,7 @@
           <div class="toggle-setting-row">
             <div class="toggle-info">
               <span class="toggle-title">Auto-Cascade Failover</span>
-              <span class="toggle-desc">Rotate to next key upon 429/quota limits.</span>
+              <span class="toggle-desc">Auto-rotate key on 429 quota limits</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-auto-cascade" checked>
@@ -249,8 +238,8 @@
       <div class="modal-card wide">
         <div class="modal-header">
           <div class="modal-title-group">
-            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <h2>API Key Vault & Cascade Governor</h2>
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <h2>API Key Vault & Failover Pool</h2>
           </div>
           <button class="icon-tool-btn" id="btn-close-vault">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -260,15 +249,15 @@
         <div class="vault-tabs">
           <button class="vault-tab-btn active" data-provider="gemini">Google AI Studio</button>
           <button class="vault-tab-btn" data-provider="groq">Groq Cloud</button>
-          <button class="vault-tab-btn" data-provider="hf">Hugging Face</button>
           <button class="vault-tab-btn" data-provider="openrouter">OpenRouter</button>
+          <button class="vault-tab-btn" data-provider="hf">Hugging Face</button>
         </div>
 
         <div class="vault-body">
           <div class="key-add-bar">
             <input type="password" class="vault-input" id="vault-key-input" placeholder="Paste API Key (e.g. AIzaSy... or gsk_...)">
-            <input type="text" class="vault-input small" id="vault-label-input" placeholder="Project Label (e.g. Key #1 Free Tier)">
-            <button class="btn-sm primary" id="btn-add-key">+ Store Key</button>
+            <input type="text" class="vault-input small" id="vault-label-input" placeholder="Label (e.g. Key 1)">
+            <button class="btn-sm primary" id="btn-add-key">+ Add Key</button>
           </div>
 
           <div class="vault-table-wrapper">
@@ -279,41 +268,12 @@
                   <th>Label</th>
                   <th>Tier</th>
                   <th>Created</th>
-                  <th>Actions</th>
+                  <th>Action</th>
                 </tr>
               </thead>
-              <tbody id="vault-keys-tbody">
-                <!-- DYNAMIC KEYS -->
-              </tbody>
+              <tbody id="vault-keys-tbody"></tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL: AUTHENTICATION -->
-    <div class="modal-overlay" id="auth-modal" style="display:none;">
-      <div class="modal-card auth-card">
-        <div class="modal-header">
-          <h2>Enterprise Authentication</h2>
-          <button class="icon-tool-btn" id="btn-close-auth">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <div class="auth-tabs">
-          <button class="auth-tab-btn active" id="tab-login" data-tab="login">Sign In</button>
-          <button class="auth-tab-btn" id="tab-signup" data-tab="signup">Sign Up</button>
-        </div>
-        <div class="auth-form-container">
-          <div class="form-group">
-            <label class="form-label" for="auth-email">Email Address</label>
-            <input type="email" class="form-input" id="auth-email" placeholder="architect@aetherspace.dev">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="auth-password">Password</label>
-            <input type="password" class="form-input" id="auth-password" placeholder="••••••••••••">
-          </div>
-          <button class="btn-full primary" id="btn-submit-auth">Sign In</button>
         </div>
       </div>
     </div>
