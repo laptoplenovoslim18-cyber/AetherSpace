@@ -1,15 +1,12 @@
 ﻿{
   "name": "aetherspace",
-  "version": "2.4.0",
-  "description": "AetherSpace - Cloud-Offloaded SOTA Edge IDE & Multi-Agent Runtime",
+  "version": "2.5.0",
+  "description": "Enterprise Edge AI Workspace with $0 FOSS Zero-Local-Weight Cascade",
   "main": "server.cjs",
-  "type": "commonjs",
   "scripts": {
-    "start": "node server.cjs",
-    "deploy": "git add . && git commit -m 'Edge auto-sync commit' && git push origin main"
+    "start": "node server.cjs"
   },
-  "keywords": ["ai-studio", "cloud-ide", "wasm", "webgpu", "edge-computing"],
-  "author": "AetherSpace Core Architecture Lead",
-  "license": "MIT",
-  "devDependencies": {}
+  "keywords": ["ai", "edge", "gemini", "groq", "zero-local-load", "workspace"],
+  "author": "AetherSpace Edge Lead",
+  "license": "MIT"
 }
