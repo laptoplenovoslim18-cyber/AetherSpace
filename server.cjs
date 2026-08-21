@@ -1,90 +1,43 @@
-﻿const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
+﻿const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const { exec } = require("child_process");
 
 const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.join(__dirname, 'public');
-const DEBOUNCE_MS = 2500;
-
-let syncTimeout = null;
-let isSyncing = false;
+const PUBLIC_DIR = path.join(__dirname, "public");
 
 const MIME_TYPES = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.ico': 'image/x-icon'
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".ico": "image/x-icon"
 };
 
-function triggerGitSync() {
-  if (isSyncing) return;
-  isSyncing = true;
-  console.log('[AetherSync] Debounce triggered. Synchronizing to origin/main...');
-
-  const gitCommand = 'git add . && git commit -m "Auto-sync: commit latest AetherSpace assets" && git push origin main';
-  exec(gitCommand, { cwd: __dirname }, (error, stdout, stderr) => {
-    isSyncing = false;
-    if (error) {
-      console.warn(`[AetherSync Note] ${error.message}`);
-      return;
-    }
-    if (stderr && stderr.trim().length > 0) {
-      console.info(`[AetherSync Log] ${stderr.trim()}`);
-    }
-    if (stdout && stdout.trim().length > 0) {
-      console.log(`[AetherSync Done] ${stdout.trim()}`);
-    }
-  });
-}
-
-function startFileWatcher() {
-  if (!fs.existsSync(PUBLIC_DIR)) {
-    fs.mkdirSync(PUBLIC_DIR, { recursive: true });
-  }
-
-  try {
-    fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
-      if (!filename) return;
-      console.log(`[AetherWatch] File event: ${eventType} on ${filename}`);
-      if (syncTimeout) {
-        clearTimeout(syncTimeout);
-      }
-      syncTimeout = setTimeout(triggerGitSync, DEBOUNCE_MS);
-    });
-    console.log(`[AetherWatch] Auto-sync watcher active for ${PUBLIC_DIR}`);
-  } catch (err) {
-    console.error(`[AetherWatch Error] Watcher failed to start: ${err.message}`);
-  }
-}
-
+// HTTP Static Server
 const server = http.createServer((req, res) => {
-  let requestPath = req.url.split('?')[0];
-  if (requestPath === '/' || requestPath === '') {
-    requestPath = '/index.html';
-  }
-
-  const normalized = path.normalize(requestPath).replace(/^(\.\.[\/\\])+/, '');
-  const filePath = path.join(PUBLIC_DIR, normalized);
+  let reqUrl = req.url.split("?")[0];
+  let safePath = path.normalize(reqUrl).replace(/^(\.\.[\/\\])+/, "");
+  let filePath = path.join(PUBLIC_DIR, safePath === "/" ? "index.html" : safePath);
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('404 Not Found - AetherSpace Asset');
+      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      res.end("404 Not Found: AetherSpace Resource Missing");
       return;
     }
 
     const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
     res.writeHead(200, {
-      'Content-Type': contentType,
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Access-Control-Allow-Origin': '*'
+      "Content-Type": contentType,
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "SAMEORIGIN"
     });
 
     const stream = fs.createReadStream(filePath);
@@ -92,7 +45,39 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[AetherSpace Server] Ready at http://127.0.0.1:${PORT}`);
-  startFileWatcher();
+server.listen(PORT, "127.0.0.1", () => {
+  console.log(`\x1b[36m[AetherSpace Local Engine]\x1b[0m Running at http://127.0.0.1:${PORT}`);
+  console.log(`\x1b[35m[AetherSpace Edge Live]\x1b[0m Target: https://aetherspace.pages.dev`);
+  console.log(`\x1b[32m[Auto-Sync Active]\x1b[0m Watching ${PUBLIC_DIR} for changes...`);
 });
+
+// Git Watcher mit 2500ms Debounce
+let syncTimer = null;
+let isSyncing = false;
+
+function triggerEdgeSync(filename) {
+  if (isSyncing) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    isSyncing = true;
+    const timestamp = new Date().toISOString().replace(/T/, " ").replace(/\..+/, "");
+    console.log(`\x1b[33m[Auto-Sync]\x1b[0m Ändere: ${filename} -> Starte Git-Push...`);
+    
+    exec("git add . && git commit -m \"Auto-sync: " + timestamp + "\" && git push origin main", (err, stdout, stderr) => {
+      isSyncing = false;
+      if (err) {
+        console.error(`\x1b[31m[Sync Error]\x1b[0m ${err.message}`);
+        return;
+      }
+      console.log(`\x1b[32m[Sync Complete]\x1b[0m Edge-Deployment getriggert.`);
+    });
+  }, 2500);
+}
+
+if (fs.existsSync(PUBLIC_DIR)) {
+  fs.watch(PUBLIC_DIR, { recursive: true }, (eventType, filename) => {
+    if (filename && !filename.includes(".git")) {
+      triggerEdgeSync(filename);
+    }
+  });
+}

@@ -1,12 +1,15 @@
 ﻿{
   "name": "aetherspace",
-  "version": "1.0.0",
-  "description": "AetherSpace Enterprise Cloud Architect & 144Hz Edge Sandbox",
+  "version": "2.4.0",
+  "description": "AetherSpace - Cloud-Offloaded SOTA Edge IDE & Multi-Agent Runtime",
   "main": "server.cjs",
+  "type": "commonjs",
   "scripts": {
-    "start": "node server.cjs"
+    "start": "node server.cjs",
+    "deploy": "git add . && git commit -m 'Edge auto-sync commit' && git push origin main"
   },
-  "keywords": ["aetherspace", "edge-ide", "144hz-sandbox", "ai-mesh"],
-  "author": "AetherSpace Principal Architect",
-  "license": "MIT"
+  "keywords": ["ai-studio", "cloud-ide", "wasm", "webgpu", "edge-computing"],
+  "author": "AetherSpace Core Architecture Lead",
+  "license": "MIT",
+  "devDependencies": {}
 }

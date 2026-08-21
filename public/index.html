@@ -3,112 +3,250 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | Enterprise Cloud Architect</title>
+  <title>AetherSpace | Enterprise Cloud IDE & Agent Mesh</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header class="aether-header">
+
+  <!-- TOP HEADER WITH TWO-TIER CONTROLS -->
+  <header class="top-header">
     <div class="brand-section">
-      <img src="favicon.svg" alt="Aether Logo" class="brand-logo">
-      <span>AETHERSPACE</span>
-      <span class="brand-badge">SOTA 144Hz</span>
+      <img src="favicon.svg" alt="AetherSpace" class="brand-logo">
+      <span class="brand-title">AetherSpace</span>
+      <span class="brand-badge">SOTA 2026</span>
     </div>
-    <div class="pill-group">
-      <button class="master-pill active" id="pill-autopilot">⚡ Auto-Pilot</button>
-      <button class="master-pill" id="pill-hardware">🛡️ Hardware: <span id="memory-indicator">< 25 MB</span></button>
-      <button class="master-pill" id="pill-staging">🌐 Staging: Cloudflare</button>
+
+    <div class="toggle-pills">
+      <button class="pill-button active" title="Autonome Multi-Agent Synthese">
+        <span class="pill-indicator"></span>
+        <span>⚡ Auto-Pilot</span>
+      </button>
+      <button class="pill-button" title="Zero Local Weight Governor (RAM &lt; 50MB)">
+        <span class="pill-indicator"></span>
+        <span>🛡️ Hardware Offload</span>
+      </button>
+      <button class="pill-button" id="btnOpenVault" title="Cloud API Key Tresor (Google, Groq, OpenRouter)">
+        <span>🔑 API Vault</span>
+      </button>
     </div>
+
     <div class="header-actions">
-      <button class="btn-icon" id="btn-export-html" title="Standalone HTML exportieren">⬇ .html</button>
-      <button class="btn-icon" id="btn-open-vault">🔑 Tresor</button>
-      <button class="btn-icon" id="btn-open-auth">👤 Account</button>
-      <button class="btn-icon" id="btn-toggle-settings">⚙️ Run Settings</button>
+      <button class="action-btn" id="btnRunSettings">
+        <span>⚙️ Run Settings</span>
+      </button>
+      <button class="action-btn" id="btnOpenAuth">
+        <span>👤 Account</span>
+      </button>
+      <button class="action-btn primary" id="btnDeployEdge">
+        <span>🚀 Edge Deploy</span>
+      </button>
     </div>
   </header>
 
-  <main class="workspace-container">
-    <section class="explorer-column">
-      <div class="column-header"><span>Dateibaum</span></div>
-      <div class="file-tree" id="file-tree"></div>
-      <div class="file-context-info" id="context-count">3 Kontext-Dateien aktiv</div>
+  <!-- 3-COLUMN WORKSPACE GRID -->
+  <main class="workspace-grid">
+    <!-- COL 1: COLLAPSIBLE FILE EXPLORER WITH CONTEXT CHECKBOXES -->
+    <aside class="col-files">
+      <div class="panel-header">
+        <span>Explorer</span>
+        <span style="font-size: 10px; color: var(--accent-cyan);">Context Select</span>
+      </div>
+      <div class="file-tree">
+        <div class="file-item active" data-file="public/index.html">
+          <input type="checkbox" class="file-context-chk" checked title="In Prompt Context einbinden">
+          <span class="file-icon">📄</span>
+          <span class="file-label">public/index.html</span>
+        </div>
+        <div class="file-item" data-file="public/styles.css">
+          <input type="checkbox" class="file-context-chk" title="In Prompt Context einbinden">
+          <span class="file-icon">🎨</span>
+          <span class="file-label">public/styles.css</span>
+        </div>
+        <div class="file-item" data-file="public/app.js">
+          <input type="checkbox" class="file-context-chk" title="In Prompt Context einbinden">
+          <span class="file-icon">⚡</span>
+          <span class="file-label">public/app.js</span>
+        </div>
+        <div class="file-item" data-file="package.json">
+          <input type="checkbox" class="file-context-chk" title="In Prompt Context einbinden">
+          <span class="file-icon">📦</span>
+          <span class="file-label">package.json</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- COL 2: MULTI-TAB CODE EDITOR -->
+    <section class="col-editor">
+      <div class="editor-tabs">
+        <div class="editor-tab active" data-file="public/index.html">
+          <span>index.html</span>
+        </div>
+        <div class="editor-tab" data-file="public/styles.css">
+          <span>styles.css</span>
+        </div>
+        <div class="editor-tab" data-file="public/app.js">
+          <span>app.js</span>
+        </div>
+      </div>
+      <div class="editor-surface">
+        <div class="line-numbers" id="lineNumbers">1</div>
+        <textarea class="code-textarea" id="codeEditor" spellcheck="false" placeholder="// Write code or let AetherSpace synthesize..."></textarea>
+      </div>
     </section>
 
-    <section class="editor-column">
-      <div class="tab-bar" id="tab-bar"></div>
-      <div class="editor-wrapper">
-        <div class="line-numbers" id="line-numbers">1</div>
-        <textarea class="code-area" id="code-area" spellcheck="false"></textarea>
-      </div>
-      <div class="status-bar">
-        <span id="status-label">Aktiv: index.html</span>
-        <span>UTF-8 / LF</span>
-        <span>Watcher: 2.5s Sync aktiv</span>
-      </div>
-    </section>
-
-    <section class="sandbox-column">
+    <!-- COL 3: 144HZ+ UNCAPPED DARK SANDBOX -->
+    <section class="col-sandbox">
       <div class="sandbox-toolbar">
-        <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Live Runtime</span>
-        <span id="fps-indicator" style="color: var(--accent-green); font-size: 12px; font-weight: 700;">144 FPS</span>
+        <div class="sandbox-indicators">
+          <span class="fps-counter" id="fpsDisplay">144 FPS</span>
+          <span class="watchdog-status">🛡️ Heartbeat Watchdog Active</span>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button class="action-btn" style="padding: 3px 8px; font-size: 11px;" onclick="document.getElementById('sandboxFrame').src = document.getElementById('sandboxFrame').src">⟳ Refresh</button>
+        </div>
       </div>
-      <div class="sandbox-frame-wrap">
-        <iframe id="sandbox-frame" class="sandbox-iframe" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+      <div class="sandbox-frame-container">
+        <iframe id="sandboxFrame" class="sandbox-iframe" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
       </div>
     </section>
   </main>
 
-  <aside class="settings-drawer" id="settings-drawer">
-    <div class="column-header" style="padding:0; margin-bottom: 8px;"><span>Run Settings</span></div>
-    <div class="setting-row">
-      <label>Model Selector</label>
-      <select id="setting-model">
-        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-        <option value="gemini-1.5-flash" selected>Gemini 1.5 Flash</option>
-      </select>
+  <!-- SLIDE-OUT RUN SETTINGS (AI STUDIO DESIGN) -->
+  <aside class="settings-drawer" id="settingsDrawer">
+    <div class="drawer-header">
+      <span>Run Settings (Google AI Studio SOTA)</span>
+      <button class="action-btn" id="closeSettings" style="padding: 2px 6px;">✕</button>
     </div>
-    <div class="setting-row">
-      <label>System Instructions</label>
-      <textarea id="setting-sys-prompt" rows="4"></textarea>
+    <div class="drawer-body">
+      <div class="setting-group">
+        <label class="setting-label">Model Architecture</label>
+        <select class="setting-control" id="modelSelect">
+          <option value="gemini-2.5-flash">Google Gemini 2.5 Flash (Free Tier)</option>
+          <option value="gemini-2.5-pro">Google Gemini 2.5 Pro (Thinking)</option>
+          <option value="groq-llama-3">Groq Llama 3 70B (Ultra-Fast)</option>
+          <option value="openrouter-mesh">OpenRouter Multi-Mesh Cascade</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">System Instructions</label>
+        <textarea class="setting-control" rows="4" style="resize: vertical;" placeholder="You are an autonomous Principal Systems Architect..."></textarea>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">Thinking Level</label>
+        <select class="setting-control">
+          <option>High (Deep Multi-Agent Reasoning)</option>
+          <option>Medium (Standard Verification)</option>
+          <option>Fast (Instant Code Streaming)</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">Temperature: <span id="tempVal" style="color: var(--accent-cyan);">0.7</span></label>
+        <div class="slider-container">
+          <input type="range" id="tempSlider" min="0" max="2" step="0.05" value="0.7">
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">Output Length: <span id="tokenVal" style="color: var(--accent-cyan);">8,192</span> Tokens</label>
+        <div class="slider-container">
+          <input type="range" id="tokenSlider" min="1024" max="65536" step="1024" value="8192">
+        </div>
+      </div>
     </div>
   </aside>
 
-  <div class="modal-backdrop" id="vault-modal">
-    <div class="modal-card">
+  <!-- KEY-TABLE VAULT MODAL -->
+  <div class="modal-backdrop" id="vaultModal">
+    <div class="modal-window">
       <div class="modal-header">
-        <h3>Schnittstellen-Tresor (API Keys)</h3>
-        <button class="btn-icon" id="btn-close-vault">✕</button>
+        <h3 style="font-size: 14px; font-weight: 600;">🔑 API Key Table Vault (Google AI Studio Design)</h3>
+        <button class="action-btn" id="closeVault" style="padding: 2px 6px;">✕</button>
       </div>
       <div class="modal-body">
-        <div class="nav-tabs">
-          <button class="nav-tab active" data-provider="google">Google AI Studio</button>
-          <button class="nav-tab" data-provider="groq">Groq Cloud</button>
+        <div class="vault-tabs">
+          <div class="vault-tab active">Google AI Studio</div>
+          <div class="vault-tab">Groq Cloud</div>
+          <div class="vault-tab">Hugging Face</div>
+          <div class="vault-tab">OpenRouter Mesh</div>
         </div>
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-          <input type="text" id="vault-label-input" placeholder="Projekt-Label" style="flex: 1; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--border-color); padding: 8px; border-radius: 4px;">
-          <input type="password" id="vault-key-input" placeholder="API Key eingeben..." style="flex: 2; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--border-color); padding: 8px; border-radius: 4px;">
-          <button class="btn-icon btn-primary" id="btn-add-key">+ Hinzufügen</button>
-        </div>
-        <table class="table-vault">
-          <thead><tr><th>Key</th><th>Label</th><th>Erstellt</th><th>Status</th><th>Aktion</th></tr></thead>
-          <tbody id="vault-table-body"></tbody>
+
+        <table class="key-table">
+          <thead>
+            <tr>
+              <th>Key Preview</th>
+              <th>Project Label</th>
+              <th>Created</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="key-preview">AIzaSy...VJjA</td>
+              <td>Primary Gemini 2.5</td>
+              <td>2026-08-18</td>
+              <td><span class="key-tier-badge">Free tier</span></td>
+              <td><button class="action-btn" style="padding: 2px 6px; font-size: 11px;">Copy</button></td>
+            </tr>
+            <tr>
+              <td class="key-preview">AIzaSy...9xLm</td>
+              <td>Exhaustive Backup 2</td>
+              <td>2026-08-19</td>
+              <td><span class="key-tier-badge">Free tier</span></td>
+              <td><button class="action-btn" style="padding: 2px 6px; font-size: 11px;">Copy</button></td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <div class="modal-backdrop" id="auth-modal">
-    <div class="modal-card" style="width: 400px;">
+  <!-- ENTERPRISE AUTH MODAL -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal-window" style="width: 420px;">
       <div class="modal-header">
-        <h3>Enterprise Authentifizierung</h3>
-        <button class="btn-icon" id="btn-close-auth">✕</button>
+        <h3 style="font-size: 14px; font-weight: 600;">Enterprise Authentication</h3>
+        <button class="action-btn" id="closeAuth" style="padding: 2px 6px;">✕</button>
       </div>
-      <div class="modal-body">
-        <input type="email" placeholder="entwickler@domain.com" style="width: 100%; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 4px; margin-bottom: 10px;">
-        <button class="btn-icon btn-primary" style="width: 100%; justify-content: center; padding: 10px;">Magischen Link anfordern</button>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+        <button class="action-btn" style="width: 100%; justify-content: center; padding: 10px; background-color: #ffffff; color: #000000; font-weight: 600;">
+          <span>G</span> Mit Google One-Tap fortfahren
+        </button>
+        <button class="action-btn" style="width: 100%; justify-content: center; padding: 10px;">
+          <span>❖</span> Mit Microsoft anmelden
+        </button>
+        <div style="text-align: center; font-size: 11px; color: var(--text-dim); margin: 6px 0;">— ODER PER E-MAIL —</div>
+        <input type="email" class="setting-control" placeholder="name@company.com">
+        <button class="action-btn primary" style="width: 100%; justify-content: center; padding: 10px;">
+          Bestätigungs-Code anfordern
+        </button>
       </div>
     </div>
   </div>
+
+  <!-- FOOTER STATUS BAR -->
+  <footer class="footer-bar">
+    <div class="footer-section">
+      <div class="status-item">
+        <span class="status-dot"></span>
+        <span>Local Watcher: Port 3000 (2.5s Sync)</span>
+      </div>
+      <div class="status-item">
+        <span>Edge: aetherspace.pages.dev</span>
+      </div>
+    </div>
+    <div class="footer-section">
+      <span>Obsidian Engine #06080c</span>
+      <span style="color: var(--accent-cyan);">Zero Local Load &lt; 50MB</span>
+    </div>
+  </footer>
 
   <script src="app.js"></script>
 </body>

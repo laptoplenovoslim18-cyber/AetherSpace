@@ -1,11 +1,12 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#06080c"/>
-  <path d="M16 4L26 24H6L16 4Z" stroke="url(#aether-grad)" stroke-width="2.5" stroke-linejoin="round"/>
-  <circle cx="16" cy="18" r="3" fill="#00f2fe"/>
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
-    <linearGradient id="aether-grad" x1="6" y1="4" x2="26" y2="24" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#00f2fe"/>
-      <stop offset="1" stop-color="#4facfe"/>
+    <linearGradient id="aetherGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
     </linearGradient>
   </defs>
+  <rect width="32" height="32" rx="8" fill="#06080c"/>
+  <path d="M16 4 L28 26 L16 21 L4 26 Z" fill="url(#aetherGlow)"/>
+  <circle cx="16" cy="14" r="3" fill="#ffffff" filter="drop-shadow(0 0 4px #38bdf8)"/>
 </svg>
