@@ -1,12 +1,12 @@
 ﻿{
   "name": "aetherspace",
-  "version": "2.0.0",
-  "description": "AetherSpace - Autonomous High-Leverage Cloud AI IDE and Sandbox",
+  "version": "1.0.0",
+  "description": "AetherSpace Enterprise Cloud Architect & 144Hz Edge Sandbox",
   "main": "server.cjs",
-  "type": "commonjs",
   "scripts": {
     "start": "node server.cjs"
   },
-  "author": "laptoplenovoslim18-cyber",
+  "keywords": ["aetherspace", "edge-ide", "144hz-sandbox", "ai-mesh"],
+  "author": "AetherSpace Principal Architect",
   "license": "MIT"
 }

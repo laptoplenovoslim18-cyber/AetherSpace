@@ -2,6 +2,7 @@
   --bg-primary: #06080c;
   --bg-secondary: #0b0e14;
   --bg-tertiary: #121824;
+  --bg-hover: #1b2333;
   --border-color: #1e2638;
   --border-focus: #3b82f6;
   --text-main: #e2e8f0;
@@ -11,8 +12,8 @@
   --accent-green: #10b981;
   --accent-amber: #f59e0b;
   --accent-red: #ef4444;
-  --font-mono: "Fira Code", "Cascadia Code", Consolas, monospace;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  --font-mono: "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 * {
@@ -31,7 +32,6 @@ body {
   overflow: hidden;
 }
 
-/* Header & Master-Pills */
 .aether-header {
   height: 48px;
   background-color: var(--bg-secondary);
@@ -41,6 +41,7 @@ body {
   justify-content: space-between;
   padding: 0 16px;
   user-select: none;
+  z-index: 10;
 }
 
 .brand-section {
@@ -49,6 +50,11 @@ body {
   gap: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
+}
+
+.brand-logo {
+  width: 20px;
+  height: 20px;
 }
 
 .brand-badge {
@@ -70,8 +76,8 @@ body {
   border: 1px solid var(--border-color);
   color: var(--text-main);
   font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 14px;
+  padding: 4px 12px;
+  border-radius: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -91,24 +97,36 @@ body {
 }
 
 .btn-icon {
-  background: transparent;
+  background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   color: var(--text-main);
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  transition: all 0.15s ease;
 }
 
 .btn-icon:hover {
-  background-color: var(--bg-tertiary);
-  border-color: var(--text-muted);
+  background-color: var(--bg-hover);
+  border-color: var(--border-focus);
 }
 
-/* 3-Column Layout */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+  color: #000;
+  font-weight: 700;
+  border: none;
+}
+
+.btn-primary:hover {
+  opacity: 0.92;
+}
+
 .workspace-container {
   flex: 1;
   display: grid;
@@ -117,7 +135,6 @@ body {
   overflow: hidden;
 }
 
-/* Left Column: File Explorer */
 .explorer-column {
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
@@ -126,7 +143,7 @@ body {
 }
 
 .column-header {
-  height: 32px;
+  height: 34px;
   border-bottom: 1px solid var(--border-color);
   padding: 0 12px;
   font-size: 11px;
@@ -141,29 +158,43 @@ body {
 .file-tree {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .file-node {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px;
+  padding: 6px 12px;
   font-size: 12px;
   cursor: pointer;
   color: var(--text-main);
   user-select: none;
+  transition: background-color 0.15s ease;
 }
 
-.file-node:hover, .file-node.selected {
+.file-node:hover {
+  background-color: var(--bg-hover);
+}
+
+.file-node.selected {
   background-color: var(--bg-tertiary);
+  border-left: 2px solid var(--accent-cyan);
 }
 
 .file-node input[type="checkbox"] {
   accent-color: var(--accent-cyan);
+  cursor: pointer;
 }
 
-/* Center Column: Editor */
+.file-context-info {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-color);
+  font-size: 11px;
+  color: var(--text-muted);
+  background-color: var(--bg-secondary);
+}
+
 .editor-column {
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -172,7 +203,7 @@ body {
 }
 
 .tab-bar {
-  height: 32px;
+  height: 34px;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -180,39 +211,59 @@ body {
 }
 
 .tab-item {
-  padding: 0 12px;
+  padding: 0 14px;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
   border-right: 1px solid var(--border-color);
   background-color: var(--bg-secondary);
+  color: var(--text-muted);
   cursor: pointer;
+  user-select: none;
 }
 
 .tab-item.active {
   background-color: var(--bg-primary);
+  color: var(--text-main);
   border-top: 2px solid var(--border-focus);
 }
 
 .editor-wrapper {
   flex: 1;
+  display: flex;
   position: relative;
+  overflow: hidden;
+}
+
+.line-numbers {
+  width: 44px;
+  background-color: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 20px;
+  padding: 12px 6px;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
 }
 
 .code-area {
-  width: 100%;
-  height: 100%;
+  flex: 1;
   background-color: var(--bg-primary);
   color: #f8fafc;
   font-family: var(--font-mono);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 20px;
   border: none;
   outline: none;
   resize: none;
   padding: 12px;
   white-space: pre;
+  tab-size: 2;
+  overflow: auto;
 }
 
 .status-bar {
@@ -227,11 +278,19 @@ body {
   padding: 0 12px;
 }
 
-/* Right Column: Sandbox */
 .sandbox-column {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-secondary);
+}
+
+.sandbox-toolbar {
+  height: 34px;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .sandbox-frame-wrap {
@@ -244,15 +303,14 @@ body {
   width: 100%;
   height: 100%;
   border: none;
-  background-color: #ffffff;
+  background-color: #0b0e14;
 }
 
-/* Slide-out Run Settings */
 .settings-drawer {
   position: fixed;
   top: 48px;
-  right: -320px;
-  width: 320px;
+  right: -340px;
+  width: 340px;
   height: calc(100vh - 48px);
   background-color: var(--bg-secondary);
   border-left: 1px solid var(--border-color);
@@ -261,7 +319,8 @@ body {
   flex-direction: column;
   z-index: 100;
   padding: 16px;
-  gap: 16px;
+  gap: 14px;
+  overflow-y: auto;
 }
 
 .settings-drawer.open {
@@ -277,26 +336,43 @@ body {
 .setting-row label {
   font-size: 12px;
   color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
 }
 
-.setting-row select, .setting-row input[type="range"], .setting-row textarea {
+.setting-row select, .setting-row input[type="range"], .setting-row input[type="text"], .setting-row textarea {
   background-color: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   color: var(--text-main);
   border-radius: 4px;
-  padding: 6px;
+  padding: 6px 8px;
   font-size: 12px;
+  outline: none;
 }
 
-/* Key Vault Modal */
+.setting-row textarea {
+  resize: vertical;
+  min-height: 70px;
+  font-family: var(--font-mono);
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.75);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 200;
+  backdrop-filter: blur(2px);
 }
 
 .modal-backdrop.open {
@@ -306,12 +382,14 @@ body {
 .modal-card {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  width: 680px;
-  max-height: 80vh;
+  width: 720px;
+  max-width: 90vw;
+  max-height: 85vh;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
 .modal-header {
@@ -327,18 +405,44 @@ body {
   overflow-y: auto;
 }
 
+.nav-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.nav-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.nav-tab.active {
+  background-color: var(--bg-tertiary);
+  color: var(--accent-cyan);
+}
+
 .table-vault {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
+  margin-top: 12px;
 }
 
 .table-vault th, .table-vault td {
   border: 1px solid var(--border-color);
-  padding: 8px;
+  padding: 8px 10px;
   text-align: left;
 }
 
 .table-vault th {
   background-color: var(--bg-tertiary);
+  color: var(--text-muted);
 }

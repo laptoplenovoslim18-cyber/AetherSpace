@@ -4,21 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AetherSpace | Enterprise Cloud Architect</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="aether-header">
     <div class="brand-section">
-      <span>🌌 AETHERSPACE</span>
-      <span class="brand-badge">SOTA-EDGE</span>
+      <img src="favicon.svg" alt="Aether Logo" class="brand-logo">
+      <span>AETHERSPACE</span>
+      <span class="brand-badge">SOTA 144Hz</span>
     </div>
     <div class="pill-group">
       <button class="master-pill active" id="pill-autopilot">⚡ Auto-Pilot</button>
-      <button class="master-pill" id="pill-hardware">🛡️ Hardware: <span id="memory-indicator">-- MB</span></button>
+      <button class="master-pill" id="pill-hardware">🛡️ Hardware: <span id="memory-indicator">< 25 MB</span></button>
       <button class="master-pill" id="pill-staging">🌐 Staging: Cloudflare</button>
     </div>
     <div class="header-actions">
-      <button class="btn-icon" id="btn-open-vault">🔑 Key-Tresor</button>
+      <button class="btn-icon" id="btn-export-html" title="Standalone HTML exportieren">⬇ .html</button>
+      <button class="btn-icon" id="btn-open-vault">🔑 Tresor</button>
       <button class="btn-icon" id="btn-open-auth">👤 Account</button>
       <button class="btn-icon" id="btn-toggle-settings">⚙️ Run Settings</button>
     </div>
@@ -26,32 +29,28 @@
 
   <main class="workspace-container">
     <section class="explorer-column">
-      <div class="column-header">
-        <span>Dateibaum</span>
-      </div>
+      <div class="column-header"><span>Dateibaum</span></div>
       <div class="file-tree" id="file-tree"></div>
+      <div class="file-context-info" id="context-count">3 Kontext-Dateien aktiv</div>
     </section>
 
     <section class="editor-column">
-      <div class="tab-bar">
-        <div class="tab-item active">
-          <span id="current-file-label">index.html</span>
-        </div>
-      </div>
+      <div class="tab-bar" id="tab-bar"></div>
       <div class="editor-wrapper">
+        <div class="line-numbers" id="line-numbers">1</div>
         <textarea class="code-area" id="code-area" spellcheck="false"></textarea>
       </div>
       <div class="status-bar">
-        <span>UTF-8</span>
-        <span>LF</span>
-        <span>Node.js Watcher: Aktiv (2.5s Sync)</span>
+        <span id="status-label">Aktiv: index.html</span>
+        <span>UTF-8 / LF</span>
+        <span>Watcher: 2.5s Sync aktiv</span>
       </div>
     </section>
 
     <section class="sandbox-column">
-      <div class="column-header">
-        <span>Uncapped Sandbox</span>
-        <span id="fps-indicator" style="color: var(--accent-green);">144 FPS</span>
+      <div class="sandbox-toolbar">
+        <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Live Runtime</span>
+        <span id="fps-indicator" style="color: var(--accent-green); font-size: 12px; font-weight: 700;">144 FPS</span>
       </div>
       <div class="sandbox-frame-wrap">
         <iframe id="sandbox-frame" class="sandbox-iframe" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
@@ -59,42 +58,21 @@
     </section>
   </main>
 
-  <!-- Run Settings Drawer -->
   <aside class="settings-drawer" id="settings-drawer">
-    <div class="column-header">
-      <span>Run Settings (Google AI Studio)</span>
-    </div>
+    <div class="column-header" style="padding:0; margin-bottom: 8px;"><span>Run Settings</span></div>
     <div class="setting-row">
-      <label for="setting-model">Model Selector</label>
+      <label>Model Selector</label>
       <select id="setting-model">
         <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
         <option value="gemini-1.5-flash" selected>Gemini 1.5 Flash</option>
-        <option value="llama-3.3-70b-versatile">Groq Llama-3.3 70B</option>
       </select>
     </div>
     <div class="setting-row">
-      <label for="setting-thinking">Thinking Level</label>
-      <select id="setting-thinking">
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Fast">Fast</option>
-      </select>
-    </div>
-    <div class="setting-row">
-      <label for="setting-sys-prompt">System Instructions</label>
-      <textarea id="setting-sys-prompt" rows="4" placeholder="You are a principal engineer..."></textarea>
-    </div>
-    <div class="setting-row">
-      <label>Google Search Grounding</label>
-      <input type="checkbox" id="setting-grounding" checked>
-    </div>
-    <div class="setting-row">
-      <label>Code Execution</label>
-      <input type="checkbox" id="setting-code-exec" checked>
+      <label>System Instructions</label>
+      <textarea id="setting-sys-prompt" rows="4"></textarea>
     </div>
   </aside>
 
-  <!-- Key-Vault Modal -->
   <div class="modal-backdrop" id="vault-modal">
     <div class="modal-card">
       <div class="modal-header">
@@ -102,44 +80,32 @@
         <button class="btn-icon" id="btn-close-vault">✕</button>
       </div>
       <div class="modal-body">
-        <div style="display:flex; gap:8px; margin-bottom:12px;">
-          <select id="vault-provider-select" style="background:var(--bg-tertiary); color:#fff; border:1px solid var(--border-color); padding:6px; border-radius:4px;">
-            <option value="google">Google AI Studio</option>
-            <option value="groq">Groq Cloud</option>
-            <option value="huggingface">Hugging Face</option>
-            <option value="openrouter">OpenRouter Free</option>
-          </select>
-          <input type="password" id="vault-key-input" placeholder="API Key eingeben..." style="flex:1; background:var(--bg-tertiary); color:#fff; border:1px solid var(--border-color); padding:6px; border-radius:4px;">
-          <button class="btn-icon" id="btn-add-key">Hinzufügen</button>
+        <div class="nav-tabs">
+          <button class="nav-tab active" data-provider="google">Google AI Studio</button>
+          <button class="nav-tab" data-provider="groq">Groq Cloud</button>
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <input type="text" id="vault-label-input" placeholder="Projekt-Label" style="flex: 1; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--border-color); padding: 8px; border-radius: 4px;">
+          <input type="password" id="vault-key-input" placeholder="API Key eingeben..." style="flex: 2; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--border-color); padding: 8px; border-radius: 4px;">
+          <button class="btn-icon btn-primary" id="btn-add-key">+ Hinzufügen</button>
         </div>
         <table class="table-vault">
-          <thead>
-            <tr>
-              <th>Schlüssel-Vorschau</th>
-              <th>Erstellt am</th>
-              <th>Status</th>
-              <th>Aktion</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Key</th><th>Label</th><th>Erstellt</th><th>Status</th><th>Aktion</th></tr></thead>
           <tbody id="vault-table-body"></tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- Auth Modal -->
   <div class="modal-backdrop" id="auth-modal">
-    <div class="modal-card" style="width:400px;">
+    <div class="modal-card" style="width: 400px;">
       <div class="modal-header">
         <h3>Enterprise Authentifizierung</h3>
         <button class="btn-icon" id="btn-close-auth">✕</button>
       </div>
-      <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
-        <button class="btn-icon" style="justify-content:center;">Mit Google anmelden</button>
-        <button class="btn-icon" style="justify-content:center;">Mit Microsoft anmelden</button>
-        <hr style="border-color:var(--border-color);">
-        <input type="email" placeholder="name@domain.com" style="background:var(--bg-tertiary); color:#fff; border:1px solid var(--border-color); padding:8px; border-radius:4px;">
-        <button class="btn-icon" style="justify-content:center; background:var(--accent-blue); color:#000; font-weight:700;">Magischen Link senden</button>
+      <div class="modal-body">
+        <input type="email" placeholder="entwickler@domain.com" style="width: 100%; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+        <button class="btn-icon btn-primary" style="width: 100%; justify-content: center; padding: 10px;">Magischen Link anfordern</button>
       </div>
     </div>
   </div>
