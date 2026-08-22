@@ -19,18 +19,17 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [deploy via AetherSpace AI Gateway]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Executing: ${cmd}`);
+  console.log(`[Auto-Sync] Debounce triggered. Running Git sync...`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Note] Git notice: ${error.message}`);
+      console.warn(`[Auto-Sync Notice] ${error.message}`);
       return;
     }
-    if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] GitHub & Cloudflare Pages webhook triggered.');
+    if (stdout) console.log(`[Git]\n${stdout}`);
   });
 }
 
@@ -46,7 +45,7 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
+  console.log(`[File Watcher] Active on ${PUBLIC_DIR}`);
 } catch (err) {
   console.warn(`[Watcher Warning] ${err.message}`);
 }
@@ -72,11 +71,7 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({
       status: 'online',
       uptime: process.uptime(),
-      memory: {
-        rssMb: (mem.rss / (1024 * 1024)).toFixed(2),
-        heapUsedMb: (mem.heapUsed / (1024 * 1024)).toFixed(2)
-      },
-      syncDebounceMs: DEBOUNCE_MS
+      memoryRssMb: (mem.rss / (1024 * 1024)).toFixed(2)
     }));
   }
 
@@ -88,7 +83,7 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body);
         if (!payload.filename || typeof payload.content !== 'string') {
           res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Missing parameters' }));
+          return res.end(JSON.stringify({ error: 'Payload missing parameters' }));
         }
 
         const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
@@ -127,7 +122,7 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        return res.end('500 Internal Server Error');
+        return res.end('500 Server Error');
       }
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
@@ -140,5 +135,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online at http://127.0.0.1:${PORT}`);
+  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
 });
