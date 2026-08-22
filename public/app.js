@@ -5,25 +5,16 @@
     files: new Map(),
     activeFile: null,
     runSettings: {
-      model: 'gemini-3.7-flash',
-      systemInstructions: 'You are AetherSpace AI Assistant. Provide helpful, direct, and high-quality responses for coding, architecture, and questions. If generating code across files, format each as <file path="name">content</file>.',
+      model: 'gemini-2.5-flash',
+      systemInstructions: '',
       thinkingBudget: 4096,
       searchGrounding: false,
       autoCascade: true,
       maxOutputTokens: 8192,
       temperature: 0.70
     },
-    keys: { gemini: [], groq: [], openrouter: [], hf: [] }
+    keys: { gemini: [], groq: [], openrouter: [] }
   };
-
-  // Google AI Studio Fallback Chain for 503 / 429 overloads
-  const GEMINI_FALLBACK_CHAIN = [
-    'gemini-3.7-flash',
-    'gemini-3.5-flash',
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash'
-  ];
 
   const dom = {
     fileTreeEmptyState: document.getElementById('file-tree-empty-state'),
@@ -48,7 +39,6 @@
     activeContextCount: document.getElementById('active-context-count'),
     statusDot: document.getElementById('status-dot'),
     keyCountBadge: document.getElementById('key-count-badge'),
-    btnClearChat: document.getElementById('btn-clear-chat'),
 
     btnCodepenExport: document.getElementById('btn-codepen-export'),
     btnExportBundle: document.getElementById('btn-export-bundle'),
@@ -60,6 +50,11 @@
     btnCloseSettings: document.getElementById('btn-close-settings'),
 
     settingModel: document.getElementById('setting-model'),
+    btnRefreshModels: document.getElementById('btn-refresh-models'),
+    optgroupGemini: document.getElementById('optgroup-gemini'),
+    optgroupGroq: document.getElementById('optgroup-groq'),
+    optgroupOpenrouter: document.getElementById('optgroup-openrouter'),
+
     settingSystemInstructions: document.getElementById('setting-system-instructions'),
     btnResetSysInst: document.getElementById('btn-reset-sys-inst'),
     settingThinkingLevel: document.getElementById('setting-thinking-level'),
@@ -83,7 +78,7 @@
   function loadKeys() {
     try {
       const raw = localStorage.getItem('aetherspace_vault_keys');
-      if (raw) state.keys = Object.assign({ gemini: [], groq: [], openrouter: [], hf: [] }, JSON.parse(raw));
+      if (raw) state.keys = Object.assign({ gemini: [], groq: [], openrouter: [] }, JSON.parse(raw));
     } catch (e) {
       console.warn('Vault load error', e);
     }
@@ -98,6 +93,61 @@
   function updateKeyBadge() {
     const total = Object.values(state.keys).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
+  }
+
+  // --- DYNAMIC MODEL FETCHING ENGINE ---
+  async function fetchLiveModels() {
+    const geminiKeys = state.keys.gemini || [];
+    if (geminiKeys.length > 0) {
+      try {
+        const key = geminiKeys[0].key;
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.models && Array.isArray(data.models)) {
+            const valid = data.models
+              .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+              .map(m => m.name.replace(/^models\//, ''));
+
+            if (valid.length > 0) {
+              dom.optgroupGemini.innerHTML = '';
+              valid.forEach(mName => {
+                const opt = document.createElement('option');
+                opt.value = mName;
+                opt.textContent = mName;
+                dom.optgroupGemini.appendChild(opt);
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Gemini live model fetch error:', err.message);
+      }
+    }
+
+    const groqKeys = state.keys.groq || [];
+    if (groqKeys.length > 0) {
+      try {
+        const key = groqKeys[0].key;
+        const res = await fetch('https://api.groq.com/openai/v1/models', {
+          headers: { 'Authorization': `Bearer ${key}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data && Array.isArray(data.data)) {
+            dom.optgroupGroq.innerHTML = '';
+            data.data.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m.id;
+              opt.textContent = m.id;
+              dom.optgroupGroq.appendChild(opt);
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Groq live model fetch error:', err.message);
+      }
+    }
   }
 
   function renderFiles() {
@@ -231,29 +281,37 @@
     dom.cursorPos.textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
   }
 
-  function appendChatBubble(author, text, type = 'normal') {
+  function createChatBubble(author, initialText = '', isError = false) {
     const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${author.toLowerCase()} ${type === 'notice' ? 'notice' : ''}`;
+    bubble.className = `chat-bubble ${author.toLowerCase()} ${isError ? 'error' : ''}`;
 
-    if (type !== 'notice') {
-      const auth = document.createElement('div');
-      auth.className = 'chat-bubble-author';
-      auth.textContent = author;
-      bubble.appendChild(auth);
-    }
+    const auth = document.createElement('div');
+    auth.className = 'chat-bubble-author';
+    auth.textContent = author;
 
     const body = document.createElement('div');
     body.className = 'chat-bubble-body';
-    
-    // Format <file> tags as code blocks
-    const formatted = text
-      .replace(/<file path="([^"]+)">([\s\S]*?)<\/file>/g, '<pre><code>[$1]\n$2</code></pre>')
-      .replace(/\n/g, '<br>');
-    body.innerHTML = formatted;
+    body.innerHTML = formatChatBody(initialText);
 
+    bubble.appendChild(auth);
     bubble.appendChild(body);
     dom.dialogueStream.appendChild(bubble);
     dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+
+    return {
+      element: bubble,
+      bodyElement: body,
+      update(text) {
+        body.innerHTML = formatChatBody(text);
+        dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+      }
+    };
+  }
+
+  function formatChatBody(text) {
+    return text
+      .replace(/<file path="([^"]+)">([\s\S]*?)<\/file>/g, '<pre><code>[$1]\n$2</code></pre>')
+      .replace(/\n/g, '<br>');
   }
 
   function buildPromptPayload(instruction) {
@@ -261,13 +319,12 @@
     state.files.forEach((f, name) => {
       if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
-    return contextStr ? `WORKSPACE FILES CONTEXT:\n${contextStr}\nUSER MESSAGE:\n${instruction}` : instruction;
+    return contextStr ? `WORKSPACE CODE CONTEXT:\n${contextStr}\nUSER INSTRUCTION:\n${instruction}` : instruction;
   }
 
-  // CODEPEN EXPORT
   function exportToCodePen() {
     if (state.files.size === 0) {
-      appendChatBubble('System', 'Workspace is empty. Create HTML/CSS/JS files first.', 'notice');
+      alert('Workspace is empty. Create HTML/CSS/JS files first.');
       return;
     }
 
@@ -299,9 +356,9 @@
     document.body.removeChild(form);
   }
 
-  // GEMINI 3.7 / 3.5 / 2.5 REST CALL WITH STATUS INSPECTION
-  async function callGemini(apiKey, model, systemPrompt, userPrompt, config) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  // --- SSE STREAMING FOR GOOGLE GEMINI ---
+  async function streamGemini(apiKey, model, systemPrompt, userPrompt, config, onChunk) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
     const body = {
       contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
       generationConfig: {
@@ -329,21 +386,53 @@
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      const errorObj = { status: res.status, message: err };
-      throw errorObj;
+      const errText = await res.text();
+      const err = new Error(`Google AI Studio HTTP ${res.status}: ${errText}`);
+      err.status = res.status;
+      throw err;
     }
 
-    const data = await res.json();
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      throw { status: 500, message: 'Empty candidate from Gemini API' };
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let accumulatedText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const clean = line.trim();
+        if (clean.startsWith('data:')) {
+          const jsonStr = clean.replace(/^data:\s*/, '');
+          if (!jsonStr) continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            if (parsed.candidates && parsed.candidates[0] && parsed.candidates[0].content) {
+              const parts = parsed.candidates[0].content.parts || [];
+              for (const part of parts) {
+                if (part.text) {
+                  accumulatedText += part.text;
+                  onChunk(accumulatedText);
+                }
+              }
+            }
+          } catch (e) {
+            // Ignore parse errors on partial chunks
+          }
+        }
+      }
     }
 
-    return data.candidates[0].content.parts.map(p => p.text || '').join('');
+    return accumulatedText;
   }
 
-  // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER)
-  async function callOpenAICompatible(endpoint, apiKey, model, systemPrompt, userPrompt, config) {
+  // --- SSE STREAMING FOR GROQ & OPENROUTER ---
+  async function streamOpenAICompatible(endpoint, apiKey, model, systemPrompt, userPrompt, config, onChunk) {
     const messages = [];
     if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
     messages.push({ role: 'user', content: userPrompt });
@@ -358,25 +447,59 @@
         model: model,
         messages: messages,
         temperature: config.temperature,
-        max_tokens: Math.min(config.maxOutputTokens, 8192)
+        max_tokens: Math.min(config.maxOutputTokens, 8192),
+        stream: true
       })
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw { status: res.status, message: err };
+      const errText = await res.text();
+      const err = new Error(`Provider HTTP ${res.status}: ${errText}`);
+      err.status = res.status;
+      throw err;
     }
 
-    const data = await res.json();
-    return data.choices[0].message.content;
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let accumulatedText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const clean = line.trim();
+        if (clean.startsWith('data:')) {
+          const jsonStr = clean.replace(/^data:\s*/, '');
+          if (jsonStr === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content;
+            if (delta) {
+              accumulatedText += delta;
+              onChunk(accumulatedText);
+            }
+          } catch (e) {}
+        }
+      }
+    }
+
+    return accumulatedText;
   }
 
-  // RESILIENT SYNTHESIS (HANDLES 503 OVERLOAD & RETRIES AUTOMATICALLY)
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  // --- SYNTHESIZE ORCHESTRATOR WITH EXPONENTIAL BACKOFF & CASCADE ---
   async function synthesize() {
     const prompt = dom.promptInput.value.trim();
     if (!prompt) return;
 
-    appendChatBubble('User', prompt);
+    createChatBubble('User', prompt);
     dom.promptInput.value = '';
 
     state.runSettings.model = dom.settingModel.value;
@@ -388,14 +511,13 @@
     state.runSettings.temperature = parseFloat(dom.settingTemp.value);
 
     let provider = 'gemini';
-    const primaryModel = state.runSettings.model;
-    if (primaryModel.startsWith('llama') || primaryModel.startsWith('deepseek-r1-distill')) provider = 'groq';
-    else if (primaryModel.includes('openrouter') || primaryModel.includes(':free')) provider = 'openrouter';
-    else if (primaryModel.includes('/')) provider = 'hf';
+    const model = state.runSettings.model;
+    if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
+    else if (model.includes('openrouter') || model.includes(':free')) provider = 'openrouter';
 
     const keys = state.keys[provider] || [];
     if (keys.length === 0) {
-      appendChatBubble('AI', `⚠️ No API Key found for ${provider.toUpperCase()}. Please open Key Vault to add a key.`, 'notice');
+      createChatBubble('AI', `No API key found for ${provider.toUpperCase()}. Please open Key Vault to add a key.`, true);
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
       return;
@@ -405,44 +527,69 @@
     dom.statusDot.className = 'status-indicator busy';
 
     const fullPrompt = buildPromptPayload(prompt);
-    let output = null;
+    const aiBubble = createChatBubble('AI', 'Connecting to Cloud Mesh...');
+    let accumulatedText = '';
     let success = false;
-    let modelsToTry = [primaryModel];
 
-    if (provider === 'gemini') {
-      const remaining = GEMINI_FALLBACK_CHAIN.filter(m => m !== primaryModel);
-      modelsToTry = [primaryModel, ...remaining];
-    }
+    // Iterate through available keys for the provider
+    for (let i = 0; i < keys.length; i++) {
+      const currentKey = keys[i].key;
 
-    for (let k = 0; k < keys.length; k++) {
-      const currentKey = keys[k].key;
-
-      for (let m = 0; m < modelsToTry.length; m++) {
-        const currentModel = modelsToTry[m];
+      // Up to 2 retries on 503 Spike
+      for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          if (provider === 'gemini') {
-            output = await callGemini(currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
-          } else if (provider === 'groq') {
-            output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
-          } else if (provider === 'openrouter') {
-            output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          if (attempt > 0) {
+            aiBubble.update(`Spike detected (503). Retrying in ${attempt * 1.5}s...`);
+            await sleep(attempt * 1500);
           }
 
-          if (currentModel !== primaryModel) {
-            appendChatBubble('System', `ℹ️ ${primaryModel} was at peak capacity. Seamlessly fulfilled via ${currentModel}.`, 'notice');
+          if (provider === 'gemini') {
+            accumulatedText = await streamGemini(
+              currentKey,
+              model,
+              state.runSettings.systemInstructions,
+              fullPrompt,
+              state.runSettings,
+              chunk => aiBubble.update(chunk)
+            );
+          } else if (provider === 'groq') {
+            accumulatedText = await streamOpenAICompatible(
+              'https://api.groq.com/openai/v1/chat/completions',
+              currentKey,
+              model,
+              state.runSettings.systemInstructions,
+              fullPrompt,
+              state.runSettings,
+              chunk => aiBubble.update(chunk)
+            );
+          } else if (provider === 'openrouter') {
+            accumulatedText = await streamOpenAICompatible(
+              'https://openrouter.ai/api/v1/chat/completions',
+              currentKey,
+              model,
+              state.runSettings.systemInstructions,
+              fullPrompt,
+              state.runSettings,
+              chunk => aiBubble.update(chunk)
+            );
           }
 
           success = true;
           break;
         } catch (err) {
-          const status = err.status || 500;
-          console.warn(`[Auto-Cascade] Model ${currentModel} on Key ${k + 1} returned status ${status}.`);
+          console.warn(`[Gateway Notice] Key ${i} Attempt ${attempt} failed:`, err.message);
 
-          // If 503 (High demand) or 429 (Rate limit) or 404 (Model unlisted for key), try next model in fallback chain
-          if ((status === 503 || status === 429 || status === 404) && state.runSettings.autoCascade && m < modelsToTry.length - 1) {
-            continue;
+          if (err.status === 503 && attempt === 0) {
+            continue; // Retry once on 503
           }
-          break;
+
+          // Cascade to next key if available
+          if (state.runSettings.autoCascade && i < keys.length - 1) {
+            aiBubble.update(`Rate/Demand Limit reached. Cascading to next key in pool...`);
+            break;
+          } else {
+            aiBubble.update(`Execution Notice: ${err.message}`);
+          }
         }
       }
 
@@ -451,13 +598,11 @@
 
     dom.btnExecutePrompt.disabled = false;
 
-    if (success && output) {
+    if (success && accumulatedText) {
       dom.statusDot.className = 'status-indicator ready';
-      appendChatBubble('AI', output);
-      applyOutput(output);
+      applyOutput(accumulatedText);
     } else {
       dom.statusDot.className = 'status-indicator error';
-      appendChatBubble('AI', '⚠️ All cloud models and keys in pool experienced temporary peak demand. Please retry in a few moments or switch providers in Run Settings.', 'notice');
     }
   }
 
@@ -533,7 +678,7 @@
     });
 
     dom.btnNewFile.addEventListener('click', () => {
-      const name = prompt('Enter file path (e.g. index.html, styles.css, app.js):');
+      const name = prompt('Enter file name (e.g. index.html, styles.css, app.js):');
       if (name && name.trim()) {
         addOrUpdateFile(name.trim(), '', true);
         selectFile(name.trim());
@@ -569,11 +714,6 @@
         reader.readAsText(file);
       });
       dom.hiddenFileInput.value = '';
-    });
-
-    dom.btnClearChat.addEventListener('click', () => {
-      dom.dialogueStream.innerHTML = '';
-      appendChatBubble('System', 'Chat session cleared. Ready for new instructions.', 'notice');
     });
 
     dom.btnExecutePrompt.addEventListener('click', synthesize);
@@ -615,12 +755,12 @@
       const blob = new Blob([manifest], { type: 'text/plain' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'aetherspace-project.txt';
+      a.download = 'aetherspace-manifest.txt';
       a.click();
     });
 
     dom.btnSaveServer.addEventListener('click', async () => {
-      if (!state.activeFile) return alert('No file selected.');
+      if (!state.activeFile) return alert('No active file selected.');
       try {
         const res = await fetch('/api/save', {
           method: 'POST',
@@ -628,14 +768,20 @@
           body: JSON.stringify({ filename: state.activeFile, content: dom.codeEditor.value })
         });
         if (!res.ok) throw new Error('Save error');
-        appendChatBubble('System', `Saved ${state.activeFile} to disk. Git sync scheduled.`, 'notice');
+        alert(`Saved ${state.activeFile} to disk. Git auto-sync scheduled.`);
       } catch (err) {
-        appendChatBubble('System', `Preserved ${state.activeFile} in browser memory.`, 'notice');
+        alert('File preserved in browser storage.');
       }
     });
 
     dom.settingModel.addEventListener('change', () => {
-      dom.activeModelDisplay.textContent = dom.settingModel.options[dom.settingModel.selectedIndex].text.split(' (')[0];
+      dom.activeModelDisplay.textContent = dom.settingModel.value;
+    });
+
+    dom.btnRefreshModels.addEventListener('click', async () => {
+      dom.btnRefreshModels.textContent = 'Fetching...';
+      await fetchLiveModels();
+      dom.btnRefreshModels.textContent = 'Fetch Live';
     });
 
     dom.toggleRunSettingsBtn.addEventListener('click', () => dom.settingsSlideout.classList.toggle('open'));
@@ -644,16 +790,14 @@
     dom.settingOutputLength.addEventListener('input', () => dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value);
     dom.settingTemp.addEventListener('input', () => dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2));
     dom.btnResetSysInst.addEventListener('click', () => {
-      dom.settingSystemInstructions.value = 'You are AetherSpace AI Assistant. Provide helpful, direct, and high-quality responses for coding, architecture, and questions. If generating code across files, format each as <file path="name">content</file>.';
+      dom.settingSystemInstructions.value = '';
     });
 
     dom.openKeyVaultBtn.addEventListener('click', () => {
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
     });
-    dom.btnCloseVault.addEventListener('click', () => {
-      dom.keyVaultModal.style.display = 'none';
-    });
+    dom.btnCloseVault.addEventListener('click', () => dom.keyVaultModal.style.display = 'none');
 
     dom.vaultTabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -669,13 +813,14 @@
       const key = dom.vaultKeyInput.value.trim();
       const label = dom.vaultLabelInput.value.trim() || 'Key';
 
-      if (!key) return;
+      if (!key) return alert('Please enter a key.');
       state.keys[prov] = state.keys[prov] || [];
       state.keys[prov].push({ key, label, created: new Date().toLocaleDateString() });
       saveKeys();
       dom.vaultKeyInput.value = '';
       dom.vaultLabelInput.value = '';
       renderVaultTable();
+      fetchLiveModels();
     });
   }
 
@@ -683,7 +828,7 @@
     loadKeys();
     initEvents();
     renderFiles();
-    dom.settingSystemInstructions.value = state.runSettings.systemInstructions;
+    fetchLiveModels();
   }
 
   document.addEventListener('DOMContentLoaded', init);
