@@ -22,11 +22,11 @@ function triggerGitSync() {
   const commitMsg = `auto-sync: ${timestamp} [AetherSpace Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] 2.5s elapsed. Executing: ${cmd}`);
+  console.log(`[Auto-Sync] Executing: ${cmd}`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Note] Git notification: ${error.message}`);
+      console.warn(`[Auto-Sync Note] ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);

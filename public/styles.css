@@ -86,16 +86,6 @@ button, input, select, textarea {
   letter-spacing: -0.01em;
 }
 
-.brand-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(56, 189, 248, 0.1);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  font-weight: 600;
-}
-
 .master-pills { display: flex; gap: 6px; }
 
 .pill-btn {
@@ -143,9 +133,7 @@ button, input, select, textarea {
   color: var(--accent-emerald);
 }
 
-.action-btn.accent:hover {
-  background: rgba(16, 185, 129, 0.2);
-}
+.action-btn.accent:hover { background: rgba(16, 185, 129, 0.2); }
 
 .action-btn.primary {
   background-color: rgba(56, 189, 248, 0.12);
@@ -294,7 +282,7 @@ button, input, select, textarea {
 
 .file-checkbox { accent-color: var(--accent-cyan); cursor: pointer; }
 
-/* MERGED WORKSPACE (55% CODE STUDIO | 45% AI DIALOGUE STREAM) */
+/* MERGED WORKSPACE */
 .merged-workspace {
   flex: 1;
   display: flex;
@@ -302,7 +290,7 @@ button, input, select, textarea {
 }
 
 .code-studio-pane {
-  flex: 1.2;
+  flex: 1.15;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-canvas);
@@ -421,7 +409,7 @@ button, input, select, textarea {
 }
 
 .dialogue-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.dialogue-meta { color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
+.dialogue-meta { display: flex; align-items: center; color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
 
 .dialogue-stream {
   flex: 1;
@@ -465,6 +453,15 @@ button, input, select, textarea {
   background-color: var(--bg-canvas);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
+}
+
+.chat-bubble.system {
+  align-self: center;
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-amber);
+  font-size: 11px;
+  padding: 6px 10px;
 }
 
 .chat-bubble-author {

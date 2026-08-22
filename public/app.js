@@ -4,9 +4,10 @@
   const state = {
     files: new Map(),
     activeFile: null,
+    chatHistory: [], // [{ role: 'user', content: string }, { role: 'model', content: string }]
     runSettings: {
-      model: 'gemini-3.7-flash',
-      systemInstructions: 'You are AetherSpace SOTA Principal Systems & AI Engineer. Deliver deterministic, fully realized code architectures without placeholders.',
+      model: 'gemini-2.5-flash',
+      systemInstructions: 'You are AetherSpace AI software architect and coding assistant. Answer concisely and write complete code in <file path="...">...</file> blocks when modifying files.',
       thinkingBudget: 4096,
       searchGrounding: false,
       autoCascade: true,
@@ -36,6 +37,7 @@
     activeModelDisplay: document.getElementById('active-model-display'),
     promptInput: document.getElementById('prompt-input'),
     btnExecutePrompt: document.getElementById('btn-execute-prompt'),
+    btnClearChat: document.getElementById('btn-clear-chat'),
     activeContextCount: document.getElementById('active-context-count'),
     statusDot: document.getElementById('status-dot'),
     keyCountBadge: document.getElementById('key-count-badge'),
@@ -221,33 +223,34 @@
     dom.cursorPos.textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
   }
 
-  function appendChatBubble(author, text) {
+  function appendChatBubble(author, text, type = 'normal') {
     const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${author.toLowerCase()}`;
+    bubble.className = `chat-bubble ${author.toLowerCase()} ${type}`;
 
-    const auth = document.createElement('div');
-    auth.className = 'chat-bubble-author';
-    auth.textContent = author;
+    if (type !== 'system') {
+      const auth = document.createElement('div');
+      auth.className = 'chat-bubble-author';
+      auth.textContent = author;
+      bubble.appendChild(auth);
+    }
 
     const body = document.createElement('div');
     body.className = 'chat-bubble-body';
     body.innerHTML = text.replace(/<file path="([^"]+)">([\s\S]*?)<\/file>/g, '<pre><code>[$1]\n$2</code></pre>').replace(/\n/g, '<br>');
 
-    bubble.appendChild(auth);
     bubble.appendChild(body);
     dom.dialogueStream.appendChild(bubble);
     dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
   }
 
-  function buildPromptPayload(instruction) {
+  function buildContextBlock() {
     let contextStr = '';
     state.files.forEach((f, name) => {
       if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
-    return contextStr ? `WORKSPACE CODE CONTEXT:\n${contextStr}\nUSER INSTRUCTION:\n${instruction}` : instruction;
+    return contextStr ? `[WORKSPACE CONTEXT]\n${contextStr}\n` : '';
   }
 
-  // OFFICIAL CODEPEN EXPORT
   function exportToCodePen() {
     if (state.files.size === 0) {
       alert('Workspace is empty. Create HTML/CSS/JS files first.');
@@ -270,7 +273,7 @@
     input.type = 'hidden';
     input.name = 'data';
     input.value = JSON.stringify({
-      title: 'AetherSpace SOTA Export',
+      title: 'AetherSpace Export',
       html: htmlCode,
       css: cssCode,
       js: jsCode
@@ -282,11 +285,27 @@
     document.body.removeChild(form);
   }
 
-  // GOOGLE GEMINI 3.7 / 3.5 / 3.1 REST API CALL
-  async function callGemini(apiKey, model, systemPrompt, userPrompt, config) {
+  // GEMINI CALL WITH MULTI-TURN HISTORY & AUTO-RETRY ON 503
+  async function callGemini(apiKey, model, systemPrompt, history, currentPrompt, config, attempt = 1) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    
+    // Build multi-turn contents
+    const contents = [];
+    history.forEach(turn => {
+      contents.push({
+        role: turn.role === 'user' ? 'user' : 'model',
+        parts: [{ text: turn.content }]
+      });
+    });
+
+    const contextPrefix = buildContextBlock();
+    contents.push({
+      role: 'user',
+      parts: [{ text: contextPrefix + currentPrompt }]
+    });
+
     const body = {
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      contents: contents,
       generationConfig: {
         temperature: config.temperature,
         maxOutputTokens: config.maxOutputTokens
@@ -312,23 +331,40 @@
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Google AI Studio HTTP ${res.status}: ${err}`);
+      const errText = await res.text();
+      // Auto-retry once on 503 / high demand overload
+      if (res.status === 503 && attempt === 1) {
+        appendChatBubble('System', `Model ${model} is busy (503). Retrying in 800ms...`, 'system');
+        await new Promise(r => setTimeout(r, 800));
+        return callGemini(apiKey, model, systemPrompt, history, currentPrompt, config, 2);
+      }
+      throw new Error(`Google AI Studio HTTP ${res.status}: ${errText}`);
     }
 
     const data = await res.json();
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      throw new Error('Empty response candidate from Google AI Studio.');
+      throw new Error('Empty response from Google AI Studio.');
     }
 
     return data.candidates[0].content.parts.map(p => p.text || '').join('');
   }
 
-  // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER)
-  async function callOpenAICompatible(endpoint, apiKey, model, systemPrompt, userPrompt, config) {
+  // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER) WITH MULTI-TURN HISTORY
+  async function callOpenAICompatible(endpoint, apiKey, model, systemPrompt, history, currentPrompt, config) {
     const messages = [];
-    if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
-    messages.push({ role: 'user', content: userPrompt });
+    if (systemPrompt && systemPrompt.trim()) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+
+    history.forEach(turn => {
+      messages.push({
+        role: turn.role === 'user' ? 'user' : 'assistant',
+        content: turn.content
+      });
+    });
+
+    const contextPrefix = buildContextBlock();
+    messages.push({ role: 'user', content: contextPrefix + currentPrompt });
 
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -345,8 +381,8 @@
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Provider HTTP ${res.status}: ${err}`);
+      const errText = await res.text();
+      throw new Error(`Provider HTTP ${res.status}: ${errText}`);
     }
 
     const data = await res.json();
@@ -369,14 +405,14 @@
     state.runSettings.temperature = parseFloat(dom.settingTemp.value);
 
     let provider = 'gemini';
-    const model = state.runSettings.model;
+    let model = state.runSettings.model;
     if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
     else if (model.includes('openrouter') || model.includes(':free')) provider = 'openrouter';
     else if (model.includes('/')) provider = 'hf';
 
     const keys = state.keys[provider] || [];
     if (keys.length === 0) {
-      appendChatBubble('AI', `No API Key found for ${provider.toUpperCase()}. Please open Key Vault to configure your key.`);
+      appendChatBubble('AI', `No API Key stored for ${provider.toUpperCase()}. Please open Key Vault to add a key.`);
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
       return;
@@ -385,25 +421,34 @@
     dom.btnExecutePrompt.disabled = true;
     dom.statusDot.className = 'status-indicator busy';
 
-    const fullPrompt = buildPromptPayload(prompt);
     let output = null;
     let success = false;
 
     for (let i = 0; i < keys.length; i++) {
       try {
         if (provider === 'gemini') {
-          output = await callGemini(keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          output = await callGemini(keys[i].key, model, state.runSettings.systemInstructions, state.chatHistory, prompt, state.runSettings);
         } else if (provider === 'groq') {
-          output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, state.chatHistory, prompt, state.runSettings);
         } else if (provider === 'openrouter') {
-          output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, state.chatHistory, prompt, state.runSettings);
         }
         success = true;
         break;
       } catch (err) {
-        console.warn(`[Failover] Key ${i} error:`, err.message);
+        console.warn(`[Failover] Key ${i} failed:`, err.message);
+        
+        // If 503 persists on Gemini, try fallback to gemini-2.5-flash
+        if (provider === 'gemini' && err.message.includes('503') && model !== 'gemini-2.5-flash') {
+          appendChatBubble('System', `Model ${model} unavailable (503). Auto-switching to gemini-2.5-flash...`, 'system');
+          model = 'gemini-2.5-flash';
+          dom.activeModelDisplay.textContent = 'Gemini 2.5 Flash';
+          i--; // Retry loop with flash model
+          continue;
+        }
+
         if (!state.runSettings.autoCascade || i === keys.length - 1) {
-          appendChatBubble('AI', `Inference failed: ${err.message}`);
+          appendChatBubble('AI', `Execution Error: ${err.message}`);
           break;
         }
       }
@@ -414,6 +459,11 @@
     if (success && output) {
       dom.statusDot.className = 'status-indicator ready';
       appendChatBubble('AI', output);
+      
+      // Update multi-turn history
+      state.chatHistory.push({ role: 'user', content: prompt });
+      state.chatHistory.push({ role: 'model', content: output });
+
       applyOutput(output);
     } else {
       dom.statusDot.className = 'status-indicator error';
@@ -538,6 +588,16 @@
       }
     });
 
+    dom.btnClearChat.addEventListener('click', () => {
+      state.chatHistory = [];
+      dom.dialogueStream.innerHTML = `
+        <div class="dialogue-welcome">
+          <p><strong>Chat history cleared.</strong></p>
+          <p>Start a new dialogue or ask questions with workspace context.</p>
+        </div>
+      `;
+    });
+
     dom.btnCodepenExport.addEventListener('click', exportToCodePen);
 
     dom.btnExportBundle.addEventListener('click', () => {
@@ -598,14 +658,16 @@
     dom.settingOutputLength.addEventListener('input', () => dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value);
     dom.settingTemp.addEventListener('input', () => dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2));
     dom.btnResetSysInst.addEventListener('click', () => {
-      dom.settingSystemInstructions.value = 'You are AetherSpace SOTA Principal Systems & AI Engineer. Deliver deterministic, fully realized code architectures without placeholders.';
+      dom.settingSystemInstructions.value = 'You are AetherSpace AI software architect and coding assistant. Answer concisely and write complete code in <file path="...">...</file> blocks when modifying files.';
     });
 
     dom.openKeyVaultBtn.addEventListener('click', () => {
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
     });
-    dom.btnCloseVault.addEventListener('click', () => dom.keyVaultModal.style.display = 'none');
+    dom.btnCloseVault.addEventListener('click', () => {
+      dom.keyVaultModal.style.display = 'none';
+    });
 
     dom.vaultTabBtns.forEach(btn => {
       btn.addEventListener('click', () => {

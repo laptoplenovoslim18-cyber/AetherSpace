@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | Unified Code Studio & AI Dialogue Workbench</title>
+  <title>AetherSpace | Cloud IDE & AI Dialogue</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 </head>
 <body>
   <div id="app-root" class="app-layout">
-    <!-- TOP HEADER -->
+    <!-- HEADER (CLEAN BRANDING WITHOUT ARTIFICIAL BADGES) -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
@@ -20,19 +20,18 @@
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
           <span class="brand-title">AetherSpace</span>
-          <span class="brand-badge">SOTA v2026.8</span>
         </div>
 
         <nav class="master-pills">
           <div class="pill-group">
-            <button class="pill-btn active" title="Zero Local Ki Compute Weight Active">
+            <button class="pill-btn active" title="100% Cloud Execution Active">
               <span class="pill-indicator online"></span>
-              <span class="pill-label">Cloud Mesh 100% Free</span>
+              <span class="pill-label">Cloud Mesh: Active</span>
             </button>
           </div>
           <div class="pill-group">
             <button class="pill-btn" id="btn-memory-governor">
-              <span class="pill-icon">🛡️</span>
+              <span class="pill-icon">⚡</span>
               <span class="pill-label" id="governor-stat">0 MB Local Load</span>
             </button>
           </div>
@@ -40,27 +39,27 @@
       </div>
 
       <div class="header-right">
-        <button class="action-btn accent" id="btn-codepen-export" title="Transfer workspace code directly to CodePen">
+        <button class="action-btn accent" id="btn-codepen-export" title="Send workspace code to CodePen">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
           <span>Open in CodePen</span>
         </button>
 
-        <button class="action-btn" id="open-key-vault-btn" title="Open API Key Pool & Cascade Governor">
+        <button class="action-btn" id="open-key-vault-btn" title="Manage API Keys & Cascade">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Key Vault</span>
           <span class="badge" id="key-count-badge">0 Keys</span>
         </button>
 
-        <button class="action-btn primary" id="toggle-run-settings-btn" title="Configure 2026 AI Models & Parameters">
+        <button class="action-btn primary" id="toggle-run-settings-btn" title="Configure AI Model & Parameters">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Run Settings</span>
         </button>
       </div>
     </header>
 
-    <!-- UNIFIED 2-COLUMN WORKSPACE: LEFT EXPLORER, RIGHT SPLIT STUDIO & DIALOGUE -->
+    <!-- 2-COLUMN WORKSPACE: LEFT EXPLORER, RIGHT SPLIT STUDIO & DIALOGUE -->
     <div class="workspace-container">
-      <!-- LEFT: WORKSPACE EXPLORER & MULTI-FILE CONTEXT -->
+      <!-- LEFT: WORKSPACE EXPLORER -->
       <aside class="sidebar-panel" id="file-sidebar">
         <div class="sidebar-header">
           <div class="sidebar-title-row">
@@ -98,10 +97,10 @@
         <input type="file" id="hidden-file-input" multiple style="display:none;">
       </aside>
 
-      <!-- CENTER & RIGHT MERGED: DUAL-PANE (CODE STUDIO + LIVE AI DIALOGUE) -->
+      <!-- MERGED DUAL-PANE: CODE STUDIO & LIVE AI DIALOGUE -->
       <main class="merged-workspace">
         
-        <!-- PANE A: MULTI-TAB CODE STUDIO -->
+        <!-- PANE A: CODE STUDIO -->
         <section class="code-studio-pane">
           <div class="editor-tab-bar" id="editor-tabs"></div>
           <div class="editor-inner-wrapper">
@@ -118,36 +117,37 @@
           </div>
         </section>
 
-        <!-- PANE B: AI DIALOGUE & SYNTHESIS STREAM -->
+        <!-- PANE B: AI DIALOGUE & CONVERSATION -->
         <section class="ai-dialogue-pane">
           <div class="dialogue-header">
             <div class="dialogue-title">
               <span class="status-indicator ready" id="status-dot"></span>
-              <span id="active-model-display">Gemini 3.7 Flash</span>
+              <span id="active-model-display">Gemini 2.5 Flash</span>
             </div>
             <div class="dialogue-meta">
               <span id="active-context-count">0 files in context</span>
+              <button class="link-btn" id="btn-clear-chat" title="Clear Conversation History" style="margin-left: 8px;">Clear Chat</button>
             </div>
           </div>
 
           <div class="dialogue-stream" id="dialogue-stream">
             <div class="dialogue-welcome">
-              <p><strong>AetherSpace 2026 AI Dialogue Online.</strong></p>
-              <p>Type your architectural prompts, code generation requests, or debugging commands below. Selected workspace files are automatically injected as grounded context.</p>
+              <p><strong>AetherSpace AI Assistant Online.</strong></p>
+              <p>Type requests or ask questions. Selected workspace files are automatically provided as context.</p>
             </div>
           </div>
 
           <div class="dialogue-input-area">
-            <textarea class="prompt-textarea" id="prompt-input" rows="2" placeholder="Ask AI, request multi-file refactoring, or talk to the model (Ctrl+Enter to send)..."></textarea>
+            <textarea class="prompt-textarea" id="prompt-input" rows="2" placeholder="Talk with model or ask for code changes (Ctrl+Enter to send)..."></textarea>
             <button class="execute-btn" id="btn-execute-prompt" title="Send to Cloud AI">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span>Synthesize</span>
+              <span>Send</span>
             </button>
           </div>
         </section>
       </main>
 
-      <!-- RIGHT SLIDE-OUT RUN SETTINGS (GOOGLE AI STUDIO SPEC) -->
+      <!-- RIGHT SLIDE-OUT RUN SETTINGS -->
       <aside class="settings-slideout" id="settings-slideout">
         <div class="slideout-header">
           <div class="slideout-title">
@@ -160,19 +160,17 @@
         </div>
 
         <div class="slideout-content">
-          <!-- 2026 SOTA GOOGLE AI STUDIO & GROQ MODEL ROSTER -->
           <div class="form-group">
-            <label class="form-label" for="setting-model">Active Cloud Model</label>
+            <label class="form-label" for="setting-model">Active Model</label>
             <select class="form-select" id="setting-model">
-              <optgroup label="Google AI Studio (Live SOTA Lineup)">
-                <option value="gemini-3.7-flash" selected>Gemini 3.7 Flash (Latest Agentic Coding)</option>
-                <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite (High-Throughput)</option>
-                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Deepest Reasoning)</option>
-                <option value="gemini-3.6-flash">Gemini 3.6 Flash (Fast Agentic)</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash (Adaptive)</option>
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Stable)</option>
+              <optgroup label="Google AI Studio">
+                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Ultra Fast & Stable)</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning)</option>
+                <option value="gemini-3.7-flash">Gemini 3.7 Flash (High Demand)</option>
+                <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
+                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
               </optgroup>
-              <optgroup label="Groq Cloud (Ultra LPU Speed)">
+              <optgroup label="Groq Cloud">
                 <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
                 <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill Llama 70B</option>
                 <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
@@ -190,23 +188,23 @@
               <label class="form-label" for="setting-system-instructions">System Instructions</label>
               <button class="link-btn" id="btn-reset-sys-inst">Default</button>
             </div>
-            <textarea class="form-textarea" id="setting-system-instructions" rows="4"></textarea>
+            <textarea class="form-textarea" id="setting-system-instructions" rows="3"></textarea>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="setting-thinking-level">Thinking Budget (Tokens)</label>
+            <label class="form-label" for="setting-thinking-level">Thinking Budget</label>
             <select class="form-select" id="setting-thinking-level">
-              <option value="0">0 (Instant / Disabled)</option>
+              <option value="0">0 (Disabled / Fast)</option>
               <option value="1024">1,024 (Low)</option>
               <option value="4096" selected>4,096 (Medium)</option>
-              <option value="16384">16,384 (Deep Thinking)</option>
+              <option value="16384">16,384 (Deep)</option>
             </select>
           </div>
 
           <div class="toggle-setting-row">
             <div class="toggle-info">
               <span class="toggle-title">Google Search Grounding</span>
-              <span class="toggle-desc">Live web retrieval in API calls</span>
+              <span class="toggle-desc">Live web retrieval</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-search-grounding">
@@ -216,8 +214,8 @@
 
           <div class="toggle-setting-row">
             <div class="toggle-info">
-              <span class="toggle-title">Auto-Cascade Failover</span>
-              <span class="toggle-desc">Auto-rotate key on 429 quota exhaustion</span>
+              <span class="toggle-title">Auto-Cascade & Fallback</span>
+              <span class="toggle-desc">Auto-retry on 503 and rotate on 429</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-auto-cascade" checked>
