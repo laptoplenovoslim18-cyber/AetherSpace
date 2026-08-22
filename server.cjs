@@ -26,17 +26,19 @@ function triggerGitSync() {
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Info] Git notice: ${error.message}`);
+      console.warn(`[Auto-Sync Note] ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Deploy pipeline triggered.');
+    console.log('[Auto-Sync] Cloudflare / GitHub deploy pipeline updated.');
   });
 }
 
 function scheduleSync() {
   if (syncTimeout) clearTimeout(syncTimeout);
-  syncTimeout = setTimeout(() => triggerGitSync(), DEBOUNCE_MS);
+  syncTimeout = setTimeout(() => {
+    triggerGitSync();
+  }, DEBOUNCE_MS);
 }
 
 try {
@@ -44,7 +46,7 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[File Watcher] Active on: ${PUBLIC_DIR}`);
+  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
 } catch (err) {
   console.warn(`[Watcher Warning] ${err.message}`);
 }
@@ -73,7 +75,8 @@ const server = http.createServer((req, res) => {
       memory: {
         rssMb: (mem.rss / (1024 * 1024)).toFixed(2),
         heapUsedMb: (mem.heapUsed / (1024 * 1024)).toFixed(2)
-      }
+      },
+      syncDebounceMs: DEBOUNCE_MS
     }));
   }
 
@@ -137,5 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online at http://127.0.0.1:${PORT}`);
+  console.log(`[AetherSpace Server] Online at: http://127.0.0.1:${PORT}`);
 });
