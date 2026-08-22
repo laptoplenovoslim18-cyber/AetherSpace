@@ -4,7 +4,7 @@
   const state = {
     files: new Map(),
     activeFile: null,
-    activeView: 'editor', // 'editor' | 'chat'
+    viewMode: 'editor', // 'editor' | 'chat'
     runSettings: {
       model: 'gemini-3.7-flash',
       systemInstructions: 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.',
@@ -18,6 +18,12 @@
   };
 
   const dom = {
+    btnViewEditor: document.getElementById('btn-view-editor'),
+    btnViewChat: document.getElementById('btn-view-chat'),
+    viewEditorWrapper: document.getElementById('view-editor-wrapper'),
+    viewChatWrapper: document.getElementById('view-chat-wrapper'),
+    chatHistory: document.getElementById('chat-history'),
+
     fileTreeEmptyState: document.getElementById('file-tree-empty-state'),
     fileListItems: document.getElementById('file-list-items'),
     btnNewFile: document.getElementById('btn-new-file'),
@@ -27,12 +33,6 @@
     btnSelectAllContext: document.getElementById('btn-select-all-context'),
     btnDeselectAllContext: document.getElementById('btn-deselect-all-context'),
     hiddenFileInput: document.getElementById('hidden-file-input'),
-
-    tabModeEditor: document.getElementById('tab-mode-editor'),
-    tabModeChat: document.getElementById('tab-mode-chat'),
-    editorWorkspaceView: document.getElementById('editor-workspace-view'),
-    chatWorkspaceView: document.getElementById('chat-workspace-view'),
-    chatMessages: document.getElementById('chat-messages'),
 
     editorTabs: document.getElementById('editor-tabs'),
     codeEditor: document.getElementById('code-editor'),
@@ -94,6 +94,43 @@
   function updateKeyBadge() {
     const total = Object.values(state.keys).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
+  }
+
+  function switchView(mode) {
+    state.viewMode = mode;
+    if (mode === 'editor') {
+      dom.btnViewEditor.classList.add('active');
+      dom.btnViewChat.classList.remove('active');
+      dom.viewEditorWrapper.style.display = 'flex';
+      dom.viewChatWrapper.style.display = 'none';
+    } else {
+      dom.btnViewChat.classList.add('active');
+      dom.btnViewEditor.classList.remove('active');
+      dom.viewEditorWrapper.style.display = 'none';
+      dom.viewChatWrapper.style.display = 'flex';
+    }
+  }
+
+  function appendChatMessage(role, title, text) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-message ${role}`;
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+    
+    const strong = document.createElement('strong');
+    strong.textContent = title;
+    
+    const p = document.createElement('div');
+    p.style.whiteSpace = 'pre-wrap';
+    p.textContent = text;
+
+    bubble.appendChild(strong);
+    bubble.appendChild(p);
+    msgDiv.appendChild(bubble);
+
+    dom.chatHistory.appendChild(msgDiv);
+    dom.chatHistory.scrollTop = dom.chatHistory.scrollHeight;
   }
 
   function renderFiles() {
@@ -184,6 +221,7 @@
     renderFiles();
     updateGutter();
     updateCursorPos();
+    if (state.viewMode !== 'editor') switchView('editor');
   }
 
   function addOrUpdateFile(filename, content = '', inContext = true) {
@@ -233,35 +271,42 @@
     state.files.forEach((f, name) => {
       if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
-    return contextStr ? `WORKSPACE CONTEXT:\n${contextStr}\nTASK INSTRUCTION:\n${instruction}` : instruction;
-  }
-
-  function appendChatMessage(role, text) {
-    const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${role}`;
-    bubble.innerHTML = text.replace(/\n/g, '<br>');
-    dom.chatMessages.appendChild(bubble);
-    dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+    return contextStr ? `WORKSPACE CODE CONTEXT:\n${contextStr}\nTASK INSTRUCTION:\n${instruction}` : instruction;
   }
 
   function exportToCodePen() {
-    if (state.files.size === 0) return alert('Workspace is empty.');
-    let htmlCode = '', cssCode = '', jsCode = '';
+    if (state.files.size === 0) {
+      alert('Workspace is empty. Create HTML/CSS/JS files first.');
+      return;
+    }
+
+    let htmlCode = '';
+    let cssCode = '';
+    let jsCode = '';
+
     state.files.forEach((f, name) => {
       if (name.endsWith('.html')) htmlCode += f.content + '\n';
       else if (name.endsWith('.css')) cssCode += f.content + '\n';
       else if (name.endsWith('.js')) jsCode += f.content + '\n';
     });
 
-    const payload = { title: 'AetherSpace Export', html: htmlCode, css: cssCode, js: jsCode };
+    const payload = {
+      title: 'AetherSpace Studio Export',
+      html: htmlCode,
+      css: cssCode,
+      js: jsCode
+    };
+
     const form = document.createElement('form');
     form.action = 'https://codepen.io/pen/define';
     form.method = 'POST';
     form.target = '_blank';
+
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = 'data';
     input.value = JSON.stringify(payload);
+
     form.appendChild(input);
     document.body.appendChild(form);
     form.submit();
@@ -277,9 +322,18 @@
         maxOutputTokens: config.maxOutputTokens
       }
     };
-    if (systemPrompt && systemPrompt.trim()) body.systemInstruction = { parts: [{ text: systemPrompt }] };
-    if (config.thinkingBudget > 0) body.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
-    if (config.searchGrounding) body.tools = [{ googleSearch: {} }];
+
+    if (systemPrompt && systemPrompt.trim()) {
+      body.systemInstruction = { parts: [{ text: systemPrompt }] };
+    }
+
+    if (config.thinkingBudget > 0) {
+      body.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
+    }
+
+    if (config.searchGrounding) {
+      body.tools = [{ googleSearch: {} }];
+    }
 
     const res = await fetch(url, {
       method: 'POST',
@@ -296,6 +350,7 @@
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       throw new Error('Malformed or empty candidate response.');
     }
+
     return data.candidates[0].content.parts.map(p => p.text || '').join('');
   }
 
@@ -329,7 +384,10 @@
 
   async function synthesize() {
     const prompt = dom.promptInput.value.trim();
-    if (!prompt) return alert('Please enter a prompt.');
+    if (!prompt) {
+      alert('Please enter a synthesis instruction.');
+      return;
+    }
 
     state.runSettings.model = dom.settingModel.value;
     state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
@@ -341,19 +399,20 @@
 
     let provider = 'gemini';
     const model = state.runSettings.model;
-    if (model.startsWith('llama')) provider = 'groq';
-    else if (model.includes(':free')) provider = 'openrouter';
+    if (model.startsWith('llama') || model.includes('gpt-oss')) provider = 'groq';
+    else if (model.includes(':free') || model.includes('openrouter')) provider = 'openrouter';
     else if (model.includes('/')) provider = 'hf';
 
     const keys = state.keys[provider] || [];
     if (keys.length === 0) {
-      alert(`No API Key found for ${provider.toUpperCase()}. Open Key Vault to enter one.`);
+      alert(`No API Key found for provider: ${provider.toUpperCase()}. Open Key Vault to enter one.`);
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
       return;
     }
 
-    appendChatMessage('user', prompt);
+    appendChatMessage('user', 'You', prompt);
+
     dom.btnExecutePrompt.disabled = true;
     dom.statusDot.className = 'status-indicator busy';
     dom.statusText.textContent = `Routing request to ${model}...`;
@@ -379,7 +438,7 @@
         if (!state.runSettings.autoCascade || i === keys.length - 1) {
           dom.statusDot.className = 'status-indicator error';
           dom.statusText.textContent = `Error: ${err.message}`;
-          appendChatMessage('ai', `⚠️ Error: ${err.message}`);
+          alert(`Inference failed: ${err.message}`);
           break;
         }
       }
@@ -389,8 +448,8 @@
 
     if (success && output) {
       dom.statusDot.className = 'status-indicator ready';
-      dom.statusText.textContent = 'Synthesis complete. 0 local weight active.';
-      appendChatMessage('ai', output);
+      dom.statusText.textContent = 'Synthesis complete. 0 local weight maintained.';
+      appendChatMessage('assistant', `${model}`, output);
       applyOutput(output);
       dom.promptInput.value = '';
     }
@@ -424,7 +483,7 @@
     dom.vaultKeysTbody.innerHTML = '';
     if (keys.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys stored for ${provider.toUpperCase()}.</td>`;
+      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys configured for ${provider.toUpperCase()}.</td>`;
       dom.vaultKeysTbody.appendChild(tr);
       return;
     }
@@ -449,22 +508,8 @@
   }
 
   function initEvents() {
-    // Mode Switcher (Editor vs Chat)
-    dom.tabModeEditor.addEventListener('click', () => {
-      state.activeView = 'editor';
-      dom.tabModeEditor.classList.add('active');
-      dom.tabModeChat.classList.remove('active');
-      dom.editorWorkspaceView.style.display = 'block';
-      dom.chatWorkspaceView.style.display = 'none';
-    });
-
-    dom.tabModeChat.addEventListener('click', () => {
-      state.activeView = 'chat';
-      dom.tabModeChat.classList.add('active');
-      dom.tabModeEditor.classList.remove('active');
-      dom.editorWorkspaceView.style.display = 'none';
-      dom.chatWorkspaceView.style.display = 'flex';
-    });
+    dom.btnViewEditor.addEventListener('click', () => switchView('editor'));
+    dom.btnViewChat.addEventListener('click', () => switchView('chat'));
 
     dom.codeEditor.addEventListener('input', () => {
       if (state.activeFile) state.files.get(state.activeFile).content = dom.codeEditor.value;

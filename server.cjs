@@ -19,7 +19,7 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [deploy via AetherSpace Engine]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace SOTA Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
   console.log(`[Auto-Sync] Debounce elapsed. Executing Git sync...`);
@@ -30,7 +30,7 @@ function triggerGitSync() {
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Pipeline executed successfully.');
+    console.log('[Auto-Sync] Cloudflare Pages / GitHub deploy pipeline triggered.');
   });
 }
 
