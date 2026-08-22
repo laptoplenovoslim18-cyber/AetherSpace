@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | AI Gateway & Code Studio</title>
+  <title>AetherSpace | AI Gateway & Cloud Workbench</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 </head>
 <body>
   <div id="app-root" class="app-layout">
-    <!-- TOP HEADER (BADGE GELÖSCHT) -->
+    <!-- HEADER (BADGE VOLLSTÄNDIG ENTFERNT) -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
@@ -24,34 +24,40 @@
 
         <nav class="master-pills">
           <div class="pill-group">
-            <button class="pill-btn active" id="btn-status-indicator" title="AI Gateway Online">
-              <span class="pill-indicator online" id="global-status-dot"></span>
-              <span class="pill-label" id="global-status-label">AI Gateway: Ready</span>
+            <button class="pill-btn active" title="100% Free Cloud Engine">
+              <span class="pill-indicator online"></span>
+              <span class="pill-label">AI Gateway Mesh</span>
+            </button>
+          </div>
+          <div class="pill-group">
+            <button class="pill-btn" id="btn-memory-governor">
+              <span class="pill-icon">🛡️</span>
+              <span class="pill-label" id="governor-stat">0 MB Local Compute</span>
             </button>
           </div>
         </nav>
       </div>
 
       <div class="header-right">
-        <button class="action-btn accent" id="btn-codepen-export" title="Send HTML/CSS/JS directly to CodePen">
+        <button class="action-btn accent" id="btn-codepen-export" title="Export workspace directly to CodePen">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
           <span>Open in CodePen</span>
         </button>
 
-        <button class="action-btn" id="open-key-vault-btn" title="Manage API Keys & Cascade">
+        <button class="action-btn" id="open-key-vault-btn" title="Open API Key Pool">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Key Vault</span>
           <span class="badge" id="key-count-badge">0 Keys</span>
         </button>
 
-        <button class="action-btn primary" id="toggle-run-settings-btn" title="Configure AI Gateway & Models">
+        <button class="action-btn primary" id="toggle-run-settings-btn" title="Model & Gateway Settings">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span id="header-model-label">Settings</span>
+          <span>Run Settings</span>
         </button>
       </div>
     </header>
 
-    <!-- UNIFIED WORKSPACE: EXPLORER (LEFT) + MERGED CODE STUDIO & AI DIALOGUE (RIGHT) -->
+    <!-- 2-COLUMN UNIFIED WORKSPACE -->
     <div class="workspace-container">
       <!-- LEFT: WORKSPACE EXPLORER -->
       <aside class="sidebar-panel" id="file-sidebar">
@@ -65,7 +71,7 @@
               <button class="icon-tool-btn" id="btn-upload-files" title="Upload Files">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               </button>
-              <button class="icon-tool-btn" id="btn-clear-workspace" title="Clear All Workspace Files">
+              <button class="icon-tool-btn" id="btn-clear-workspace" title="Clear Workspace">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
@@ -83,7 +89,7 @@
           <div class="empty-state-card" id="file-tree-empty-state">
             <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
             <p class="empty-title">Workspace empty</p>
-            <p class="empty-subtitle">Create or upload files to start editing.</p>
+            <p class="empty-subtitle">Create or upload files to start editing and synthesizing.</p>
             <button class="btn-sm primary" id="btn-empty-create">+ Create File</button>
           </div>
           <ul class="file-list" id="file-list-items" style="display:none;"></ul>
@@ -91,9 +97,9 @@
         <input type="file" id="hidden-file-input" multiple style="display:none;">
       </aside>
 
-      <!-- MERGED STUDIO & DIALOGUE (SPLIT VIEW) -->
+      <!-- MERGED DUAL-PANE: CODE STUDIO + LIVE AI DIALOGUE STREAM -->
       <main class="merged-workspace">
-        <!-- PANE A: CODE STUDIO -->
+        <!-- CODE STUDIO PANE -->
         <section class="code-studio-pane">
           <div class="editor-tab-bar" id="editor-tabs"></div>
           <div class="editor-inner-wrapper">
@@ -110,42 +116,41 @@
           </div>
         </section>
 
-        <!-- PANE B: AI DIALOGUE STREAM (REAL-TIME STREAMING) -->
+        <!-- AI DIALOGUE PANE WITH REAL-TIME STREAMING -->
         <section class="ai-dialogue-pane">
           <div class="dialogue-header">
             <div class="dialogue-title">
               <span class="status-indicator ready" id="status-dot"></span>
-              <span id="active-model-display">Gemini 3.7 Flash</span>
+              <span id="active-model-display">Gemini 3.5 Flash</span>
             </div>
             <div class="dialogue-meta">
               <span id="active-context-count">0 files in context</span>
-              <button class="link-btn" id="btn-clear-chat" title="Clear Chat History">Clear Chat</button>
             </div>
           </div>
 
           <div class="dialogue-stream" id="dialogue-stream">
             <div class="dialogue-welcome">
-              <p><strong>AetherSpace Live AI Gateway Online.</strong></p>
-              <p>Type any question or prompt below. Responses stream live word-by-word with automatic 503/429 failover protection.</p>
+              <p><strong>AetherSpace Live AI Dialogue Online.</strong></p>
+              <p>Type requests or prompts below. Responses stream live. Workspace context is automatically injected without local hardware load.</p>
             </div>
           </div>
 
           <div class="dialogue-input-area">
-            <textarea class="prompt-textarea" id="prompt-input" rows="2" placeholder="Talk with model or instruct code changes (Enter sends, Shift+Enter for new line)..."></textarea>
-            <button class="execute-btn" id="btn-execute-prompt" title="Send to Cloud AI">
+            <textarea class="prompt-textarea" id="prompt-input" rows="2" placeholder="Send prompt to AI or ask for multi-file code (Enter sends, Shift+Enter for new line)..."></textarea>
+            <button class="execute-btn" id="btn-execute-prompt" title="Send to AI Gateway">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span>Send</span>
+              <span>Synthesize</span>
             </button>
           </div>
         </section>
       </main>
 
-      <!-- RUN SETTINGS SLIDEOUT -->
+      <!-- RIGHT SLIDE-OUT RUN SETTINGS -->
       <aside class="settings-slideout" id="settings-slideout">
         <div class="slideout-header">
           <div class="slideout-title">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>AI Gateway Settings</span>
+            <span>Run Settings</span>
           </div>
           <button class="icon-tool-btn" id="btn-close-settings">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -155,24 +160,21 @@
         <div class="slideout-content">
           <div class="form-group">
             <div class="form-label-row">
-              <label class="form-label" for="setting-model">Active Model</label>
-              <button class="link-btn" id="btn-fetch-live-models" title="Fetch live models directly from active provider APIs">⚡ Sync Live Models</button>
+              <label class="form-label" for="setting-model">Active SOTA Model</label>
+              <button class="link-btn" id="btn-sync-models" title="Sync live model lists from connected API keys">Sync Models</button>
             </div>
             <select class="form-select" id="setting-model">
-              <optgroup label="Google AI Studio (Live SOTA)" id="optgroup-gemini">
-                <option value="gemini-3.7-flash" selected>Gemini 3.7 Flash</option>
-                <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
-                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
-                <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+              <optgroup label="Google AI Studio (Top 3 SOTA)" id="optgroup-gemini">
+                <option value="gemini-3.5-flash" selected>Gemini 3.5 Flash (Adaptive SOTA)</option>
+                <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite (High Speed)</option>
+                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Deep Reasoning)</option>
               </optgroup>
-              <optgroup label="Groq Cloud (Ultra LPU)" id="optgroup-groq">
+              <optgroup label="Groq Cloud (Top 3 SOTA)" id="optgroup-groq">
                 <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
                 <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill Llama 70B</option>
                 <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
               </optgroup>
-              <optgroup label="OpenRouter Free Tier" id="optgroup-openrouter">
+              <optgroup label="OpenRouter Free Tier (Top 3 SOTA)" id="optgroup-openrouter">
                 <option value="openrouter/free">OpenRouter Auto Free Router</option>
                 <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B Instruct (Free)</option>
                 <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free)</option>
@@ -183,25 +185,25 @@
           <div class="form-group">
             <div class="form-label-row">
               <label class="form-label" for="setting-system-instructions">System Instructions</label>
-              <button class="link-btn" id="btn-reset-sys-inst">Clear</button>
+              <button class="link-btn" id="btn-clear-sys-inst">Clear</button>
             </div>
-            <textarea class="form-textarea" id="setting-system-instructions" rows="3" placeholder="Optional system prompt to steer the model..."></textarea>
+            <textarea class="form-textarea" id="setting-system-instructions" rows="3" placeholder="Optional system prompt to steer model behavior..."></textarea>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="setting-thinking-level">Thinking Budget (Tokens)</label>
             <select class="form-select" id="setting-thinking-level">
-              <option value="0">0 (Instant / Disabled)</option>
-              <option value="1024">1,024 (Low)</option>
-              <option value="4096" selected>4,096 (Medium)</option>
-              <option value="16384">16,384 (Deep)</option>
+              <option value="0" selected>0 (Instant / Direct Stream)</option>
+              <option value="1024">1,024 (Low Thinking)</option>
+              <option value="4096">4,096 (Medium Thinking)</option>
+              <option value="16384">16,384 (Deep Reasoning)</option>
             </select>
           </div>
 
           <div class="toggle-setting-row">
             <div class="toggle-info">
               <span class="toggle-title">Google Search Grounding</span>
-              <span class="toggle-desc">Live web retrieval</span>
+              <span class="toggle-desc">Real-time web search grounding</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-search-grounding">
@@ -212,7 +214,7 @@
           <div class="toggle-setting-row">
             <div class="toggle-info">
               <span class="toggle-title">Auto-Cascade Failover</span>
-              <span class="toggle-desc">Auto-rotate on 503/429 limits</span>
+              <span class="toggle-desc">Auto-retry on 503 / auto-switch model</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-auto-cascade" checked>
@@ -239,13 +241,13 @@
       </aside>
     </div>
 
-    <!-- KEY VAULT MODAL -->
+    <!-- MODAL: KEY VAULT -->
     <div class="modal-overlay" id="key-vault-modal" style="display:none;">
       <div class="modal-card">
         <div class="modal-header">
           <div class="modal-title-group">
             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <h2>API Key Vault & Cascade Pool</h2>
+            <h2>API Key Vault & Cascade Governor</h2>
           </div>
           <button class="icon-tool-btn" id="btn-close-vault">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -261,7 +263,7 @@
         <div class="vault-body">
           <div class="key-add-bar">
             <input type="password" class="vault-input" id="vault-key-input" placeholder="Paste API Key (e.g. AIzaSy... or gsk_...)">
-            <input type="text" class="vault-input small" id="vault-label-input" placeholder="Label (e.g. Key 1)">
+            <input type="text" class="vault-input small" id="vault-label-input" placeholder="Label (e.g. Primary Key)">
             <button class="btn-sm primary" id="btn-add-key">+ Store Key</button>
           </div>
 

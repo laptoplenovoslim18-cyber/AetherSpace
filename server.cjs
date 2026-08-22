@@ -19,18 +19,18 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace AI Gateway]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Executing: ${cmd}`);
-  exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
+  console.log(`[Auto-Sync] Executing Git deploy pipeline...`);
+  exec(cmd, { cwd: __dirname }, (error, stdout) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Info] ${error.message}`);
+      console.warn(`[Auto-Sync Notice] ${error.message}`);
       return;
     }
-    if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Cloudflare Pages deploy triggered.');
+    if (stdout) console.log(`[Git] ${stdout.trim()}`);
+    console.log('[Auto-Sync] Cloudflare Pages deploy triggered successfully.');
   });
 }
 
@@ -46,7 +46,7 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
+  console.log(`[Watcher] Monitoring distribution directory: ${PUBLIC_DIR}`);
 } catch (err) {
   console.warn(`[Watcher Warning] ${err.message}`);
 }
@@ -140,5 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
+  console.log(`[AetherSpace Server] Online at http://127.0.0.1:${PORT}`);
 });

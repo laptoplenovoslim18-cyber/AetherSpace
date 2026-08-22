@@ -84,6 +84,7 @@ button, input, select, textarea {
   font-weight: 700;
   font-size: 14px;
   letter-spacing: -0.01em;
+  color: var(--text-primary);
 }
 
 .master-pills { display: flex; gap: 6px; }
@@ -131,6 +132,10 @@ button, input, select, textarea {
   background: rgba(16, 185, 129, 0.1);
   border-color: rgba(16, 185, 129, 0.3);
   color: var(--accent-emerald);
+}
+
+.action-btn.accent:hover {
+  background: rgba(16, 185, 129, 0.2);
 }
 
 .action-btn.primary {
@@ -280,7 +285,7 @@ button, input, select, textarea {
 
 .file-checkbox { accent-color: var(--accent-cyan); cursor: pointer; }
 
-/* MERGED SPLIT WORKSPACE */
+/* MERGED WORKSPACE (DUAL-PANE) */
 .merged-workspace {
   flex: 1;
   display: flex;
@@ -288,7 +293,7 @@ button, input, select, textarea {
 }
 
 .code-studio-pane {
-  flex: 1.1;
+  flex: 1.2;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-canvas);
@@ -386,9 +391,9 @@ button, input, select, textarea {
 .btn-xs:hover { background-color: #171f2d; color: var(--text-primary); }
 .btn-xs.primary-outline { border-color: rgba(56, 189, 248, 0.4); color: var(--accent-cyan); }
 
-/* PANE B: AI DIALOGUE STREAM */
+/* AI DIALOGUE PANE */
 .ai-dialogue-pane {
-  flex: 1;
+  flex: 0.95;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-surface);
@@ -407,7 +412,7 @@ button, input, select, textarea {
 }
 
 .dialogue-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.dialogue-meta { display: flex; align-items: center; gap: 10px; color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
+.dialogue-meta { color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
 
 .dialogue-stream {
   flex: 1;
@@ -469,7 +474,20 @@ button, input, select, textarea {
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 11.5px;
-  border: 1px solid var(--border-subtle);
+}
+
+.notification-pill {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  margin: 4px 0;
+  font-family: var(--font-mono);
+}
+
+.notification-pill.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-amber);
 }
 
 .dialogue-input-area {
