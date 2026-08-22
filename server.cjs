@@ -19,18 +19,18 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace SOTA Engine]`;
+  const commitMsg = `auto-sync: ${timestamp} [deploy via AetherSpace Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Debounce beendet. Führe Git-Sync aus...`);
+  console.log(`[Auto-Sync] Debounce elapsed. Executing Git sync...`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Info] Hinweis: ${error.message}`);
+      console.warn(`[Auto-Sync Info] Git notice: ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] GitHub/Cloudflare Pipeline erfolgreich aktualisiert.');
+    console.log('[Auto-Sync] Pipeline executed successfully.');
   });
 }
 
@@ -46,9 +46,9 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[File Watcher] Aktiv auf: ${PUBLIC_DIR}`);
+  console.log(`[File Watcher] Active on: ${PUBLIC_DIR}`);
 } catch (err) {
-  console.warn(`[File Watcher Warnung] ${err.message}`);
+  console.warn(`[File Watcher Warning] Watcher error: ${err.message}`);
 }
 
 const MIME_TYPES = {
@@ -88,7 +88,7 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body);
         if (!payload.filename || typeof payload.content !== 'string') {
           res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Ungültige Nutzlast' }));
+          return res.end(JSON.stringify({ error: 'Invalid payload' }));
         }
 
         const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
@@ -140,5 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
+  console.log(`[Server] Online: http://127.0.0.1:${PORT}`);
 });
