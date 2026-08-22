@@ -71,6 +71,7 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-right: 6px;
 }
 
 .brand-icon {
@@ -82,7 +83,8 @@ button, input, select, textarea {
 .brand-title {
   font-weight: 700;
   font-size: 15px;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .master-pills { display: flex; gap: 6px; }
@@ -97,13 +99,7 @@ button, input, select, textarea {
   border: 1px solid var(--border-subtle);
   font-size: 11.5px;
   font-weight: 500;
-  cursor: pointer;
-  color: var(--text-secondary);
-}
-
-.pill-btn:hover {
-  background-color: #171e2c;
-  color: var(--text-primary);
+  cursor: default;
 }
 
 .pill-indicator.online {
@@ -112,6 +108,31 @@ button, input, select, textarea {
   border-radius: 50%;
   background-color: var(--accent-emerald);
   box-shadow: 0 0 6px var(--accent-emerald);
+}
+
+.header-model-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+.header-select {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+
+.header-select option, .header-select optgroup {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .action-btn {
@@ -138,9 +159,7 @@ button, input, select, textarea {
   color: var(--accent-emerald);
 }
 
-.action-btn.accent:hover {
-  background: rgba(16, 185, 129, 0.2);
-}
+.action-btn.accent:hover { background: rgba(16, 185, 129, 0.2); }
 
 .action-btn.primary {
   background-color: rgba(56, 189, 248, 0.12);
@@ -164,9 +183,9 @@ button, input, select, textarea {
 }
 
 .sidebar-panel {
-  width: 240px;
-  min-width: 180px;
-  max-width: 320px;
+  width: 260px;
+  min-width: 200px;
+  max-width: 400px;
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
   display: flex;
@@ -238,13 +257,13 @@ button, input, select, textarea {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 24px 12px;
+  padding: 32px 16px;
   color: var(--text-muted);
 }
 
-.empty-state-card svg { margin-bottom: 8px; opacity: 0.4; }
-.empty-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; }
-.empty-subtitle { font-size: 11px; line-height: 1.3; margin-bottom: 12px; }
+.empty-state-card svg { margin-bottom: 12px; opacity: 0.4; }
+.empty-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.empty-subtitle { font-size: 11px; line-height: 1.4; margin-bottom: 16px; }
 
 .btn-sm {
   padding: 5px 12px;
@@ -267,7 +286,7 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 8px;
+  padding: 6px 8px;
   border-radius: 4px;
   cursor: pointer;
   margin-bottom: 2px;
@@ -289,7 +308,7 @@ button, input, select, textarea {
 
 .file-checkbox { accent-color: var(--accent-cyan); cursor: pointer; }
 
-/* MERGED WORKSPACE (50% EDITOR / 50% AI STREAM) */
+/* MERGED WORKSPACE (55% CODE STUDIO | 45% AI DIALOGUE STREAM) */
 .merged-workspace {
   flex: 1;
   display: flex;
@@ -297,7 +316,7 @@ button, input, select, textarea {
 }
 
 .code-studio-pane {
-  flex: 1.1;
+  flex: 1.2;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-canvas);
@@ -339,7 +358,7 @@ button, input, select, textarea {
 .editor-inner-wrapper { display: flex; flex: 1; overflow: hidden; }
 
 .line-gutter {
-  width: 42px;
+  width: 44px;
   padding: 12px 6px;
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
@@ -395,7 +414,7 @@ button, input, select, textarea {
 .btn-xs:hover { background-color: #171f2d; color: var(--text-primary); }
 .btn-xs.primary-outline { border-color: rgba(56, 189, 248, 0.4); color: var(--accent-cyan); }
 
-/* PANE B: STREAMING AI DIALOGUE */
+/* PANE 2: AI DIALOGUE */
 .ai-dialogue-pane {
   flex: 0.95;
   display: flex;
@@ -416,7 +435,7 @@ button, input, select, textarea {
 }
 
 .dialogue-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.dialogue-meta { color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
+.dialogue-meta { display: flex; align-items: center; gap: 10px; color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
 
 .dialogue-stream {
   flex: 1;
@@ -425,6 +444,16 @@ button, input, select, textarea {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.dialogue-welcome {
+  background-color: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .chat-bubble {
@@ -453,12 +482,8 @@ button, input, select, textarea {
   color: var(--text-primary);
 }
 
-.chat-bubble.system {
-  align-self: center;
-  background-color: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: var(--accent-amber);
-  font-size: 11.5px;
+.chat-bubble.ai.streaming {
+  border-color: rgba(56, 189, 248, 0.4);
 }
 
 .chat-bubble-author {
@@ -522,7 +547,7 @@ button, input, select, textarea {
 .status-indicator.busy { background-color: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
 .status-indicator.error { background-color: var(--accent-rose); }
 
-/* SLIDEOUT */
+/* SLIDEOUT PANEL */
 .settings-slideout {
   position: absolute;
   top: 0; right: 0; width: 340px; height: 100%;
