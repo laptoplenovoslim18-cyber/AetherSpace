@@ -19,18 +19,18 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace SOTA Engine]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Debounce elapsed. Executing Git sync...`);
+  console.log(`[Auto-Sync] 2.5s elapsed. Executing: ${cmd}`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Info] Git notice: ${error.message}`);
+      console.warn(`[Auto-Sync Note] Git notification: ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Cloudflare Pages / GitHub deploy pipeline triggered.');
+    console.log('[Auto-Sync] Cloudflare Pages / GitHub deploy triggered.');
   });
 }
 
@@ -46,9 +46,9 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[File Watcher] Active on: ${PUBLIC_DIR}`);
+  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
 } catch (err) {
-  console.warn(`[File Watcher Warning] Watcher error: ${err.message}`);
+  console.warn(`[Watcher Warning] ${err.message}`);
 }
 
 const MIME_TYPES = {
@@ -88,7 +88,7 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body);
         if (!payload.filename || typeof payload.content !== 'string') {
           res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Invalid payload' }));
+          return res.end(JSON.stringify({ error: 'Missing parameters' }));
         }
 
         const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
@@ -127,7 +127,7 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        return res.end('500 Server Error');
+        return res.end('500 Internal Server Error');
       }
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
@@ -140,5 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[Server] Online: http://127.0.0.1:${PORT}`);
+  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
 });
