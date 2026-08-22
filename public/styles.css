@@ -71,7 +71,6 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-right: 6px;
 }
 
 .brand-icon {
@@ -84,7 +83,6 @@ button, input, select, textarea {
   font-weight: 700;
   font-size: 14px;
   letter-spacing: -0.01em;
-  color: var(--text-primary);
 }
 
 .master-pills { display: flex; gap: 6px; }
@@ -285,7 +283,7 @@ button, input, select, textarea {
 
 .file-checkbox { accent-color: var(--accent-cyan); cursor: pointer; }
 
-/* MERGED WORKSPACE (DUAL-PANE) */
+/* MERGED WORKSPACE */
 .merged-workspace {
   flex: 1;
   display: flex;
@@ -391,7 +389,7 @@ button, input, select, textarea {
 .btn-xs:hover { background-color: #171f2d; color: var(--text-primary); }
 .btn-xs.primary-outline { border-color: rgba(56, 189, 248, 0.4); color: var(--accent-cyan); }
 
-/* AI DIALOGUE PANE */
+/* AI DIALOGUE STREAM */
 .ai-dialogue-pane {
   flex: 0.95;
   display: flex;
@@ -442,7 +440,6 @@ button, input, select, textarea {
   font-size: 12.5px;
   line-height: 1.5;
   max-width: 95%;
-  word-break: break-word;
 }
 
 .chat-bubble.user {
@@ -474,20 +471,6 @@ button, input, select, textarea {
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 11.5px;
-}
-
-.notification-pill {
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 11px;
-  margin: 4px 0;
-  font-family: var(--font-mono);
-}
-
-.notification-pill.warning {
-  background-color: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: var(--accent-amber);
 }
 
 .dialogue-input-area {
@@ -533,7 +516,7 @@ button, input, select, textarea {
 .status-indicator.busy { background-color: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
 .status-indicator.error { background-color: var(--accent-rose); }
 
-/* SLIDEOUT SETTINGS */
+/* SLIDEOUT PANEL */
 .settings-slideout {
   position: absolute;
   top: 0; right: 0; width: 340px; height: 100%;
