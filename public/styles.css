@@ -133,7 +133,9 @@ button, input, select, textarea {
   color: var(--accent-emerald);
 }
 
-.action-btn.accent:hover { background: rgba(16, 185, 129, 0.2); }
+.action-btn.accent:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
 
 .action-btn.primary {
   background-color: rgba(56, 189, 248, 0.12);
@@ -282,7 +284,7 @@ button, input, select, textarea {
 
 .file-checkbox { accent-color: var(--accent-cyan); cursor: pointer; }
 
-/* MERGED WORKSPACE */
+/* MERGED WORKSPACE: 55% CODE STUDIO | 45% AI DIALOGUE */
 .merged-workspace {
   flex: 1;
   display: flex;
@@ -290,7 +292,7 @@ button, input, select, textarea {
 }
 
 .code-studio-pane {
-  flex: 1.15;
+  flex: 1.2;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-canvas);
@@ -409,7 +411,7 @@ button, input, select, textarea {
 }
 
 .dialogue-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.dialogue-meta { display: flex; align-items: center; color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
+.dialogue-meta { display: flex; align-items: center; gap: 10px; color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
 
 .dialogue-stream {
   flex: 1;
@@ -455,12 +457,12 @@ button, input, select, textarea {
   color: var(--text-primary);
 }
 
-.chat-bubble.system {
+.chat-bubble.notice {
   align-self: center;
   background-color: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.3);
-  color: var(--accent-amber);
-  font-size: 11px;
+  color: #fcd34d;
+  font-size: 11.5px;
   padding: 6px 10px;
 }
 

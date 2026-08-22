@@ -4,10 +4,9 @@
   const state = {
     files: new Map(),
     activeFile: null,
-    chatHistory: [], // [{ role: 'user', content: string }, { role: 'model', content: string }]
     runSettings: {
-      model: 'gemini-2.5-flash',
-      systemInstructions: 'You are AetherSpace AI software architect and coding assistant. Answer concisely and write complete code in <file path="...">...</file> blocks when modifying files.',
+      model: 'gemini-3.7-flash',
+      systemInstructions: 'You are AetherSpace AI Assistant. Provide helpful, direct, and high-quality responses for coding, architecture, and questions. If generating code across files, format each as <file path="name">content</file>.',
       thinkingBudget: 4096,
       searchGrounding: false,
       autoCascade: true,
@@ -16,6 +15,15 @@
     },
     keys: { gemini: [], groq: [], openrouter: [], hf: [] }
   };
+
+  // Google AI Studio Fallback Chain for 503 / 429 overloads
+  const GEMINI_FALLBACK_CHAIN = [
+    'gemini-3.7-flash',
+    'gemini-3.5-flash',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash'
+  ];
 
   const dom = {
     fileTreeEmptyState: document.getElementById('file-tree-empty-state'),
@@ -37,10 +45,10 @@
     activeModelDisplay: document.getElementById('active-model-display'),
     promptInput: document.getElementById('prompt-input'),
     btnExecutePrompt: document.getElementById('btn-execute-prompt'),
-    btnClearChat: document.getElementById('btn-clear-chat'),
     activeContextCount: document.getElementById('active-context-count'),
     statusDot: document.getElementById('status-dot'),
     keyCountBadge: document.getElementById('key-count-badge'),
+    btnClearChat: document.getElementById('btn-clear-chat'),
 
     btnCodepenExport: document.getElementById('btn-codepen-export'),
     btnExportBundle: document.getElementById('btn-export-bundle'),
@@ -225,9 +233,9 @@
 
   function appendChatBubble(author, text, type = 'normal') {
     const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${author.toLowerCase()} ${type}`;
+    bubble.className = `chat-bubble ${author.toLowerCase()} ${type === 'notice' ? 'notice' : ''}`;
 
-    if (type !== 'system') {
+    if (type !== 'notice') {
       const auth = document.createElement('div');
       auth.className = 'chat-bubble-author';
       auth.textContent = author;
@@ -236,24 +244,30 @@
 
     const body = document.createElement('div');
     body.className = 'chat-bubble-body';
-    body.innerHTML = text.replace(/<file path="([^"]+)">([\s\S]*?)<\/file>/g, '<pre><code>[$1]\n$2</code></pre>').replace(/\n/g, '<br>');
+    
+    // Format <file> tags as code blocks
+    const formatted = text
+      .replace(/<file path="([^"]+)">([\s\S]*?)<\/file>/g, '<pre><code>[$1]\n$2</code></pre>')
+      .replace(/\n/g, '<br>');
+    body.innerHTML = formatted;
 
     bubble.appendChild(body);
     dom.dialogueStream.appendChild(bubble);
     dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
   }
 
-  function buildContextBlock() {
+  function buildPromptPayload(instruction) {
     let contextStr = '';
     state.files.forEach((f, name) => {
       if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
-    return contextStr ? `[WORKSPACE CONTEXT]\n${contextStr}\n` : '';
+    return contextStr ? `WORKSPACE FILES CONTEXT:\n${contextStr}\nUSER MESSAGE:\n${instruction}` : instruction;
   }
 
+  // CODEPEN EXPORT
   function exportToCodePen() {
     if (state.files.size === 0) {
-      alert('Workspace is empty. Create HTML/CSS/JS files first.');
+      appendChatBubble('System', 'Workspace is empty. Create HTML/CSS/JS files first.', 'notice');
       return;
     }
 
@@ -285,27 +299,11 @@
     document.body.removeChild(form);
   }
 
-  // GEMINI CALL WITH MULTI-TURN HISTORY & AUTO-RETRY ON 503
-  async function callGemini(apiKey, model, systemPrompt, history, currentPrompt, config, attempt = 1) {
+  // GEMINI 3.7 / 3.5 / 2.5 REST CALL WITH STATUS INSPECTION
+  async function callGemini(apiKey, model, systemPrompt, userPrompt, config) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    
-    // Build multi-turn contents
-    const contents = [];
-    history.forEach(turn => {
-      contents.push({
-        role: turn.role === 'user' ? 'user' : 'model',
-        parts: [{ text: turn.content }]
-      });
-    });
-
-    const contextPrefix = buildContextBlock();
-    contents.push({
-      role: 'user',
-      parts: [{ text: contextPrefix + currentPrompt }]
-    });
-
     const body = {
-      contents: contents,
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
       generationConfig: {
         temperature: config.temperature,
         maxOutputTokens: config.maxOutputTokens
@@ -331,40 +329,24 @@
     });
 
     if (!res.ok) {
-      const errText = await res.text();
-      // Auto-retry once on 503 / high demand overload
-      if (res.status === 503 && attempt === 1) {
-        appendChatBubble('System', `Model ${model} is busy (503). Retrying in 800ms...`, 'system');
-        await new Promise(r => setTimeout(r, 800));
-        return callGemini(apiKey, model, systemPrompt, history, currentPrompt, config, 2);
-      }
-      throw new Error(`Google AI Studio HTTP ${res.status}: ${errText}`);
+      const err = await res.text();
+      const errorObj = { status: res.status, message: err };
+      throw errorObj;
     }
 
     const data = await res.json();
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      throw new Error('Empty response from Google AI Studio.');
+      throw { status: 500, message: 'Empty candidate from Gemini API' };
     }
 
     return data.candidates[0].content.parts.map(p => p.text || '').join('');
   }
 
-  // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER) WITH MULTI-TURN HISTORY
-  async function callOpenAICompatible(endpoint, apiKey, model, systemPrompt, history, currentPrompt, config) {
+  // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER)
+  async function callOpenAICompatible(endpoint, apiKey, model, systemPrompt, userPrompt, config) {
     const messages = [];
-    if (systemPrompt && systemPrompt.trim()) {
-      messages.push({ role: 'system', content: systemPrompt });
-    }
-
-    history.forEach(turn => {
-      messages.push({
-        role: turn.role === 'user' ? 'user' : 'assistant',
-        content: turn.content
-      });
-    });
-
-    const contextPrefix = buildContextBlock();
-    messages.push({ role: 'user', content: contextPrefix + currentPrompt });
+    if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
+    messages.push({ role: 'user', content: userPrompt });
 
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -381,14 +363,15 @@
     });
 
     if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Provider HTTP ${res.status}: ${errText}`);
+      const err = await res.text();
+      throw { status: res.status, message: err };
     }
 
     const data = await res.json();
     return data.choices[0].message.content;
   }
 
+  // RESILIENT SYNTHESIS (HANDLES 503 OVERLOAD & RETRIES AUTOMATICALLY)
   async function synthesize() {
     const prompt = dom.promptInput.value.trim();
     if (!prompt) return;
@@ -405,14 +388,14 @@
     state.runSettings.temperature = parseFloat(dom.settingTemp.value);
 
     let provider = 'gemini';
-    let model = state.runSettings.model;
-    if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
-    else if (model.includes('openrouter') || model.includes(':free')) provider = 'openrouter';
-    else if (model.includes('/')) provider = 'hf';
+    const primaryModel = state.runSettings.model;
+    if (primaryModel.startsWith('llama') || primaryModel.startsWith('deepseek-r1-distill')) provider = 'groq';
+    else if (primaryModel.includes('openrouter') || primaryModel.includes(':free')) provider = 'openrouter';
+    else if (primaryModel.includes('/')) provider = 'hf';
 
     const keys = state.keys[provider] || [];
     if (keys.length === 0) {
-      appendChatBubble('AI', `No API Key stored for ${provider.toUpperCase()}. Please open Key Vault to add a key.`);
+      appendChatBubble('AI', `⚠️ No API Key found for ${provider.toUpperCase()}. Please open Key Vault to add a key.`, 'notice');
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
       return;
@@ -421,37 +404,49 @@
     dom.btnExecutePrompt.disabled = true;
     dom.statusDot.className = 'status-indicator busy';
 
+    const fullPrompt = buildPromptPayload(prompt);
     let output = null;
     let success = false;
+    let modelsToTry = [primaryModel];
 
-    for (let i = 0; i < keys.length; i++) {
-      try {
-        if (provider === 'gemini') {
-          output = await callGemini(keys[i].key, model, state.runSettings.systemInstructions, state.chatHistory, prompt, state.runSettings);
-        } else if (provider === 'groq') {
-          output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, state.chatHistory, prompt, state.runSettings);
-        } else if (provider === 'openrouter') {
-          output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, state.chatHistory, prompt, state.runSettings);
-        }
-        success = true;
-        break;
-      } catch (err) {
-        console.warn(`[Failover] Key ${i} failed:`, err.message);
-        
-        // If 503 persists on Gemini, try fallback to gemini-2.5-flash
-        if (provider === 'gemini' && err.message.includes('503') && model !== 'gemini-2.5-flash') {
-          appendChatBubble('System', `Model ${model} unavailable (503). Auto-switching to gemini-2.5-flash...`, 'system');
-          model = 'gemini-2.5-flash';
-          dom.activeModelDisplay.textContent = 'Gemini 2.5 Flash';
-          i--; // Retry loop with flash model
-          continue;
-        }
+    if (provider === 'gemini') {
+      const remaining = GEMINI_FALLBACK_CHAIN.filter(m => m !== primaryModel);
+      modelsToTry = [primaryModel, ...remaining];
+    }
 
-        if (!state.runSettings.autoCascade || i === keys.length - 1) {
-          appendChatBubble('AI', `Execution Error: ${err.message}`);
+    for (let k = 0; k < keys.length; k++) {
+      const currentKey = keys[k].key;
+
+      for (let m = 0; m < modelsToTry.length; m++) {
+        const currentModel = modelsToTry[m];
+        try {
+          if (provider === 'gemini') {
+            output = await callGemini(currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          } else if (provider === 'groq') {
+            output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          } else if (provider === 'openrouter') {
+            output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
+          }
+
+          if (currentModel !== primaryModel) {
+            appendChatBubble('System', `ℹ️ ${primaryModel} was at peak capacity. Seamlessly fulfilled via ${currentModel}.`, 'notice');
+          }
+
+          success = true;
+          break;
+        } catch (err) {
+          const status = err.status || 500;
+          console.warn(`[Auto-Cascade] Model ${currentModel} on Key ${k + 1} returned status ${status}.`);
+
+          // If 503 (High demand) or 429 (Rate limit) or 404 (Model unlisted for key), try next model in fallback chain
+          if ((status === 503 || status === 429 || status === 404) && state.runSettings.autoCascade && m < modelsToTry.length - 1) {
+            continue;
+          }
           break;
         }
       }
+
+      if (success) break;
     }
 
     dom.btnExecutePrompt.disabled = false;
@@ -459,14 +454,10 @@
     if (success && output) {
       dom.statusDot.className = 'status-indicator ready';
       appendChatBubble('AI', output);
-      
-      // Update multi-turn history
-      state.chatHistory.push({ role: 'user', content: prompt });
-      state.chatHistory.push({ role: 'model', content: output });
-
       applyOutput(output);
     } else {
       dom.statusDot.className = 'status-indicator error';
+      appendChatBubble('AI', '⚠️ All cloud models and keys in pool experienced temporary peak demand. Please retry in a few moments or switch providers in Run Settings.', 'notice');
     }
   }
 
@@ -580,22 +571,17 @@
       dom.hiddenFileInput.value = '';
     });
 
+    dom.btnClearChat.addEventListener('click', () => {
+      dom.dialogueStream.innerHTML = '';
+      appendChatBubble('System', 'Chat session cleared. Ready for new instructions.', 'notice');
+    });
+
     dom.btnExecutePrompt.addEventListener('click', synthesize);
     dom.promptInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         synthesize();
       }
-    });
-
-    dom.btnClearChat.addEventListener('click', () => {
-      state.chatHistory = [];
-      dom.dialogueStream.innerHTML = `
-        <div class="dialogue-welcome">
-          <p><strong>Chat history cleared.</strong></p>
-          <p>Start a new dialogue or ask questions with workspace context.</p>
-        </div>
-      `;
     });
 
     dom.btnCodepenExport.addEventListener('click', exportToCodePen);
@@ -642,9 +628,9 @@
           body: JSON.stringify({ filename: state.activeFile, content: dom.codeEditor.value })
         });
         if (!res.ok) throw new Error('Save error');
-        alert(`Saved ${state.activeFile} to disk. Git sync scheduled.`);
+        appendChatBubble('System', `Saved ${state.activeFile} to disk. Git sync scheduled.`, 'notice');
       } catch (err) {
-        alert('Preserved in browser memory.');
+        appendChatBubble('System', `Preserved ${state.activeFile} in browser memory.`, 'notice');
       }
     });
 
@@ -658,7 +644,7 @@
     dom.settingOutputLength.addEventListener('input', () => dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value);
     dom.settingTemp.addEventListener('input', () => dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2));
     dom.btnResetSysInst.addEventListener('click', () => {
-      dom.settingSystemInstructions.value = 'You are AetherSpace AI software architect and coding assistant. Answer concisely and write complete code in <file path="...">...</file> blocks when modifying files.';
+      dom.settingSystemInstructions.value = 'You are AetherSpace AI Assistant. Provide helpful, direct, and high-quality responses for coding, architecture, and questions. If generating code across files, format each as <file path="name">content</file>.';
     });
 
     dom.openKeyVaultBtn.addEventListener('click', () => {
@@ -683,7 +669,7 @@
       const key = dom.vaultKeyInput.value.trim();
       const label = dom.vaultLabelInput.value.trim() || 'Key';
 
-      if (!key) return alert('Please enter a key.');
+      if (!key) return;
       state.keys[prov] = state.keys[prov] || [];
       state.keys[prov].push({ key, label, created: new Date().toLocaleDateString() });
       saveKeys();

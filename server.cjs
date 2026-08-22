@@ -26,11 +26,11 @@ function triggerGitSync() {
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Note] ${error.message}`);
+      console.warn(`[Auto-Sync Note] Git notice: ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Cloudflare Pages / GitHub deploy triggered.');
+    console.log('[Auto-Sync] Deploy pipeline triggered successfully.');
   });
 }
 
@@ -127,7 +127,7 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        return res.end('500 Internal Server Error');
+        return res.end('500 Server Error');
       }
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
@@ -140,5 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
+  console.log(`[AetherSpace Server] Online at http://127.0.0.1:${PORT}`);
 });
