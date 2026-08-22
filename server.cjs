@@ -19,18 +19,17 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Engine]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Initiating Git commit: ${cmd}`);
-  exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
+  console.log(`[Auto-Sync] Executing Git sync: ${cmd}`);
+  exec(cmd, { cwd: __dirname }, (error, stdout) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Note] Git info: ${error.message}`);
+      console.warn(`[Auto-Sync Notice] ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Cloudflare Pages deploy triggered.');
   });
 }
 
@@ -46,9 +45,9 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[File Watcher] Watching: ${PUBLIC_DIR}`);
+  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
 } catch (err) {
-  console.warn(`[File Watcher Warning] ${err.message}`);
+  console.warn(`[Watcher Warning] ${err.message}`);
 }
 
 const MIME_TYPES = {

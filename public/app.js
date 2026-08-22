@@ -1,42 +1,32 @@
 (function () {
   'use strict';
 
-  // SOTA Top-3 Default Models (Live fallback list)
-  const DEFAULT_MODELS = {
-    gemini: [
-      { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (SOTA Agentic)' },
-      { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (Fast)' },
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Stable LTS)' }
-    ],
-    groq: [
-      { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile' },
-      { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B' },
-      { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant' }
-    ],
-    openrouter: [
-      { id: 'openrouter/free', name: 'OpenRouter Free Mesh' },
-      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)' },
-      { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free)' }
-    ]
-  };
-
+  // 1. STATE & ROUTER CONFIG
   const state = {
     files: new Map(),
     activeFile: null,
-    messages: [], // Multi-turn chat history [{role: 'user'|'model'|'assistant', content: string}]
-    models: JSON.parse(JSON.stringify(DEFAULT_MODELS)),
+    canvasMode: 'split', // 'split', 'chat', 'editor'
     runSettings: {
-      model: 'gemini-3.7-flash',
+      model: 'gemini-2.5-flash',
       systemInstructions: '',
-      thinkingBudget: 4096,
+      thinkingBudget: 0,
       searchGrounding: false,
       autoCascade: true,
       maxOutputTokens: 8192,
       temperature: 0.70
     },
-    keys: { gemini: [], groq: [], openrouter: [] }
+    keys: { gemini: [], groq: [], openrouter: [] },
+    fallbackLadder: [
+      { provider: 'gemini', model: 'gemini-2.5-flash' },
+      { provider: 'gemini', model: 'gemini-2.0-flash' },
+      { provider: 'gemini', model: 'gemini-3.7-flash' },
+      { provider: 'groq', model: 'llama-3.3-70b-versatile' },
+      { provider: 'groq', model: 'deepseek-r1-distill-llama-70b' },
+      { provider: 'openrouter', model: 'openrouter/free' }
+    ]
   };
 
+  // 2. DOM REFS
   const dom = {
     fileTreeEmptyState: document.getElementById('file-tree-empty-state'),
     fileListItems: document.getElementById('file-list-items'),
@@ -48,6 +38,11 @@
     btnDeselectAllContext: document.getElementById('btn-deselect-all-context'),
     hiddenFileInput: document.getElementById('hidden-file-input'),
 
+    mergedCanvas: document.getElementById('merged-canvas'),
+    btnViewSplit: document.getElementById('btn-view-split'),
+    btnViewChat: document.getElementById('btn-view-chat'),
+    btnViewEditor: document.getElementById('btn-view-editor'),
+
     editorTabs: document.getElementById('editor-tabs'),
     codeEditor: document.getElementById('code-editor'),
     lineGutter: document.getElementById('line-gutter'),
@@ -58,12 +53,10 @@
     activeModelNav: document.getElementById('active-model-nav'),
     promptInput: document.getElementById('prompt-input'),
     btnExecutePrompt: document.getElementById('btn-execute-prompt'),
-    btnClearChat: document.getElementById('btn-clear-chat'),
     activeContextCount: document.getElementById('active-context-count'),
     statusDot: document.getElementById('status-dot'),
     keyCountBadge: document.getElementById('key-count-badge'),
-    modelCountLabel: document.getElementById('model-count-label'),
-    btnRefreshInventory: document.getElementById('btn-refresh-inventory'),
+    btnClearChat: document.getElementById('btn-clear-chat'),
 
     btnCodepenExport: document.getElementById('btn-codepen-export'),
     btnExportBundle: document.getElementById('btn-export-bundle'),
@@ -75,13 +68,17 @@
     btnCloseSettings: document.getElementById('btn-close-settings'),
 
     settingModel: document.getElementById('setting-model'),
+    btnRefreshModels: document.getElementById('btn-refresh-models'),
+    optgroupGemini: document.getElementById('optgroup-gemini'),
+    optgroupGroq: document.getElementById('optgroup-groq'),
+    optgroupOpenrouter: document.getElementById('optgroup-openrouter'),
+
     settingSystemInstructions: document.getElementById('setting-system-instructions'),
     btnResetSysInst: document.getElementById('btn-reset-sys-inst'),
     settingThinkingLevel: document.getElementById('setting-thinking-level'),
+    settingThinkingVal: document.getElementById('setting-thinking-val'),
     settingSearchGrounding: document.getElementById('setting-search-grounding'),
     settingAutoCascade: document.getElementById('setting-auto-cascade'),
-    settingOutputLength: document.getElementById('setting-output-length'),
-    settingOutputLengthVal: document.getElementById('setting-output-length-val'),
     settingTemp: document.getElementById('setting-temp'),
     settingTempVal: document.getElementById('setting-temp-val'),
 
@@ -95,13 +92,13 @@
     vaultTabBtns: document.querySelectorAll('.vault-tab-btn')
   };
 
-  // 1. KEY STORAGE & INVENTORY
+  // 3. PERSISTENCE & INVENTORY
   function loadKeys() {
     try {
       const raw = localStorage.getItem('aetherspace_vault_keys');
       if (raw) state.keys = Object.assign({ gemini: [], groq: [], openrouter: [] }, JSON.parse(raw));
     } catch (e) {
-      console.warn('Vault key parse error', e);
+      console.warn('Vault load notice', e);
     }
     updateKeyBadge();
   }
@@ -116,100 +113,75 @@
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
   }
 
-  // 2. DYNAMIC MODEL FETCHING & LIFECYCLE MANAGEMENT (TOP 3 PER PROVIDER)
-  async function fetchDynamicInventory() {
-    dom.modelCountLabel.textContent = 'Syncing...';
-    
-    // A. Gemini Dynamic Fetch
+  // 4. DYNAMIC MODEL FETCHING & TOP-3 PRUNING
+  async function fetchLiveModels() {
+    // 1. Google AI Studio live fetching
     if (state.keys.gemini && state.keys.gemini.length > 0) {
-      const key = state.keys.gemini[0].key;
+      const geminiKey = state.keys.gemini[0].key;
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.models && Array.isArray(data.models)) {
-            const valid = data.models
-              .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
-              .map(m => ({ id: m.name.replace('models/', ''), name: m.displayName || m.name.replace('models/', '') }))
-              .filter(m => m.id.includes('gemini'));
-            
-            // Prioritize SOTA 3.7, 3.5, 2.5
-            const priority = ['gemini-3.7-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash'];
-            const top = [];
-            priority.forEach(p => {
-              const f = valid.find(v => v.id === p);
-              if (f && top.length < 3) top.push(f);
+          const valid = (data.models || [])
+            .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+            .map(m => m.name.replace('models/', ''))
+            .filter(m => !m.includes('vision') && !m.includes('embedding'));
+          
+          if (valid.length > 0) {
+            dom.optgroupGemini.innerHTML = '';
+            valid.slice(0, 4).forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m;
+              opt.textContent = `${m} (Live)`;
+              if (m.includes('2.5-flash') || m.includes('flash')) opt.selected = true;
+              dom.optgroupGemini.appendChild(opt);
             });
-            valid.forEach(v => {
-              if (!top.find(t => t.id === v.id) && top.length < 3) top.push(v);
-            });
-            if (top.length > 0) state.models.gemini = top;
           }
         }
-      } catch (e) { console.warn('Gemini inventory fetch note:', e.message); }
+      } catch (e) {
+        console.warn('Live Gemini model fetch notice', e);
+      }
     }
 
-    // B. Groq Dynamic Fetch
+    // 2. Groq Cloud live fetching
     if (state.keys.groq && state.keys.groq.length > 0) {
-      const key = state.keys.groq[0].key;
+      const groqKey = state.keys.groq[0].key;
       try {
         const res = await fetch('https://api.groq.com/openai/v1/models', {
-          headers: { 'Authorization': `Bearer ${key}` }
+          headers: { 'Authorization': `Bearer ${groqKey}` }
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.data && Array.isArray(data.data)) {
-            const valid = data.data
-              .filter(m => m.active !== false && !m.id.includes('whisper'))
-              .map(m => ({ id: m.id, name: m.id }));
-            if (valid.length > 0) state.models.groq = valid.slice(0, 3);
+          const topGroq = (data.data || [])
+            .map(m => m.id)
+            .filter(id => id.includes('llama-3.3') || id.includes('deepseek') || id.includes('llama-3.1'))
+            .slice(0, 3);
+          
+          if (topGroq.length > 0) {
+            dom.optgroupGroq.innerHTML = '';
+            topGroq.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m;
+              opt.textContent = `${m} (Live)`;
+              dom.optgroupGroq.appendChild(opt);
+            });
           }
         }
-      } catch (e) { console.warn('Groq inventory fetch note:', e.message); }
+      } catch (e) {
+        console.warn('Live Groq model fetch notice', e);
+      }
     }
 
-    renderModelDropdown();
-    dom.modelCountLabel.textContent = 'Models Synced';
+    updateActiveModelLabels();
   }
 
-  function renderModelDropdown() {
-    const prev = state.runSettings.model;
-    dom.settingModel.innerHTML = '';
-
-    const createGroup = (label, list) => {
-      const grp = document.createElement('optgroup');
-      grp.label = label;
-      list.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = m.name;
-        grp.appendChild(opt);
-      });
-      dom.settingModel.appendChild(grp);
-    };
-
-    createGroup('Google AI Studio (Top 3 Live)', state.models.gemini);
-    createGroup('Groq Cloud (Top 3 Ultra-Speed)', state.models.groq);
-    createGroup('OpenRouter Free Mesh (Top 3)', state.models.openrouter);
-
-    // Restore or select first
-    const exists = Array.from(dom.settingModel.options).some(o => o.value === prev);
-    if (exists) {
-      dom.settingModel.value = prev;
-    } else if (dom.settingModel.options.length > 0) {
-      dom.settingModel.selectedIndex = 0;
-      state.runSettings.model = dom.settingModel.value;
-    }
-    updateModelHeader();
+  function updateActiveModelLabels() {
+    const selText = dom.settingModel.options[dom.settingModel.selectedIndex]?.text.split(' (')[0] || dom.settingModel.value;
+    dom.activeModelDisplay.textContent = selText;
+    dom.activeModelNav.textContent = selText;
   }
 
-  function updateModelHeader() {
-    const text = dom.settingModel.options[dom.settingModel.selectedIndex]?.text || state.runSettings.model;
-    dom.activeModelDisplay.textContent = text.split(' (')[0];
-    dom.activeModelNav.textContent = text.split(' (')[0];
-  }
-
-  // 3. WORKSPACE FILES
+  // 5. WORKSPACE & FILE MANAGEMENT
   function renderFiles() {
     if (state.files.size === 0) {
       dom.fileTreeEmptyState.style.display = 'flex';
@@ -244,6 +216,7 @@
 
       const span = document.createElement('span');
       span.textContent = filename;
+
       left.appendChild(checkbox);
       left.appendChild(span);
 
@@ -324,7 +297,7 @@
     state.files.forEach(f => {
       if (f.inContext) { count++; chars += f.content.length; }
     });
-    dom.activeContextCount.textContent = `${count} files attached (${chars.toLocaleString()} chars)`;
+    dom.activeContextCount.textContent = `${count} files context (${chars.toLocaleString()} chars)`;
   }
 
   function updateGutter() {
@@ -340,17 +313,17 @@
     dom.cursorPos.textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
   }
 
-  // 4. CHAT BUBBLES & REAL-TIME STREAMING
-  function createChatBubble(author, role = 'ai') {
+  function appendChatBubble(author, initialText = '') {
     const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${role}`;
+    bubble.className = `chat-bubble ${author.toLowerCase()}`;
 
     const auth = document.createElement('div');
     auth.className = 'chat-bubble-author';
     auth.textContent = author;
 
     const body = document.createElement('div');
-    body.className = 'chat-bubble-body streaming-cursor';
+    body.className = 'chat-bubble-body';
+    body.innerHTML = initialText;
 
     bubble.appendChild(auth);
     bubble.appendChild(body);
@@ -359,302 +332,25 @@
     return body;
   }
 
-  function renderBubbleContent(container, rawText) {
-    container.classList.remove('streaming-cursor');
-    // Sanitize and replace code blocks
-    let formatted = rawText
+  function renderFormattedText(text) {
+    return text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
-    // Parse `<file path="...">` blocks
-    formatted = formatted.replace(/&lt;file path="([^"]+)"&gt;([\s\S]*?)&lt;\/file&gt;/g, '<pre><code>[$1]\n$2</code></pre>');
-    formatted = formatted.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-    formatted = formatted.replace(/\n/g, '<br>');
-    container.innerHTML = formatted;
-    dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+      .replace(/>/g, '&gt;')
+      .replace(/&lt;file path="([^"]+)"&gt;([\s\S]*?)&lt;\/file&gt;/g, '<pre><code>[$1]\n$2</code></pre>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\n/g, '<br>');
   }
 
-  function buildContextPayload() {
+  function buildPromptPayload(instruction) {
     let contextStr = '';
     state.files.forEach((f, name) => {
       if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
-    return contextStr;
+    return contextStr ? `CURRENT PROJECT FILES:\n${contextStr}\nTASK:\n${instruction}` : instruction;
   }
 
-  // 5. RESILIENT LIVE STREAMING ENGINES (WITH RETRY ON 503 & 429)
-  async function streamGeminiWithRetry(apiKey, model, systemPrompt, contents, config, onChunk, retries = 2) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
-    const body = {
-      contents: contents,
-      generationConfig: {
-        temperature: config.temperature,
-        maxOutputTokens: config.maxOutputTokens
-      }
-    };
-
-    if (systemPrompt && systemPrompt.trim()) {
-      body.systemInstruction = { parts: [{ text: systemPrompt }] };
-    }
-    if (config.thinkingBudget > 0) {
-      body.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
-    }
-    if (config.searchGrounding) {
-      body.tools = [{ googleSearch: {} }];
-    }
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-          const errJson = await response.json().catch(() => ({}));
-          const errMsg = errJson.error?.message || `HTTP ${response.status}`;
-          if ((response.status === 503 || response.status === 429) && attempt < retries) {
-            await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
-            continue; // Retry
-          }
-          throw new Error(`Google AI Studio (${response.status}): ${errMsg}`);
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let fullText = '';
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop(); // keep remainder
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const jsonStr = line.slice(6).trim();
-              if (jsonStr && jsonStr !== '[DONE]') {
-                try {
-                  const chunk = JSON.parse(jsonStr);
-                  const candidate = chunk.candidates?.[0];
-                  if (candidate?.content?.parts) {
-                    const text = candidate.content.parts.map(p => p.text || '').join('');
-                    if (text) {
-                      fullText += text;
-                      onChunk(fullText);
-                    }
-                  }
-                } catch (e) {}
-              }
-            }
-          }
-        }
-        return fullText;
-      } catch (err) {
-        if (attempt === retries) throw err;
-      }
-    }
-  }
-
-  async function streamOpenAICompatible(endpoint, apiKey, model, systemPrompt, messages, config, onChunk) {
-    const reqMessages = [];
-    if (systemPrompt && systemPrompt.trim()) reqMessages.push({ role: 'system', content: systemPrompt });
-    messages.forEach(m => reqMessages.push(m));
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: reqMessages,
-        temperature: config.temperature,
-        max_tokens: Math.min(config.maxOutputTokens, 8192),
-        stream: true
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Provider (${response.status}): ${err}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let fullText = '';
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
-          try {
-            const chunk = JSON.parse(jsonStr);
-            const delta = chunk.choices?.[0]?.delta?.content || '';
-            if (delta) {
-              fullText += delta;
-              onChunk(fullText);
-            }
-          } catch (e) {}
-        }
-      }
-    }
-    return fullText;
-  }
-
-  // 6. SYNTHESIS & LIVE CHAT ROUTER
-  async function executePrompt() {
-    const userPrompt = dom.promptInput.value.trim();
-    if (!userPrompt) return;
-
-    dom.promptInput.value = '';
-
-    // Append User Message to Chat
-    const userBubble = createChatBubble('You', 'user');
-    renderBubbleContent(userBubble, userPrompt);
-
-    // Sync Run Settings
-    state.runSettings.model = dom.settingModel.value;
-    state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
-    state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
-    state.runSettings.searchGrounding = dom.settingSearchGrounding.checked;
-    state.runSettings.autoCascade = dom.settingAutoCascade.checked;
-    state.runSettings.maxOutputTokens = parseInt(dom.settingOutputLength.value, 10);
-    state.runSettings.temperature = parseFloat(dom.settingTemp.value);
-
-    let provider = 'gemini';
-    const model = state.runSettings.model;
-    if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
-    else if (model.includes('openrouter') || model.includes(':free')) provider = 'openrouter';
-
-    const keys = state.keys[provider] || [];
-    if (keys.length === 0) {
-      const errBubble = createChatBubble('AI Gateway', 'error');
-      renderBubbleContent(errBubble, `No API key configured for provider [${provider.toUpperCase()}]. Please open Key Vault to store a valid key.`);
-      dom.keyVaultModal.style.display = 'flex';
-      renderVaultTable();
-      return;
-    }
-
-    // Build context-injected prompt
-    const contextPrefix = buildContextPayload();
-    const finalPrompt = contextPrefix ? `CURRENT WORKSPACE FILES:\n${contextPrefix}\nUSER INSTRUCTION:\n${userPrompt}` : userPrompt;
-
-    // Prepare multi-turn messages
-    state.messages.push({ role: 'user', content: finalPrompt });
-
-    dom.btnExecutePrompt.disabled = true;
-    dom.statusDot.className = 'status-indicator busy';
-
-    const aiBubble = createChatBubble(model, 'ai');
-    let fullOutput = '';
-    let success = false;
-
-    // Prepare Gemini payload structure
-    const geminiContents = state.messages.map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }]
-    }));
-
-    // Prepared OpenAI-compatible messages structure
-    const openAIMessages = state.messages.map(m => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.content
-    }));
-
-    for (let i = 0; i < keys.length; i++) {
-      try {
-        if (provider === 'gemini') {
-          fullOutput = await streamGeminiWithRetry(
-            keys[i].key,
-            model,
-            state.runSettings.systemInstructions,
-            geminiContents,
-            state.runSettings,
-            (chunk) => {
-              aiBubble.textContent = chunk;
-              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
-            }
-          );
-        } else if (provider === 'groq') {
-          fullOutput = await streamOpenAICompatible(
-            'https://api.groq.com/openai/v1/chat/completions',
-            keys[i].key,
-            model,
-            state.runSettings.systemInstructions,
-            openAIMessages,
-            state.runSettings,
-            (chunk) => {
-              aiBubble.textContent = chunk;
-              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
-            }
-          );
-        } else if (provider === 'openrouter') {
-          fullOutput = await streamOpenAICompatible(
-            'https://openrouter.ai/api/v1/chat/completions',
-            keys[i].key,
-            model,
-            state.runSettings.systemInstructions,
-            openAIMessages,
-            state.runSettings,
-            (chunk) => {
-              aiBubble.textContent = chunk;
-              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
-            }
-          );
-        }
-
-        success = true;
-        break;
-      } catch (err) {
-        console.warn(`[Failover] Key index ${i} failed:`, err.message);
-        if (!state.runSettings.autoCascade || i === keys.length - 1) {
-          renderBubbleContent(aiBubble, `Inference Error: ${err.message}`);
-          aiBubble.parentElement.classList.add('error');
-          break;
-        }
-      }
-    }
-
-    dom.btnExecutePrompt.disabled = false;
-
-    if (success && fullOutput) {
-      dom.statusDot.className = 'status-indicator ready';
-      renderBubbleContent(aiBubble, fullOutput);
-      state.messages.push({ role: 'assistant', content: fullOutput });
-      applyGeneratedFiles(fullOutput);
-    } else {
-      dom.statusDot.className = 'status-indicator error';
-    }
-  }
-
-  function applyGeneratedFiles(text) {
-    const fileRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
-    let match;
-    let found = 0;
-
-    while ((match = fileRegex.exec(text)) !== null) {
-      addOrUpdateFile(match[1].trim(), match[2].trimStart(), true);
-      found++;
-    }
-
-    if (found > 0) renderFiles();
-  }
-
-  // 7. CODEPEN ONE-CLICK EXPORT
+  // 6. CODEPEN ONE-CLICK EXPORT
   function exportToCodePen() {
     if (state.files.size === 0) {
       alert('Workspace is empty. Create HTML/CSS/JS files first.');
@@ -677,7 +373,7 @@
     input.type = 'hidden';
     input.name = 'data';
     input.value = JSON.stringify({
-      title: 'AetherSpace Export',
+      title: 'AetherSpace Gateway Export',
       html: htmlCode,
       css: cssCode,
       js: jsCode
@@ -689,7 +385,220 @@
     document.body.removeChild(form);
   }
 
-  // 8. KEY VAULT MODAL
+  // 7. MULTI-PROVIDER AI GATEWAY & SSE STREAMING
+  async function streamGemini(apiKey, model, systemPrompt, userPrompt, config, onChunk) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    const body = {
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      generationConfig: {
+        temperature: config.temperature,
+        maxOutputTokens: config.maxOutputTokens
+      }
+    };
+
+    if (systemPrompt && systemPrompt.trim()) {
+      body.systemInstruction = { parts: [{ text: systemPrompt }] };
+    }
+    if (config.thinkingBudget > 0) {
+      body.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
+    }
+    if (config.searchGrounding) {
+      body.tools = [{ googleSearch: {} }];
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      const status = res.status;
+      throw { status, message: `Google AI Studio HTTP ${status}: ${err}` };
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulated = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const textChunk = decoder.decode(value, { stream: true });
+      const lines = textChunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.substring(6));
+            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+              const partText = data.candidates[0].content.parts.map(p => p.text || '').join('');
+              accumulated += partText;
+              onChunk(accumulated);
+            }
+          } catch (e) {}
+        }
+      }
+    }
+    return accumulated;
+  }
+
+  async function streamOpenAICompatible(endpoint, apiKey, model, systemPrompt, userPrompt, config, onChunk) {
+    const messages = [];
+    if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
+    messages.push({ role: 'user', content: userPrompt });
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: messages,
+        temperature: config.temperature,
+        max_tokens: Math.min(config.maxOutputTokens, 8192),
+        stream: true
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw { status: res.status, message: `Provider HTTP ${res.status}: ${err}` };
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulated = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const textChunk = decoder.decode(value, { stream: true });
+      const lines = textChunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const data = JSON.parse(line.substring(6));
+            if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+              accumulated += data.choices[0].delta.content;
+              onChunk(accumulated);
+            }
+          } catch (e) {}
+        }
+      }
+    }
+    return accumulated;
+  }
+
+  async function executeGateway() {
+    const prompt = dom.promptInput.value.trim();
+    if (!prompt) return;
+
+    appendChatBubble('User', renderFormattedText(prompt));
+    dom.promptInput.value = '';
+
+    state.runSettings.model = dom.settingModel.value;
+    state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
+    state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
+    state.runSettings.searchGrounding = dom.settingSearchGrounding.checked;
+    state.runSettings.autoCascade = dom.settingAutoCascade.checked;
+    state.runSettings.temperature = parseFloat(dom.settingTemp.value);
+
+    dom.btnExecutePrompt.disabled = true;
+    dom.statusDot.className = 'status-indicator busy';
+
+    const aiBubbleBody = appendChatBubble('AI', '<em>Connecting to AI Gateway...</em>');
+    const fullPrompt = buildPromptPayload(prompt);
+
+    // Build Execution Plan (Primary model + Fallback Ladder)
+    let plan = [];
+    let initialProvider = 'gemini';
+    const activeModel = state.runSettings.model;
+
+    if (activeModel.startsWith('llama') || activeModel.startsWith('deepseek-r1-distill')) initialProvider = 'groq';
+    else if (activeModel.includes('openrouter') || activeModel.includes(':free')) initialProvider = 'openrouter';
+
+    plan.push({ provider: initialProvider, model: activeModel });
+
+    if (state.runSettings.autoCascade) {
+      state.fallbackLadder.forEach(f => {
+        if (f.model !== activeModel) plan.push(f);
+      });
+    }
+
+    let success = false;
+    let finalOutput = '';
+
+    for (let step = 0; step < plan.length; step++) {
+      const { provider, model } = plan[step];
+      const keysList = state.keys[provider] || [];
+
+      if (keysList.length === 0) continue;
+
+      for (let k = 0; k < keysList.length; k++) {
+        const apiKey = keysList[k].key;
+        try {
+          aiBubbleBody.innerHTML = `<em>Streaming from ${model} via ${provider.toUpperCase()} (Key ${k + 1})...</em>`;
+          
+          if (provider === 'gemini') {
+            finalOutput = await streamGemini(apiKey, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings, (chunk) => {
+              aiBubbleBody.innerHTML = renderFormattedText(chunk);
+              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+            });
+          } else if (provider === 'groq') {
+            finalOutput = await streamOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings, (chunk) => {
+              aiBubbleBody.innerHTML = renderFormattedText(chunk);
+              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+            });
+          } else if (provider === 'openrouter') {
+            finalOutput = await streamOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings, (chunk) => {
+              aiBubbleBody.innerHTML = renderFormattedText(chunk);
+              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+            });
+          }
+
+          success = true;
+          break;
+        } catch (err) {
+          console.warn(`[Gateway Failover] ${provider} (${model}) failed with code ${err.status}:`, err.message);
+          aiBubbleBody.innerHTML = `<em>Auto-Failover: ${model} busy (${err.status || '503'}). Rerouting to backup SOTA model...</em>`;
+        }
+      }
+
+      if (success) break;
+    }
+
+    dom.btnExecutePrompt.disabled = false;
+
+    if (success && finalOutput) {
+      dom.statusDot.className = 'status-indicator ready';
+      aiBubbleBody.innerHTML = renderFormattedText(finalOutput);
+      applyOutput(finalOutput);
+    } else {
+      dom.statusDot.className = 'status-indicator error';
+      aiBubbleBody.innerHTML = '<span style="color:var(--accent-rose);">Execution halted: All keys and fallback models exhausted or missing API keys. Please verify your keys in Key Vault.</span>';
+    }
+  }
+
+  function applyOutput(text) {
+    const fileRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
+    let match;
+    let found = 0;
+
+    while ((match = fileRegex.exec(text)) !== null) {
+      addOrUpdateFile(match[1].trim(), match[2].trimStart(), true);
+      found++;
+    }
+
+    if (found > 0) {
+      renderFiles();
+    } else if (state.activeFile) {
+      addOrUpdateFile(state.activeFile, text, true);
+    }
+  }
+
   function renderVaultTable() {
     const activeTab = document.querySelector('.vault-tab-btn.active');
     const provider = activeTab ? activeTab.dataset.provider : 'gemini';
@@ -698,7 +607,7 @@
     dom.vaultKeysTbody.innerHTML = '';
     if (keys.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys configured for ${provider.toUpperCase()}.</td>`;
+      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:14px;">No keys stored for ${provider.toUpperCase()}. Add your free API key above.</td>`;
       dom.vaultKeysTbody.appendChild(tr);
       return;
     }
@@ -708,8 +617,8 @@
       const mask = k.key.length > 8 ? `${k.key.substring(0, 4)}...${k.key.substring(k.key.length - 4)}` : '••••••••';
       tr.innerHTML = `
         <td><code>${mask}</code></td>
-        <td>${k.label || 'Key'}</td>
-        <td><span class="badge">Free Tier</span></td>
+        <td>${k.label || 'Default Key'}</td>
+        <td><span class="badge">Active</span></td>
         <td>${k.created}</td>
         <td><button class="btn-xs" data-del="${idx}" style="color:var(--accent-rose);">Delete</button></td>
       `;
@@ -717,13 +626,36 @@
         keys.splice(idx, 1);
         saveKeys();
         renderVaultTable();
-        fetchDynamicInventory();
       });
       dom.vaultKeysTbody.appendChild(tr);
     });
   }
 
+  // 8. EVENTS
   function initEvents() {
+    // Canvas Mode Switcher
+    dom.btnViewSplit.addEventListener('click', () => {
+      dom.mergedCanvas.className = 'merged-canvas';
+      dom.btnViewSplit.classList.add('active');
+      dom.btnViewChat.classList.remove('active');
+      dom.btnViewEditor.classList.remove('active');
+    });
+
+    dom.btnViewChat.addEventListener('click', () => {
+      dom.mergedCanvas.className = 'merged-canvas view-chat';
+      dom.btnViewChat.classList.add('active');
+      dom.btnViewSplit.classList.remove('active');
+      dom.btnViewEditor.classList.remove('active');
+    });
+
+    dom.btnViewEditor.addEventListener('click', () => {
+      dom.mergedCanvas.className = 'merged-canvas view-editor';
+      dom.btnViewEditor.classList.add('active');
+      dom.btnViewSplit.classList.remove('active');
+      dom.btnViewChat.classList.remove('active');
+    });
+
+    // Editor & Tab sync
     dom.codeEditor.addEventListener('input', () => {
       if (state.activeFile) state.files.get(state.activeFile).content = dom.codeEditor.value;
       updateGutter();
@@ -745,8 +677,9 @@
       }
     });
 
+    // File Management
     dom.btnNewFile.addEventListener('click', () => {
-      const name = prompt('Enter file path (e.g. index.html, styles.css):');
+      const name = prompt('Enter filename (e.g. index.html, styles.css, app.js):');
       if (name && name.trim()) {
         addOrUpdateFile(name.trim(), '', true);
         selectFile(name.trim());
@@ -784,28 +717,24 @@
       dom.hiddenFileInput.value = '';
     });
 
-    dom.btnExecutePrompt.addEventListener('click', executePrompt);
+    // Gateway Execution
+    dom.btnExecutePrompt.addEventListener('click', executeGateway);
     dom.promptInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        executePrompt();
+        executeGateway();
       }
     });
 
     dom.btnClearChat.addEventListener('click', () => {
-      state.messages = [];
-      dom.dialogueStream.innerHTML = `
-        <div class="dialogue-welcome">
-          <p><strong>AetherSpace Live AI Assistant</strong></p>
-          <p>Chat history cleared. Send prompt or code instruction below.</p>
-        </div>`;
+      dom.dialogueStream.innerHTML = '<div class="dialogue-welcome"><p>Chat cleared. Ready for next prompt.</p></div>';
     });
 
-    dom.btnRefreshInventory.addEventListener('click', fetchDynamicInventory);
+    // Exports
     dom.btnCodepenExport.addEventListener('click', exportToCodePen);
 
     dom.btnExportBundle.addEventListener('click', () => {
-      if (state.files.size === 0) return alert('Workspace is empty.');
+      if (state.files.size === 0) return alert('Workspace empty.');
       let bundle = '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n';
       state.files.forEach((f, name) => {
         if (name.endsWith('.css')) bundle += `<style>/* ${name} */\n${f.content}\n</style>\n`;
@@ -827,18 +756,18 @@
     });
 
     dom.btnExportZip.addEventListener('click', () => {
-      if (state.files.size === 0) return alert('Workspace is empty.');
+      if (state.files.size === 0) return alert('Workspace empty.');
       let manifest = 'PROJECT MANIFEST\n================\n';
       state.files.forEach((f, name) => manifest += `\n[FILE: ${name}]\n${f.content}\n`);
       const blob = new Blob([manifest], { type: 'text/plain' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'aetherspace-project.txt';
+      a.download = 'aetherspace-manifest.txt';
       a.click();
     });
 
     dom.btnSaveServer.addEventListener('click', async () => {
-      if (!state.activeFile) return alert('No file active.');
+      if (!state.activeFile) return alert('No active file.');
       try {
         const res = await fetch('/api/save', {
           method: 'POST',
@@ -848,27 +777,38 @@
         if (!res.ok) throw new Error('Save error');
         alert(`Saved ${state.activeFile} to disk. Git sync scheduled.`);
       } catch (err) {
-        alert('Preserved in browser memory.');
+        alert('File preserved in browser memory.');
       }
     });
 
-    dom.settingModel.addEventListener('change', () => {
-      state.runSettings.model = dom.settingModel.value;
-      updateModelHeader();
-    });
-
+    // Settings
     dom.toggleRunSettingsBtn.addEventListener('click', () => dom.settingsSlideout.classList.toggle('open'));
     dom.btnCloseSettings.addEventListener('click', () => dom.settingsSlideout.classList.remove('open'));
 
-    dom.settingOutputLength.addEventListener('input', () => dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value);
-    dom.settingTemp.addEventListener('input', () => dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2));
-    dom.btnResetSysInst.addEventListener('click', () => { dom.settingSystemInstructions.value = ''; });
+    dom.settingModel.addEventListener('change', updateActiveModelLabels);
+    dom.btnRefreshModels.addEventListener('click', fetchLiveModels);
 
+    dom.settingThinkingLevel.addEventListener('input', () => {
+      dom.settingThinkingVal.textContent = dom.settingThinkingLevel.value;
+    });
+
+    dom.settingTemp.addEventListener('input', () => {
+      dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2);
+    });
+
+    dom.btnResetSysInst.addEventListener('click', () => {
+      dom.settingSystemInstructions.value = '';
+    });
+
+    // Key Vault
     dom.openKeyVaultBtn.addEventListener('click', () => {
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
     });
-    dom.btnCloseVault.addEventListener('click', () => dom.keyVaultModal.style.display = 'none');
+    dom.btnCloseVault.addEventListener('click', () => {
+      dom.keyVaultModal.style.display = 'none';
+      fetchLiveModels();
+    });
 
     dom.vaultTabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -884,14 +824,14 @@
       const key = dom.vaultKeyInput.value.trim();
       const label = dom.vaultLabelInput.value.trim() || 'Key';
 
-      if (!key) return alert('Please enter a key.');
+      if (!key) return alert('Please paste an API key.');
       state.keys[prov] = state.keys[prov] || [];
       state.keys[prov].push({ key, label, created: new Date().toLocaleDateString() });
       saveKeys();
       dom.vaultKeyInput.value = '';
       dom.vaultLabelInput.value = '';
       renderVaultTable();
-      fetchDynamicInventory();
+      fetchLiveModels();
     });
   }
 
@@ -899,8 +839,7 @@
     loadKeys();
     initEvents();
     renderFiles();
-    renderModelDropdown();
-    fetchDynamicInventory();
+    fetchLiveModels();
   }
 
   document.addEventListener('DOMContentLoaded', init);
