@@ -19,18 +19,17 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Engine]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Executing pipeline: ${cmd}`);
+  console.log(`[Auto-Sync] Executing: ${cmd}`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Info] ${error.message}`);
+      console.warn(`[Auto-Sync Note] Git notice: ${error.message}`);
       return;
     }
-    if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Deployed successfully.');
+    console.log('[Auto-Sync] Changes pushed to origin main.');
   });
 }
 
@@ -46,7 +45,7 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[Watcher] Monitoring folder: ${PUBLIC_DIR}`);
+  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
 } catch (err) {
   console.warn(`[Watcher Warning] ${err.message}`);
 }
@@ -75,8 +74,7 @@ const server = http.createServer((req, res) => {
       memory: {
         rssMb: (mem.rss / (1024 * 1024)).toFixed(2),
         heapUsedMb: (mem.heapUsed / (1024 * 1024)).toFixed(2)
-      },
-      syncDebounceMs: DEBOUNCE_MS
+      }
     }));
   }
 
@@ -88,7 +86,7 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body);
         if (!payload.filename || typeof payload.content !== 'string') {
           res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Missing filename/content payload' }));
+          return res.end(JSON.stringify({ error: 'Missing parameters' }));
         }
 
         const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
