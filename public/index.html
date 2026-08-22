@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | Zero-Load Cloud IDE & AI Chat</title>
+  <title>AetherSpace | Zero-Load AI Cloud Studio</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 </head>
 <body>
   <div id="app-root" class="app-layout">
-    <!-- TOP NAVIGATION & CONTROLS -->
+    <!-- TOP HEADER -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
@@ -20,54 +20,64 @@
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
           <span class="brand-title">AetherSpace</span>
-          <span class="brand-badge">SOTA v2026</span>
+          <span class="brand-badge">SOTA v2026.8</span>
         </div>
 
-        <!-- VIEW MODE SWITCHER -->
-        <div class="view-mode-pill">
-          <button class="mode-btn active" id="btn-mode-code" title="Switch to Code Workspace">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            <span>Code Studio</span>
-          </button>
-          <button class="mode-btn" id="btn-mode-chat" title="Switch to Direct AI Chat & Reasoning">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span>AI Chat & Dialogue</span>
-          </button>
-        </div>
+        <nav class="master-pills">
+          <!-- WORKSPACE MODE SWITCHER -->
+          <div class="mode-switch-group">
+            <button class="mode-btn active" id="btn-mode-editor" title="Code Studio & Multi-File Explorer">
+              <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <span>Code Studio</span>
+            </button>
+            <button class="mode-btn" id="btn-mode-chat" title="Direct AI Conversation & Prompt Testing">
+              <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>AI Chat</span>
+            </button>
+          </div>
+
+          <div class="pill-group">
+            <button class="pill-btn" id="btn-memory-governor" title="Hardware Monitor">
+              <span class="pill-icon">⚡</span>
+              <span class="pill-label" id="governor-stat">0 MB Local Load</span>
+            </button>
+          </div>
+        </nav>
       </div>
 
       <div class="header-right">
-        <!-- CODEPEN DIRECT TRANSFER -->
-        <button class="action-btn accent" id="btn-codepen-export" title="Send HTML/CSS/JS files directly to CodePen">
+        <!-- CODEPEN ONE-CLICK EXPORT -->
+        <button class="action-btn accent" id="btn-codepen-export" title="Send HTML/CSS/JS directly to CodePen">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
           <span>Open in CodePen</span>
         </button>
 
-        <button class="action-btn" id="open-key-vault-btn" title="API Key Vault & Failover Pool">
+        <button class="action-btn" id="open-key-vault-btn" title="Manage API Keys & Cascade Governor">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Key Vault</span>
           <span class="badge" id="key-count-badge">0 Keys</span>
         </button>
 
-        <button class="action-btn primary" id="toggle-run-settings-btn" title="AI Model & Inference Settings">
+        <button class="action-btn primary" id="toggle-run-settings-btn" title="AI Model & Inference Parameters">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Run Settings</span>
         </button>
       </div>
     </header>
 
-    <!-- MAIN INTERFACE BODY -->
+    <!-- MAIN CONTAINER -->
     <div class="workspace-container">
-      <!-- LEFT SIDEBAR: FILE EXPLORER & MULTI-FILE CONTEXT -->
+      
+      <!-- LEFT SIDEBAR: FILE TREE & MULTI-FILE CONTEXT -->
       <aside class="sidebar-panel" id="file-sidebar">
         <div class="sidebar-header">
           <div class="sidebar-title-row">
-            <span class="panel-heading">WORKSPACE FILES</span>
-            <div class="sidebar-actions">
-              <button class="icon-tool-btn" id="btn-new-file" title="Create New File">
+            <span class="panel-heading" id="sidebar-title-label">WORKSPACE EXPLORER</span>
+            <div class="sidebar-actions" id="explorer-actions">
+              <button class="icon-tool-btn" id="btn-new-file" title="New File">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
               </button>
-              <button class="icon-tool-btn" id="btn-upload-files" title="Upload Local Files">
+              <button class="icon-tool-btn" id="btn-upload-files" title="Upload Files">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               </button>
               <button class="icon-tool-btn" id="btn-clear-workspace" title="Clear All Workspace Files">
@@ -75,7 +85,7 @@
               </button>
             </div>
           </div>
-          <div class="context-bar">
+          <div class="context-bar" id="explorer-context-bar">
             <span class="context-indicator-text">AI Context Injection</span>
             <div class="context-controls">
               <button class="link-btn" id="btn-select-all-context">All</button>
@@ -87,8 +97,8 @@
         <div class="file-tree-container" id="file-tree-root">
           <div class="empty-state-card" id="file-tree-empty-state">
             <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-            <p class="empty-title">No files loaded</p>
-            <p class="empty-subtitle">Create a file or upload source code. No mock files pre-loaded.</p>
+            <p class="empty-title">Workspace is empty</p>
+            <p class="empty-subtitle">Create or upload files to begin. No dummy files pre-loaded.</p>
             <button class="btn-sm primary" id="btn-empty-create">+ Create File</button>
           </div>
           <ul class="file-list" id="file-list-items" style="display:none;"></ul>
@@ -96,22 +106,37 @@
         <input type="file" id="hidden-file-input" multiple style="display:none;">
       </aside>
 
-      <!-- VIEW 1: CODE STUDIO EDITOR -->
-      <main class="editor-panel view-panel" id="view-code-studio">
-        <div class="editor-tab-bar" id="editor-tabs"></div>
-
-        <div class="editor-workspace">
-          <div class="editor-inner-wrapper">
-            <div class="line-gutter" id="line-gutter">1</div>
-            <textarea class="code-textarea" id="code-editor" spellcheck="false" placeholder="// Select or create a file to start editing..."></textarea>
+      <!-- CENTER VIEWPORT: DUAL-VIEW (CODE STUDIO OR LIVE AI CHAT) -->
+      <main class="editor-panel">
+        
+        <!-- 1. CODE STUDIO VIEW -->
+        <div class="view-pane active" id="pane-code-studio">
+          <div class="editor-tab-bar" id="editor-tabs"></div>
+          <div class="editor-workspace" id="editor-workspace-view">
+            <div class="editor-inner-wrapper">
+              <div class="line-gutter" id="line-gutter">1</div>
+              <textarea class="code-textarea" id="code-editor" spellcheck="false" placeholder="// Select or create a file to start editing..."></textarea>
+            </div>
           </div>
         </div>
 
-        <!-- CODE SYNTHESIS BAR -->
+        <!-- 2. DIRECT AI CHAT VIEW -->
+        <div class="view-pane" id="pane-ai-chat" style="display:none;">
+          <div class="chat-viewport" id="chat-viewport">
+            <div class="chat-empty-state" id="chat-empty-state">
+              <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <h3>Direct AI Conversation & Inspector</h3>
+              <p>Chat directly with your selected cloud model, test prompts, or inspect multimodal reasoning in real-time.</p>
+            </div>
+            <div class="chat-messages-container" id="chat-messages-container"></div>
+          </div>
+        </div>
+
+        <!-- SYNTHESIS CONSOLE (SHARED) -->
         <div class="prompt-workbench">
           <div class="prompt-header-bar">
             <div class="prompt-meta-left">
-              <span class="meta-label">Active Context:</span>
+              <span class="meta-label">Active AI Context:</span>
               <span class="meta-val" id="active-context-count">0 files (0 chars)</span>
             </div>
             <div class="prompt-meta-right">
@@ -121,42 +146,21 @@
             </div>
           </div>
           <div class="prompt-input-row">
-            <textarea class="prompt-textarea" id="prompt-input" rows="2" placeholder="Instruct cloud AI to edit active context, synthesize architecture, or generate files..."></textarea>
+            <textarea class="prompt-textarea" id="prompt-input" rows="2" placeholder="Instruct cloud AI to generate code, refactor active context, or chat directly..."></textarea>
             <button class="execute-btn" id="btn-execute-prompt">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span>Synthesize</span>
+              <span>Execute</span>
             </button>
           </div>
           <div class="synthesis-status-bar">
             <span class="status-indicator ready" id="status-dot"></span>
-            <span class="status-text" id="status-text">Engine Ready. 0 local weight active.</span>
+            <span class="status-text" id="status-text">Engine Ready. Zero local weight active.</span>
             <span class="cursor-position" id="cursor-pos">Ln 1, Col 1</span>
           </div>
         </div>
       </main>
 
-      <!-- VIEW 2: AI CHAT & DIALOGUE STREAM -->
-      <main class="chat-panel view-panel" id="view-ai-chat" style="display:none;">
-        <div class="chat-stream-container" id="chat-messages-container">
-          <div class="empty-state-card" id="chat-empty-state">
-            <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <p class="empty-title">Direct AI Dialogue & Reasoning</p>
-            <p class="empty-subtitle">Discuss system architectures, debug logic, or formulate prompts with 0 local load.</p>
-          </div>
-        </div>
-
-        <div class="chat-input-wrapper">
-          <div class="chat-input-bar">
-            <textarea class="chat-textarea" id="chat-user-input" rows="2" placeholder="Type message to AI (Enter to send, Shift+Enter for new line)..."></textarea>
-            <button class="execute-btn" id="btn-send-chat">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              <span>Send</span>
-            </button>
-          </div>
-        </div>
-      </main>
-
-      <!-- RIGHT SLIDE-OUT RUN SETTINGS (GOOGLE AI STUDIO SPEC) -->
+      <!-- RIGHT SLIDE-OUT RUN SETTINGS PANEL (GOOGLE AI STUDIO 2026 LIVE MATRIX) -->
       <aside class="settings-slideout" id="settings-slideout">
         <div class="slideout-header">
           <div class="slideout-title">
@@ -169,28 +173,25 @@
         </div>
 
         <div class="slideout-content">
-          <!-- MODEL SELECTION SYNCHRONIZED -->
           <div class="form-group">
-            <label class="form-label" for="setting-model">Active AI Model</label>
+            <label class="form-label" for="setting-model">Active Model</label>
             <select class="form-select" id="setting-model">
-              <optgroup label="Google AI Studio (Live SOTA)">
-                <option value="gemini-3.7-flash" selected>Gemini 3.7 Flash (Coding & Agentic Workflows)</option>
+              <optgroup label="Google AI Studio (Live SOTA Matrix)">
+                <option value="gemini-3.7-flash" selected>Gemini 3.7 Flash (SOTA Coding & Reasoning)</option>
                 <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite (High Throughput)</option>
-                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Deep Reasoning)</option>
-                <option value="gemini-3.6-flash">Gemini 3.6 Flash (Fast Multimodal)</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash (Balanced)</option>
-                <option value="gemini-2.5-pro">Gemini 2.5 Pro (LTS)</option>
+                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Deep Multimodal)</option>
+                <option value="gemini-3.6-flash">Gemini 3.6 Flash (Agentic & Speed)</option>
+                <option value="gemini-3.5-flash">Gemini 3.5 Flash (General SOTA)</option>
               </optgroup>
               <optgroup label="Groq Cloud (Ultra LPU Speed)">
                 <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
                 <option value="deepseek-r1-distill-llama-70b">DeepSeek-R1 Distill Llama 70B</option>
-                <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+                <option value="qwen-2.5-coder-32b">Qwen 2.5 Coder 32B</option>
               </optgroup>
-              <optgroup label="OpenRouter & Hugging Face">
-                <option value="deepseek/deepseek-r1:free">DeepSeek-R1 (Free Tier)</option>
+              <optgroup label="OpenRouter Free Tier">
+                <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free)</option>
                 <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B Instruct (Free)</option>
                 <option value="google/gemini-2.0-flash-lite:free">Gemini 2.0 Flash Lite (Free)</option>
-                <option value="Qwen/Qwen2.5-Coder-32B-Instruct">Qwen 2.5 Coder 32B</option>
               </optgroup>
             </select>
           </div>
@@ -206,10 +207,10 @@
           <div class="form-group">
             <label class="form-label" for="setting-thinking-level">Thinking Budget (Tokens)</label>
             <select class="form-select" id="setting-thinking-level">
-              <option value="0">0 (Instant / Fast)</option>
+              <option value="0">0 (Disabled / Instant)</option>
               <option value="1024">1,024 (Low)</option>
-              <option value="4096" selected>4,096 (Medium Reasoning)</option>
-              <option value="16384">16,384 (Deep Architecture Analysis)</option>
+              <option value="4096" selected>4,096 (Medium)</option>
+              <option value="16384">16,384 (Deep Thinking)</option>
             </select>
           </div>
 
@@ -227,7 +228,7 @@
           <div class="toggle-setting-row">
             <div class="toggle-info">
               <span class="toggle-title">Auto-Cascade Failover</span>
-              <span class="toggle-desc">Rotate key/provider upon 429 quota limits</span>
+              <span class="toggle-desc">Auto-rotate key on 429 quota limits</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-auto-cascade" checked>
@@ -277,8 +278,8 @@
         <div class="vault-body">
           <div class="key-add-bar">
             <input type="password" class="vault-input" id="vault-key-input" placeholder="Paste API Key (e.g. AIzaSy... or gsk_...)">
-            <input type="text" class="vault-input small" id="vault-label-input" placeholder="Label (e.g. Primary Free Tier)">
-            <button class="btn-sm primary" id="btn-add-key">+ Store Key</button>
+            <input type="text" class="vault-input small" id="vault-label-input" placeholder="Label (e.g. Primary Key)">
+            <button class="btn-sm primary" id="btn-add-key">+ Add Key</button>
           </div>
 
           <div class="vault-table-wrapper">

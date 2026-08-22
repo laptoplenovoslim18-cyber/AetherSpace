@@ -2,10 +2,10 @@
   'use strict';
 
   const state = {
-    activeView: 'code', // 'code' | 'chat'
+    currentMode: 'editor', // 'editor' | 'chat'
     files: new Map(), // filename -> { content: string, inContext: boolean }
     activeFile: null,
-    chatHistory: [], // { role: 'user'|'assistant', text: string, time: string }
+    chatMessages: [],
     runSettings: {
       model: 'gemini-3.7-flash',
       systemInstructions: 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.',
@@ -19,10 +19,12 @@
   };
 
   const dom = {
-    btnModeCode: document.getElementById('btn-mode-code'),
+    btnModeEditor: document.getElementById('btn-mode-editor'),
     btnModeChat: document.getElementById('btn-mode-chat'),
-    viewCodeStudio: document.getElementById('view-code-studio'),
-    viewAiChat: document.getElementById('view-ai-chat'),
+    paneCodeStudio: document.getElementById('pane-code-studio'),
+    paneAiChat: document.getElementById('pane-ai-chat'),
+    chatEmptyState: document.getElementById('chat-empty-state'),
+    chatMessagesContainer: document.getElementById('chat-messages-container'),
 
     fileTreeEmptyState: document.getElementById('file-tree-empty-state'),
     fileListItems: document.getElementById('file-list-items'),
@@ -45,11 +47,6 @@
     statusDot: document.getElementById('status-dot'),
     statusText: document.getElementById('status-text'),
     keyCountBadge: document.getElementById('key-count-badge'),
-
-    chatMessagesContainer: document.getElementById('chat-messages-container'),
-    chatEmptyState: document.getElementById('chat-empty-state'),
-    chatUserInput: document.getElementById('chat-user-input'),
-    btnSendChat: document.getElementById('btn-send-chat'),
 
     btnCodepenExport: document.getElementById('btn-codepen-export'),
     btnExportBundle: document.getElementById('btn-export-bundle'),
@@ -101,20 +98,20 @@
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
   }
 
-  function switchView(viewName) {
-    state.activeView = viewName;
-    if (viewName === 'code') {
-      dom.btnModeCode.classList.add('active');
+  function switchMode(mode) {
+    state.currentMode = mode;
+    if (mode === 'editor') {
+      dom.btnModeEditor.classList.add('active');
       dom.btnModeChat.classList.remove('active');
-      dom.viewCodeStudio.style.display = 'flex';
-      dom.viewAiChat.style.display = 'none';
-      updateGutter();
+      dom.paneCodeStudio.style.display = 'flex';
+      dom.paneAiChat.style.display = 'none';
+      dom.promptInput.placeholder = 'Instruct cloud AI to generate code or refactor active context...';
     } else {
       dom.btnModeChat.classList.add('active');
-      dom.btnModeCode.classList.remove('active');
-      dom.viewAiChat.style.display = 'flex';
-      dom.viewCodeStudio.style.display = 'none';
-      renderChatStream();
+      dom.btnModeEditor.classList.remove('active');
+      dom.paneCodeStudio.style.display = 'none';
+      dom.paneAiChat.style.display = 'flex';
+      dom.promptInput.placeholder = 'Direct message to AI (press Ctrl+Enter to send)...';
     }
   }
 
@@ -166,6 +163,7 @@
 
       li.appendChild(left);
       li.appendChild(del);
+
       li.addEventListener('click', () => selectFile(filename));
       dom.fileListItems.appendChild(li);
     });
@@ -249,6 +247,27 @@
     dom.cursorPos.textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
   }
 
+  function appendChatMessage(role, text) {
+    state.chatMessages.push({ role, text });
+    dom.chatEmptyState.style.display = 'none';
+
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${role === 'user' ? 'user' : 'ai'}`;
+
+    const sender = document.createElement('span');
+    sender.className = 'chat-sender';
+    sender.textContent = role === 'user' ? 'YOU' : state.runSettings.model;
+
+    const content = document.createElement('div');
+    content.textContent = text;
+
+    bubble.appendChild(sender);
+    bubble.appendChild(content);
+
+    dom.chatMessagesContainer.appendChild(bubble);
+    dom.paneAiChat.querySelector('#chat-viewport').scrollTop = dom.paneAiChat.querySelector('#chat-viewport').scrollHeight;
+  }
+
   function buildPromptPayload(instruction) {
     let contextStr = '';
     state.files.forEach((f, name) => {
@@ -257,7 +276,7 @@
     return contextStr ? `WORKSPACE CODE CONTEXT:\n${contextStr}\nTASK INSTRUCTION:\n${instruction}` : instruction;
   }
 
-  // CODEPEN DIRECT EXPORT (OFFICIAL POST API)
+  // DIRECT CODEPEN EXPORT API VIA POST
   function exportToCodePen() {
     if (state.files.size === 0) {
       alert('Workspace is empty. Create HTML/CSS/JS files first.');
@@ -297,7 +316,7 @@
     document.body.removeChild(form);
   }
 
-  // GEMINI 3.7 / 3.5 REST GENERATION CALL
+  // GOOGLE AI STUDIO 2026 REST GENERATION CALL
   async function callGemini(apiKey, model, systemPrompt, userPrompt, config) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const body = {
@@ -333,7 +352,7 @@
 
     const data = await res.json();
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      throw new Error('Empty response from Google AI Studio.');
+      throw new Error('Malformed or empty candidate response.');
     }
 
     return data.candidates[0].content.parts.map(p => p.text || '').join('');
@@ -368,8 +387,13 @@
     return data.choices[0].message.content;
   }
 
-  // DISPATCH INFERENCE ROUTER
-  async function dispatchInference(promptText) {
+  async function executeAction() {
+    const prompt = dom.promptInput.value.trim();
+    if (!prompt) {
+      alert('Please enter a prompt or instruction.');
+      return;
+    }
+
     state.runSettings.model = dom.settingModel.value;
     state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
     state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
@@ -380,21 +404,27 @@
 
     let provider = 'gemini';
     const model = state.runSettings.model;
-    if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
-    else if (model.includes(':free')) provider = 'openrouter';
+    if (model.startsWith('llama') || model.startsWith('deepseek-r1') || model.startsWith('qwen')) provider = 'groq';
+    else if (model.includes(':free') || model.includes('deepseek/')) provider = 'openrouter';
     else if (model.includes('/')) provider = 'hf';
 
     const keys = state.keys[provider] || [];
     if (keys.length === 0) {
-      alert(`No API Key found for provider [${provider.toUpperCase()}]. Please open Key Vault.`);
+      alert(`No API Key found for provider: ${provider.toUpperCase()}. Open Key Vault to enter one.`);
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
-      throw new Error('Missing API Key');
+      return;
     }
 
+    if (state.currentMode === 'chat') {
+      appendChatMessage('user', prompt);
+    }
+
+    dom.btnExecutePrompt.disabled = true;
     dom.statusDot.className = 'status-indicator busy';
     dom.statusText.textContent = `Routing request to ${model}...`;
 
+    const fullPrompt = state.currentMode === 'editor' ? buildPromptPayload(prompt) : prompt;
     let output = null;
     let success = false;
 
@@ -402,11 +432,11 @@
       try {
         dom.statusText.textContent = `Executing on Key ${i + 1}/${keys.length} (${provider})...`;
         if (provider === 'gemini') {
-          output = await callGemini(keys[i].key, model, state.runSettings.systemInstructions, promptText, state.runSettings);
+          output = await callGemini(keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
         } else if (provider === 'groq') {
-          output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, promptText, state.runSettings);
+          output = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
         } else if (provider === 'openrouter') {
-          output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, promptText, state.runSettings);
+          output = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings);
         }
         success = true;
         break;
@@ -415,34 +445,24 @@
         if (!state.runSettings.autoCascade || i === keys.length - 1) {
           dom.statusDot.className = 'status-indicator error';
           dom.statusText.textContent = `Error: ${err.message}`;
-          throw err;
+          alert(`Inference failed: ${err.message}`);
+          break;
         }
       }
     }
 
+    dom.btnExecutePrompt.disabled = false;
+
     if (success && output) {
       dom.statusDot.className = 'status-indicator ready';
-      dom.statusText.textContent = 'Inference complete. 0 local load.';
-      return output;
-    }
-    throw new Error('Inference cascade failed.');
-  }
+      dom.statusText.textContent = 'Execution complete. 0 local weight active.';
 
-  // CODE SYNTHESIS EXECUTION
-  async function synthesize() {
-    const prompt = dom.promptInput.value.trim();
-    if (!prompt) return alert('Please enter a synthesis instruction.');
-
-    dom.btnExecutePrompt.disabled = true;
-    try {
-      const fullPrompt = buildPromptPayload(prompt);
-      const output = await dispatchInference(fullPrompt);
-      applyOutput(output);
+      if (state.currentMode === 'chat') {
+        appendChatMessage('ai', output);
+      } else {
+        applyOutput(output);
+      }
       dom.promptInput.value = '';
-    } catch (e) {
-      alert(`Synthesis error: ${e.message}`);
-    } finally {
-      dom.btnExecutePrompt.disabled = false;
     }
   }
 
@@ -467,108 +487,6 @@
       addOrUpdateFile('synthesis_result.txt', text, true);
       selectFile('synthesis_result.txt');
     }
-  }
-
-  // CHAT STREAM EXECUTION
-  async function sendChatMessage() {
-    const msg = dom.chatUserInput.value.trim();
-    if (!msg) return;
-
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    state.chatHistory.push({ role: 'user', text: msg, time });
-    dom.chatUserInput.value = '';
-    renderChatStream();
-
-    dom.btnSendChat.disabled = true;
-    try {
-      const fullPrompt = buildPromptPayload(msg);
-      const reply = await dispatchInference(fullPrompt);
-      state.chatHistory.push({ role: 'assistant', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
-      renderChatStream();
-    } catch (e) {
-      state.chatHistory.push({ role: 'assistant', text: `⚠️ Error during execution: ${e.message}`, time });
-      renderChatStream();
-    } finally {
-      dom.btnSendChat.disabled = false;
-    }
-  }
-
-  function renderChatStream() {
-    if (state.chatHistory.length === 0) {
-      dom.chatEmptyState.style.display = 'flex';
-      return;
-    }
-    dom.chatEmptyState.style.display = 'none';
-
-    // Remove old messages except empty state card
-    Array.from(dom.chatMessagesContainer.children).forEach(child => {
-      if (child.id !== 'chat-empty-state') dom.chatMessagesContainer.removeChild(child);
-    });
-
-    state.chatHistory.forEach(msg => {
-      const div = document.createElement('div');
-      div.className = `chat-msg ${msg.role}`;
-
-      const header = document.createElement('div');
-      header.className = 'chat-msg-header';
-      header.innerHTML = `<span>${msg.role === 'user' ? 'YOU' : 'AETHERSPACE AI'}</span><span>${msg.time}</span>`;
-      div.appendChild(header);
-
-      const content = document.createElement('div');
-      content.className = 'chat-msg-content';
-      
-      // Multi-file tag extraction for chat view
-      const fileRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
-      let lastIdx = 0;
-      let match;
-
-      while ((match = fileRegex.exec(msg.text)) !== null) {
-        const textBefore = msg.text.substring(lastIdx, match.index);
-        if (textBefore.trim()) {
-          const p = document.createElement('div');
-          p.textContent = textBefore;
-          content.appendChild(p);
-        }
-
-        const filePath = match[1].trim();
-        const codeContent = match[2];
-
-        const codeBox = document.createElement('div');
-        codeBox.className = 'chat-code-block';
-        codeBox.innerHTML = `
-          <div class="chat-code-header">
-            <span>📄 ${filePath}</span>
-            <button class="btn-xs primary-outline" data-import="${filePath}">+ Add to Workspace</button>
-          </div>
-          <div class="chat-code-content">${escapeHtml(codeContent)}</div>
-        `;
-
-        codeBox.querySelector('[data-import]').addEventListener('click', () => {
-          addOrUpdateFile(filePath, codeContent, true);
-          alert(`Imported ${filePath} into workspace.`);
-        });
-
-        content.appendChild(codeBox);
-        lastIdx = match.index + match[0].length;
-      }
-
-      const remainingText = msg.text.substring(lastIdx);
-      if (remainingText.trim() || lastIdx === 0) {
-        const p = document.createElement('div');
-        p.style.whiteSpace = 'pre-wrap';
-        p.textContent = remainingText;
-        content.appendChild(p);
-      }
-
-      div.appendChild(content);
-      dom.chatMessagesContainer.appendChild(div);
-    });
-
-    dom.chatMessagesContainer.scrollTop = dom.chatMessagesContainer.scrollHeight;
-  }
-
-  function escapeHtml(str) {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function renderVaultTable() {
@@ -604,11 +522,9 @@
   }
 
   function initEvents() {
-    // Mode Switcher
-    dom.btnModeCode.addEventListener('click', () => switchView('code'));
-    dom.btnModeChat.addEventListener('click', () => switchView('chat'));
+    dom.btnModeEditor.addEventListener('click', () => switchMode('editor'));
+    dom.btnModeChat.addEventListener('click', () => switchMode('chat'));
 
-    // Code Editor
     dom.codeEditor.addEventListener('input', () => {
       if (state.activeFile) state.files.get(state.activeFile).content = dom.codeEditor.value;
       updateGutter();
@@ -630,7 +546,6 @@
       }
     });
 
-    // File Management
     dom.btnNewFile.addEventListener('click', () => {
       const name = prompt('Enter filename (e.g. index.html, styles.css):');
       if (name && name.trim()) {
@@ -670,24 +585,14 @@
       dom.hiddenFileInput.value = '';
     });
 
-    // Synthesis & Chat Events
-    dom.btnExecutePrompt.addEventListener('click', synthesize);
+    dom.btnExecutePrompt.addEventListener('click', executeAction);
     dom.promptInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        synthesize();
+        executeAction();
       }
     });
 
-    dom.btnSendChat.addEventListener('click', sendChatMessage);
-    dom.chatUserInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendChatMessage();
-      }
-    });
-
-    // CodePen & Exports
     dom.btnCodepenExport.addEventListener('click', exportToCodePen);
 
     dom.btnExportBundle.addEventListener('click', () => {
@@ -739,7 +644,6 @@
       }
     });
 
-    // Slide-out Run Settings
     dom.toggleRunSettingsBtn.addEventListener('click', () => dom.settingsSlideout.classList.toggle('open'));
     dom.btnCloseSettings.addEventListener('click', () => dom.settingsSlideout.classList.remove('open'));
 
@@ -749,7 +653,6 @@
       dom.settingSystemInstructions.value = 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.';
     });
 
-    // Key Vault
     dom.openKeyVaultBtn.addEventListener('click', () => {
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
