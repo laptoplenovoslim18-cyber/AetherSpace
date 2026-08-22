@@ -5,13 +5,16 @@
     files: new Map(),
     activeFile: null,
     runSettings: {
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.7-flash',
       systemInstructions: '',
+      thinkingBudget: 4096,
       searchGrounding: false,
       autoCascade: true,
+      maxOutputTokens: 8192,
       temperature: 0.70
     },
-    keys: { gemini: [], groq: [], openrouter: [] }
+    keys: { gemini: [], groq: [], openrouter: [] },
+    fetchedModels: { gemini: [], groq: [], openrouter: [] }
   };
 
   const dom = {
@@ -25,12 +28,6 @@
     btnDeselectAllContext: document.getElementById('btn-deselect-all-context'),
     hiddenFileInput: document.getElementById('hidden-file-input'),
 
-    btnViewSplit: document.getElementById('btn-view-split'),
-    btnViewEditor: document.getElementById('btn-view-editor'),
-    btnViewChat: document.getElementById('btn-view-chat'),
-    codeStudioPane: document.getElementById('code-studio-pane'),
-    aiDialoguePane: document.getElementById('ai-dialogue-pane'),
-
     editorTabs: document.getElementById('editor-tabs'),
     codeEditor: document.getElementById('code-editor'),
     lineGutter: document.getElementById('line-gutter'),
@@ -38,12 +35,12 @@
 
     dialogueStream: document.getElementById('dialogue-stream'),
     activeModelDisplay: document.getElementById('active-model-display'),
-    activeModelHeaderLabel: document.getElementById('active-model-header-label'),
     promptInput: document.getElementById('prompt-input'),
     btnExecutePrompt: document.getElementById('btn-execute-prompt'),
     activeContextCount: document.getElementById('active-context-count'),
     statusDot: document.getElementById('status-dot'),
     keyCountBadge: document.getElementById('key-count-badge'),
+    btnFetchModels: document.getElementById('btn-fetch-models'),
 
     btnCodepenExport: document.getElementById('btn-codepen-export'),
     btnExportBundle: document.getElementById('btn-export-bundle'),
@@ -55,11 +52,16 @@
     btnCloseSettings: document.getElementById('btn-close-settings'),
 
     settingModel: document.getElementById('setting-model'),
-    btnFetchModels: document.getElementById('btn-fetch-models'),
+    optgroupGemini: document.getElementById('optgroup-gemini'),
+    optgroupGroq: document.getElementById('optgroup-groq'),
+    optgroupOpenrouter: document.getElementById('optgroup-openrouter'),
     settingSystemInstructions: document.getElementById('setting-system-instructions'),
-    btnClearSysInst: document.getElementById('btn-clear-sys-inst'),
+    btnResetSysInst: document.getElementById('btn-reset-sys-inst'),
+    settingThinkingLevel: document.getElementById('setting-thinking-level'),
     settingSearchGrounding: document.getElementById('setting-search-grounding'),
     settingAutoCascade: document.getElementById('setting-auto-cascade'),
+    settingOutputLength: document.getElementById('setting-output-length'),
+    settingOutputLengthVal: document.getElementById('setting-output-length-val'),
     settingTemp: document.getElementById('setting-temp'),
     settingTempVal: document.getElementById('setting-temp-val'),
 
@@ -78,7 +80,7 @@
       const raw = localStorage.getItem('aetherspace_vault_keys');
       if (raw) state.keys = Object.assign({ gemini: [], groq: [], openrouter: [] }, JSON.parse(raw));
     } catch (e) {
-      console.warn('Vault load error', e);
+      console.warn('Key storage load error', e);
     }
     updateKeyBadge();
   }
@@ -208,7 +210,7 @@
     state.files.forEach(f => {
       if (f.inContext) { count++; chars += f.content.length; }
     });
-    dom.activeContextCount.textContent = `${count} files (${chars.toLocaleString()} chars)`;
+    dom.activeContextCount.textContent = `${count} files in context (${chars.toLocaleString()} chars)`;
   }
 
   function updateGutter() {
@@ -224,7 +226,7 @@
     dom.cursorPos.textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
   }
 
-  function appendChatBubble(author, text) {
+  function appendChatBubble(author, text = '') {
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${author.toLowerCase()}`;
 
@@ -234,7 +236,7 @@
 
     const body = document.createElement('div');
     body.className = 'chat-bubble-body';
-    body.innerHTML = text.replace(/<file path="([^"]+)">([\s\S]*?)<\/file>/g, '<pre><code>[$1]\n$2</code></pre>').replace(/\n/g, '<br>');
+    body.textContent = text;
 
     bubble.appendChild(auth);
     bubble.appendChild(body);
@@ -248,37 +250,57 @@
     state.files.forEach((f, name) => {
       if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
-    return contextStr ? `WORKSPACE FILES CONTEXT:\n${contextStr}\nUSER INSTRUCTION:\n${instruction}` : instruction;
+    return contextStr ? `WORKSPACE CONTEXT:\n${contextStr}\nUSER INSTRUCTION:\n${instruction}` : instruction;
   }
 
-  // DYNAMIC MODEL DISCOVERY
-  async function fetchLiveModels() {
-    const geminiKey = state.keys.gemini[0]?.key;
-    if (geminiKey) {
+  // DYNAMIC MODEL INVENTORY FETCHING
+  async function syncLiveModels() {
+    const gKey = state.keys.gemini[0]?.key;
+    if (gKey) {
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`);
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${gKey}`);
         if (res.ok) {
           const data = await res.json();
-          const valid = data.models.filter(m => m.supportedGenerationMethods?.includes('generateContent'));
-          console.log('[Dynamic Model Fetch] Discovered Google models:', valid.length);
+          if (data.models) {
+            const models = data.models
+              .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+              .map(m => m.name.replace('models/', ''))
+              .filter(name => !name.includes('embedding') && !name.includes('aqa'));
+            
+            dom.optgroupGemini.innerHTML = '';
+            models.slice(0, 5).forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m;
+              opt.textContent = m;
+              dom.optgroupGemini.appendChild(opt);
+            });
+          }
         }
       } catch (e) {
-        console.warn('Google model discovery failed', e);
+        console.warn('Google model sync error:', e);
       }
     }
   }
 
-  // GEMINI STREAMING REST API (SSE)
+  // SSE STREAM DECODER FOR GEMINI 3.7 / 3.5 / 2.5
   async function streamGemini(apiKey, model, systemPrompt, userPrompt, config, onChunk) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
     const body = {
       contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-      generationConfig: { temperature: config.temperature }
+      generationConfig: {
+        temperature: config.temperature,
+        maxOutputTokens: config.maxOutputTokens
+      }
     };
 
     if (systemPrompt && systemPrompt.trim()) {
       body.systemInstruction = { parts: [{ text: systemPrompt }] };
     }
+
+    if (config.thinkingBudget > 0) {
+      body.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
+    }
+
     if (config.searchGrounding) {
       body.tools = [{ googleSearch: {} }];
     }
@@ -290,31 +312,35 @@
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`HTTP ${res.status}: ${err}`);
+      const errText = await res.text();
+      throw { status: res.status, message: errText };
     }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
-    let fullText = '';
     let buffer = '';
+    let fullText = '';
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
+
       const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+      buffer = lines.pop();
 
       for (const line of lines) {
         if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            const part = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            fullText += part;
-            onChunk(fullText);
-          } catch (e) {
-            // Partial chunk parse ignore
+          const jsonStr = line.replace(/^data:\s*/, '').trim();
+          if (jsonStr) {
+            try {
+              const data = JSON.parse(jsonStr);
+              const partText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              if (partText) {
+                fullText += partText;
+                onChunk(partText, fullText);
+              }
+            } catch (err) {}
           }
         }
       }
@@ -322,8 +348,8 @@
     return fullText;
   }
 
-  // OPENAI-COMPATIBLE STREAM (GROQ / OPENROUTER)
-  async function streamOpenAI(endpoint, apiKey, model, systemPrompt, userPrompt, config, onChunk) {
+  // SSE STREAM DECODER FOR OPENAI COMPATIBLE (GROQ / OPENROUTER)
+  async function streamOpenAICompatible(endpoint, apiKey, model, systemPrompt, userPrompt, config, onChunk) {
     const messages = [];
     if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
     messages.push({ role: 'user', content: userPrompt });
@@ -338,43 +364,51 @@
         model: model,
         messages: messages,
         temperature: config.temperature,
+        max_tokens: Math.min(config.maxOutputTokens, 8192),
         stream: true
       })
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`HTTP ${res.status}: ${err}`);
+      const errText = await res.text();
+      throw { status: res.status, message: errText };
     }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
-    let fullText = '';
     let buffer = '';
+    let fullText = '';
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
+
       const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+      buffer = lines.pop();
 
       for (const line of lines) {
-        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            const delta = data.choices?.[0]?.delta?.content || '';
-            fullText += delta;
-            onChunk(fullText);
-          } catch (e) {}
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.replace(/^data:\s*/, '').trim();
+          if (jsonStr === '[DONE]') break;
+          if (jsonStr) {
+            try {
+              const data = JSON.parse(jsonStr);
+              const chunk = data.choices?.[0]?.delta?.content || '';
+              if (chunk) {
+                fullText += chunk;
+                onChunk(chunk, fullText);
+              }
+            } catch (err) {}
+          }
         }
       }
     }
     return fullText;
   }
 
-  // UNIFIED AI GATEWAY DISPATCHER
-  async function synthesize() {
+  // RETRY & AUTO-CASCADE GATEWAY DISPATCHER
+  async function executeGatewayPrompt() {
     const prompt = dom.promptInput.value.trim();
     if (!prompt) return;
 
@@ -383,18 +417,20 @@
 
     state.runSettings.model = dom.settingModel.value;
     state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
+    state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
     state.runSettings.searchGrounding = dom.settingSearchGrounding.checked;
     state.runSettings.autoCascade = dom.settingAutoCascade.checked;
+    state.runSettings.maxOutputTokens = parseInt(dom.settingOutputLength.value, 10);
     state.runSettings.temperature = parseFloat(dom.settingTemp.value);
 
     let provider = 'gemini';
-    const primaryModel = state.runSettings.model;
-    if (primaryModel.startsWith('llama') || primaryModel.startsWith('deepseek-r1-distill')) provider = 'groq';
-    else if (primaryModel.includes('openrouter') || primaryModel.includes(':free')) provider = 'openrouter';
+    let model = state.runSettings.model;
+    if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
+    else if (model.includes('openrouter') || model.includes(':free')) provider = 'openrouter';
 
-    const providerKeys = state.keys[provider] || [];
-    if (providerKeys.length === 0) {
-      appendChatBubble('Gateway', `No API Key found for ${provider.toUpperCase()}. Please open Key Vault.`);
+    const keys = state.keys[provider] || [];
+    if (keys.length === 0) {
+      appendChatBubble('System', `No API Key found for provider ${provider.toUpperCase()}. Open Key Vault to enter a valid key.`);
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
       return;
@@ -403,86 +439,88 @@
     dom.btnExecutePrompt.disabled = true;
     dom.statusDot.className = 'status-indicator busy';
 
-    const aiBubbleBody = appendChatBubble('AI', 'Connecting to Gateway...');
-    const onChunk = (txt) => {
-      aiBubbleBody.innerHTML = txt.replace(/<file path="([^"]+)">([\s\S]*?)<\/file>/g, '<pre><code>[$1]\n$2</code></pre>').replace(/\n/g, '<br>');
-      dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
-    };
-
     const fullPrompt = buildPromptPayload(prompt);
-    let output = null;
+    const aiBubbleBody = appendChatBubble('AI', 'Connecting to Cloud Mesh...');
+    let fullGeneratedText = '';
+
     let success = false;
+    const maxRetries = 2;
 
-    // Ordered failover candidates for Gemini
-    const geminiCandidates = [primaryModel, 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.0-flash'];
-    const modelsToTry = provider === 'gemini' ? [...new Set(geminiCandidates)] : [primaryModel];
+    for (let i = 0; i < keys.length; i++) {
+      const activeKey = keys[i].key;
 
-    for (let k = 0; k < providerKeys.length; k++) {
-      const currentKey = providerKeys[k].key;
-      for (const currentModel of modelsToTry) {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          dom.activeModelDisplay.textContent = `Active: ${currentModel}`;
-          if (provider === 'gemini') {
-            output = await streamGemini(currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings, onChunk);
-          } else if (provider === 'groq') {
-            output = await streamOpenAI('https://api.groq.com/openai/v1/chat/completions', currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings, onChunk);
-          } else if (provider === 'openrouter') {
-            output = await streamOpenAI('https://openrouter.ai/api/v1/chat/completions', currentKey, currentModel, state.runSettings.systemInstructions, fullPrompt, state.runSettings, onChunk);
+          if (attempt > 0) {
+            aiBubbleBody.textContent = `Model busy (503). Retrying attempt ${attempt}/${maxRetries}...`;
+            await new Promise(r => setTimeout(r, 1500 * attempt));
           }
+
+          if (provider === 'gemini') {
+            fullGeneratedText = await streamGemini(activeKey, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings, (chunk, acc) => {
+              aiBubbleBody.textContent = acc;
+              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+            });
+          } else if (provider === 'groq') {
+            fullGeneratedText = await streamOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', activeKey, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings, (chunk, acc) => {
+              aiBubbleBody.textContent = acc;
+              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+            });
+          } else if (provider === 'openrouter') {
+            fullGeneratedText = await streamOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', activeKey, model, state.runSettings.systemInstructions, fullPrompt, state.runSettings, (chunk, acc) => {
+              aiBubbleBody.textContent = acc;
+              dom.dialogueStream.scrollTop = dom.dialogueStream.scrollHeight;
+            });
+          }
+
           success = true;
           break;
         } catch (err) {
-          console.warn(`[Gateway Failover] Model ${currentModel} failed on Key ${k + 1}:`, err.message);
-          if (!state.runSettings.autoCascade) {
-            aiBubbleBody.textContent = `Inference error: ${err.message}`;
+          console.warn(`Attempt ${attempt} error:`, err);
+          if (err.status === 503 || err.status === 429) {
+            if (attempt === maxRetries) {
+              if (provider === 'gemini' && model !== 'gemini-2.5-flash') {
+                aiBubbleBody.textContent = `Model ${model} unavailable (503). Auto-cascading to fallback model (gemini-2.5-flash)...`;
+                model = 'gemini-2.5-flash';
+                attempt = -1;
+                continue;
+              }
+            }
+          } else {
+            aiBubbleBody.textContent = `Error: ${err.message || err}`;
             break;
           }
         }
       }
+
       if (success) break;
     }
 
     dom.btnExecutePrompt.disabled = false;
-    dom.statusDot.className = success ? 'status-indicator ready' : 'status-indicator error';
 
-    if (success && output) {
-      applyOutput(output);
+    if (success && fullGeneratedText) {
+      dom.statusDot.className = 'status-indicator ready';
+      applyOutput(fullGeneratedText);
+    } else {
+      dom.statusDot.className = 'status-indicator error';
     }
   }
 
   function applyOutput(text) {
     const fileRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
     let match;
-    let count = 0;
+    let found = 0;
+
     while ((match = fileRegex.exec(text)) !== null) {
       addOrUpdateFile(match[1].trim(), match[2].trimStart(), true);
-      count++;
+      found++;
     }
-    if (count > 0) renderFiles();
-    else if (state.activeFile) addOrUpdateFile(state.activeFile, text, true);
-  }
 
-  function exportToCodePen() {
-    if (state.files.size === 0) return alert('Workspace is empty.');
-    let htmlCode = '', cssCode = '', jsCode = '';
-    state.files.forEach((f, name) => {
-      if (name.endsWith('.html')) htmlCode += f.content + '\n';
-      else if (name.endsWith('.css')) cssCode += f.content + '\n';
-      else if (name.endsWith('.js')) jsCode += f.content + '\n';
-    });
-
-    const form = document.createElement('form');
-    form.action = 'https://codepen.io/pen/define';
-    form.method = 'POST';
-    form.target = '_blank';
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'data';
-    input.value = JSON.stringify({ title: 'AetherSpace Export', html: htmlCode, css: cssCode, js: jsCode });
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
+    if (found > 0) {
+      renderFiles();
+    } else if (state.activeFile) {
+      addOrUpdateFile(state.activeFile, text, true);
+    }
   }
 
   function renderVaultTable() {
@@ -503,7 +541,7 @@
       const mask = k.key.length > 8 ? `${k.key.substring(0, 4)}...${k.key.substring(k.key.length - 4)}` : '••••••••';
       tr.innerHTML = `
         <td><code>${mask}</code></td>
-        <td>${k.label || 'Default'}</td>
+        <td>${k.label || 'Key'}</td>
         <td><span class="badge">Free Tier</span></td>
         <td>${k.created}</td>
         <td><button class="btn-xs" data-del="${idx}" style="color:var(--accent-rose);">Delete</button></td>
@@ -517,32 +555,42 @@
     });
   }
 
+  // CODEPEN EXPORT
+  function exportToCodePen() {
+    if (state.files.size === 0) {
+      alert('Workspace is empty.');
+      return;
+    }
+
+    let htmlCode = '', cssCode = '', jsCode = '';
+    state.files.forEach((f, name) => {
+      if (name.endsWith('.html')) htmlCode += f.content + '\n';
+      else if (name.endsWith('.css')) cssCode += f.content + '\n';
+      else if (name.endsWith('.js')) jsCode += f.content + '\n';
+    });
+
+    const form = document.createElement('form');
+    form.action = 'https://codepen.io/pen/define';
+    form.method = 'POST';
+    form.target = '_blank';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify({
+      title: 'AetherSpace Export',
+      html: htmlCode,
+      css: cssCode,
+      js: jsCode
+    });
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+  }
+
   function initEvents() {
-    // View mode switch
-    dom.btnViewSplit.addEventListener('click', () => {
-      dom.btnViewSplit.classList.add('active');
-      dom.btnViewEditor.classList.remove('active');
-      dom.btnViewChat.classList.remove('active');
-      dom.codeStudioPane.style.display = 'flex';
-      dom.aiDialoguePane.style.display = 'flex';
-    });
-
-    dom.btnViewEditor.addEventListener('click', () => {
-      dom.btnViewEditor.classList.add('active');
-      dom.btnViewSplit.classList.remove('active');
-      dom.btnViewChat.classList.remove('active');
-      dom.codeStudioPane.style.display = 'flex';
-      dom.aiDialoguePane.style.display = 'none';
-    });
-
-    dom.btnViewChat.addEventListener('click', () => {
-      dom.btnViewChat.classList.add('active');
-      dom.btnViewSplit.classList.remove('active');
-      dom.btnViewEditor.classList.remove('active');
-      dom.codeStudioPane.style.display = 'none';
-      dom.aiDialoguePane.style.display = 'flex';
-    });
-
     dom.codeEditor.addEventListener('input', () => {
       if (state.activeFile) state.files.get(state.activeFile).content = dom.codeEditor.value;
       updateGutter();
@@ -565,16 +613,17 @@
     });
 
     dom.btnNewFile.addEventListener('click', () => {
-      const name = prompt('File name (e.g. index.html, styles.css):');
+      const name = prompt('Enter filename (e.g. index.html, styles.css, app.js):');
       if (name && name.trim()) {
         addOrUpdateFile(name.trim(), '', true);
         selectFile(name.trim());
       }
     });
+
     dom.btnEmptyCreate.addEventListener('click', () => dom.btnNewFile.click());
 
     dom.btnClearWorkspace.addEventListener('click', () => {
-      if (state.files.size > 0 && confirm('Clear workspace?')) {
+      if (state.files.size > 0 && confirm('Clear all files in workspace?')) {
         state.files.clear();
         state.activeFile = null;
         dom.codeEditor.value = '';
@@ -602,15 +651,19 @@
       dom.hiddenFileInput.value = '';
     });
 
-    dom.btnExecutePrompt.addEventListener('click', synthesize);
+    dom.btnExecutePrompt.addEventListener('click', executeGatewayPrompt);
     dom.promptInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        synthesize();
+        executeGatewayPrompt();
       }
     });
 
     dom.btnCodepenExport.addEventListener('click', exportToCodePen);
+    dom.btnFetchModels.addEventListener('click', () => {
+      syncLiveModels();
+      alert('Model inventory synchronized from provider API.');
+    });
 
     dom.btnExportBundle.addEventListener('click', () => {
       if (state.files.size === 0) return alert('Workspace is empty.');
@@ -646,40 +699,38 @@
     });
 
     dom.btnSaveServer.addEventListener('click', async () => {
-      if (!state.activeFile) return alert('No file active.');
+      if (!state.activeFile) return alert('No active file.');
       try {
         const res = await fetch('/api/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: state.activeFile, content: dom.codeEditor.value })
         });
-        if (!res.ok) throw new Error('Save error');
-        alert(`Saved ${state.activeFile} to disk. Git sync scheduled.`);
+        if (!res.ok) throw new Error('Disk save error');
+        alert(`Saved ${state.activeFile} to disk. Git sync queued.`);
       } catch (err) {
-        alert('Preserved in browser memory.');
+        alert('File preserved in memory.');
       }
     });
 
     dom.settingModel.addEventListener('change', () => {
-      const selected = dom.settingModel.options[dom.settingModel.selectedIndex].text.split(' (')[0];
-      dom.activeModelHeaderLabel.textContent = selected;
+      dom.activeModelDisplay.textContent = dom.settingModel.options[dom.settingModel.selectedIndex].text;
     });
-
-    dom.btnFetchModels.addEventListener('click', fetchLiveModels);
-    dom.btnClearSysInst.addEventListener('click', () => { dom.settingSystemInstructions.value = ''; });
 
     dom.toggleRunSettingsBtn.addEventListener('click', () => dom.settingsSlideout.classList.toggle('open'));
     dom.btnCloseSettings.addEventListener('click', () => dom.settingsSlideout.classList.remove('open'));
 
-    dom.settingTemp.addEventListener('input', () => {
-      dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2);
+    dom.settingOutputLength.addEventListener('input', () => dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value);
+    dom.settingTemp.addEventListener('input', () => dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2));
+    dom.btnResetSysInst.addEventListener('click', () => {
+      dom.settingSystemInstructions.value = '';
     });
 
     dom.openKeyVaultBtn.addEventListener('click', () => {
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
     });
-    dom.btnCloseVault.addEventListener('click', () => { dom.keyVaultModal.style.display = 'none'; });
+    dom.btnCloseVault.addEventListener('click', () => dom.keyVaultModal.style.display = 'none');
 
     dom.vaultTabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -695,13 +746,14 @@
       const key = dom.vaultKeyInput.value.trim();
       const label = dom.vaultLabelInput.value.trim() || 'Key';
 
-      if (!key) return alert('Please enter a key.');
+      if (!key) return alert('Please enter a valid API key.');
       state.keys[prov] = state.keys[prov] || [];
       state.keys[prov].push({ key, label, created: new Date().toLocaleDateString() });
       saveKeys();
       dom.vaultKeyInput.value = '';
       dom.vaultLabelInput.value = '';
       renderVaultTable();
+      syncLiveModels();
     });
   }
 
@@ -709,6 +761,7 @@
     loadKeys();
     initEvents();
     renderFiles();
+    syncLiveModels();
   }
 
   document.addEventListener('DOMContentLoaded', init);
