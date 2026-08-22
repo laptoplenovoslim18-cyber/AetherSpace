@@ -71,7 +71,6 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-right: 4px;
 }
 
 .brand-icon {
@@ -82,34 +81,34 @@ button, input, select, textarea {
 
 .brand-title {
   font-weight: 700;
-  font-size: 14.5px;
-  letter-spacing: -0.02em;
+  font-size: 14px;
+  letter-spacing: -0.01em;
 }
 
-.model-select-wrapper {
+.view-toggles {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: var(--bg-surface-elevated);
+  background-color: var(--bg-canvas);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  padding: 2px 8px;
+  padding: 2px;
+  margin-left: 8px;
 }
 
-.gateway-model-select {
-  background: transparent;
+.view-btn {
+  background: none;
   border: none;
-  color: var(--text-primary);
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
   font-weight: 500;
-  outline: none;
+  padding: 4px 10px;
+  border-radius: 4px;
   cursor: pointer;
-  max-width: 280px;
+  transition: all 0.15s ease;
 }
 
-.gateway-model-select option {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
+.view-btn.active {
+  background-color: var(--bg-surface-elevated);
+  color: var(--accent-cyan);
 }
 
 .action-btn {
@@ -121,7 +120,6 @@ button, input, select, textarea {
   background-color: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
   font-weight: 500;
-  font-size: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -132,13 +130,9 @@ button, input, select, textarea {
 }
 
 .action-btn.accent {
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(16, 185, 129, 0.1);
   border-color: rgba(16, 185, 129, 0.3);
   color: var(--accent-emerald);
-}
-
-.action-btn.accent:hover {
-  background: rgba(16, 185, 129, 0.22);
 }
 
 .action-btn.primary {
@@ -155,7 +149,6 @@ button, input, select, textarea {
   border-radius: 4px;
 }
 
-/* WORKSPACE */
 .workspace-container {
   display: flex;
   flex: 1;
@@ -166,7 +159,7 @@ button, input, select, textarea {
 .sidebar-panel {
   width: 240px;
   min-width: 180px;
-  max-width: 320px;
+  max-width: 360px;
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
   display: flex;
@@ -289,15 +282,15 @@ button, input, select, textarea {
 
 .file-checkbox { accent-color: var(--accent-cyan); cursor: pointer; }
 
-/* UNIFIED MAIN STAGE */
-.main-stage {
+/* MERGED WORKSPACE CONTAINER */
+.merged-workspace {
   flex: 1;
   display: flex;
   overflow: hidden;
 }
 
-.editor-pane {
-  flex: 1.25;
+.code-studio-pane {
+  flex: 1.1;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-canvas);
@@ -336,10 +329,10 @@ button, input, select, textarea {
 .tab-close-btn { background: none; border: none; color: var(--text-muted); font-size: 14px; cursor: pointer; }
 .tab-close-btn:hover { color: var(--accent-rose); }
 
-.editor-body { display: flex; flex: 1; overflow: hidden; }
+.editor-inner-wrapper { display: flex; flex: 1; overflow: hidden; }
 
 .line-gutter {
-  width: 42px;
+  width: 40px;
   padding: 12px 6px;
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
@@ -369,7 +362,7 @@ button, input, select, textarea {
   overflow: auto;
 }
 
-.editor-footer {
+.studio-status-bar {
   height: 30px;
   padding: 0 12px;
   background-color: var(--bg-surface);
@@ -380,7 +373,7 @@ button, input, select, textarea {
   font-size: 11px;
 }
 
-.editor-footer-actions { display: flex; gap: 6px; }
+.studio-actions-right { display: flex; gap: 6px; }
 
 .btn-xs {
   padding: 2px 8px;
@@ -395,9 +388,9 @@ button, input, select, textarea {
 .btn-xs:hover { background-color: #171f2d; color: var(--text-primary); }
 .btn-xs.primary-outline { border-color: rgba(56, 189, 248, 0.4); color: var(--accent-cyan); }
 
-/* DIALOGUE PANE */
-.dialogue-pane {
-  flex: 0.95;
+/* PANE 2: AI DIALOGUE STREAM */
+.ai-dialogue-pane {
+  flex: 0.9;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-surface);
@@ -415,12 +408,8 @@ button, input, select, textarea {
   font-size: 11.5px;
 }
 
-.dialogue-status-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-}
+.dialogue-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.dialogue-meta { color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
 
 .dialogue-stream {
   flex: 1;
@@ -435,8 +424,8 @@ button, input, select, textarea {
   background-color: var(--bg-canvas);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  padding: 10px 12px;
-  font-size: 11.5px;
+  padding: 12px;
+  font-size: 12px;
   color: var(--text-secondary);
   line-height: 1.5;
 }
@@ -444,10 +433,10 @@ button, input, select, textarea {
 .chat-bubble {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 8px 12px;
+  gap: 4px;
+  padding: 10px 12px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1.5;
   max-width: 95%;
   word-break: break-word;
@@ -455,7 +444,7 @@ button, input, select, textarea {
 
 .chat-bubble.user {
   align-self: flex-end;
-  background-color: #142033;
+  background-color: #172438;
   border: 1px solid rgba(56, 189, 248, 0.3);
   color: var(--text-primary);
 }
@@ -481,11 +470,11 @@ button, input, select, textarea {
   margin: 6px 0;
   overflow-x: auto;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
 }
 
-.dialogue-input-wrapper {
-  padding: 8px 10px;
+.dialogue-input-area {
+  padding: 10px;
   background-color: var(--bg-surface);
   border-top: 1px solid var(--border-subtle);
   display: flex;
@@ -527,10 +516,10 @@ button, input, select, textarea {
 .status-indicator.busy { background-color: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
 .status-indicator.error { background-color: var(--accent-rose); }
 
-/* SLIDEOUT PANEL */
+/* SLIDEOUT SETTINGS */
 .settings-slideout {
   position: absolute;
-  top: 0; right: 0; width: 320px; height: 100%;
+  top: 0; right: 0; width: 340px; height: 100%;
   background-color: var(--bg-surface);
   border-left: 1px solid var(--border-subtle);
   z-index: 10;
@@ -544,15 +533,15 @@ button, input, select, textarea {
 .settings-slideout.open { transform: translateX(0); }
 
 .slideout-header {
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.slideout-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 12.5px; }
-.slideout-content { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.slideout-title { font-weight: 600; }
+.slideout-content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-label-row { display: flex; justify-content: space-between; align-items: center; }
 .form-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
@@ -561,7 +550,7 @@ button, input, select, textarea {
   background-color: var(--bg-canvas);
   border: 1px solid var(--border-subtle);
   border-radius: 4px;
-  padding: 6px 8px;
+  padding: 6px 10px;
   font-size: 12px;
   color: var(--text-primary);
   outline: none;
@@ -576,10 +565,10 @@ button, input, select, textarea {
 }
 
 .toggle-info { display: flex; flex-direction: column; gap: 2px; }
-.toggle-title { font-size: 11.5px; font-weight: 500; }
-.toggle-desc { font-size: 10px; color: var(--text-muted); }
+.toggle-title { font-size: 12px; font-weight: 500; }
+.toggle-desc { font-size: 10.5px; color: var(--text-muted); }
 
-.switch { position: relative; display: inline-block; width: 32px; height: 18px; }
+.switch { position: relative; display: inline-block; width: 34px; height: 18px; }
 .switch input { opacity: 0; width: 0; height: 0; }
 
 .slider {
@@ -593,7 +582,7 @@ button, input, select, textarea {
 }
 
 input:checked + .slider { background-color: var(--accent-cyan); }
-input:checked + .slider:before { transform: translateX(14px); }
+input:checked + .slider:before { transform: translateX(16px); }
 
 .form-range { width: 100%; accent-color: var(--accent-cyan); cursor: pointer; }
 .range-val { font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan); }
@@ -621,13 +610,13 @@ input:checked + .slider:before { transform: translateX(14px); }
   align-items: center;
 }
 
-.modal-title-group { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.modal-title-group { display: flex; align-items: center; gap: 8px; }
 .vault-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); background-color: var(--bg-canvas); }
 
 .vault-tab-btn {
   flex: 1; padding: 8px; background: none; border: none;
   border-bottom: 2px solid transparent; color: var(--text-muted);
-  font-weight: 500; font-size: 11.5px; cursor: pointer;
+  font-weight: 500; cursor: pointer;
 }
 
 .vault-tab-btn.active {
@@ -636,18 +625,16 @@ input:checked + .slider:before { transform: translateX(14px); }
   background-color: var(--bg-surface);
 }
 
-.vault-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.vault-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .key-add-bar { display: flex; gap: 8px; }
 
 .vault-input {
   flex: 1; background-color: var(--bg-canvas); border: 1px solid var(--border-subtle);
-  border-radius: 4px; padding: 6px 8px; font-size: 12px; color: var(--text-primary); outline: none;
+  border-radius: 4px; padding: 6px 10px; font-size: 12px; color: var(--text-primary); outline: none;
 }
 
 .vault-input.small { flex: 0.5; }
-.key-detect-hint { font-size: 11px; color: var(--text-muted); }
-.key-detect-hint strong { color: var(--accent-cyan); }
-.vault-table-wrapper { max-height: 220px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 4px; }
-.vault-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
-.vault-table th { background-color: var(--bg-canvas); padding: 6px 8px; text-align: left; font-size: 10.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-subtle); }
-.vault-table td { padding: 6px 8px; border-bottom: 1px solid var(--border-subtle); font-family: var(--font-mono); }
+.vault-table-wrapper { max-height: 240px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 4px; }
+.vault-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.vault-table th { background-color: var(--bg-canvas); padding: 8px 10px; text-align: left; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border-subtle); }
+.vault-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 11.5px; }

@@ -19,18 +19,18 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Update]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Executing Git deploy...`);
-  exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
+  console.log(`[Auto-Sync] Executing: ${cmd}`);
+  exec(cmd, { cwd: __dirname }, (error, stdout) => {
     isSyncing = false;
     if (error) {
       console.warn(`[Auto-Sync Note] ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Cloudflare Pages / GitHub Pages deploy triggered.');
+    console.log('[Auto-Sync] Cloudflare Pages deploy triggered.');
   });
 }
 
@@ -66,26 +66,17 @@ const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
 
-  // CORS Headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-goog-api-key');
-
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    return res.end();
-  }
-
   if (pathname === '/api/status' && req.method === 'GET') {
     const mem = process.memoryUsage();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     return res.end(JSON.stringify({
       status: 'online',
       uptime: process.uptime(),
       memory: {
         rssMb: (mem.rss / (1024 * 1024)).toFixed(2),
         heapUsedMb: (mem.heapUsed / (1024 * 1024)).toFixed(2)
-      }
+      },
+      syncDebounceMs: DEBOUNCE_MS
     }));
   }
 
@@ -96,7 +87,7 @@ const server = http.createServer((req, res) => {
       try {
         const payload = JSON.parse(body);
         if (!payload.filename || typeof payload.content !== 'string') {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
           return res.end(JSON.stringify({ error: 'Missing parameters' }));
         }
 
@@ -106,10 +97,10 @@ const server = http.createServer((req, res) => {
         fs.mkdirSync(path.dirname(targetPath), { recursive: true });
         fs.writeFileSync(targetPath, payload.content, 'utf8');
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify({ success: true, path: safeFilename }));
       } catch (e) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify({ error: e.message }));
       }
     });
@@ -136,11 +127,12 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        return res.end('500 Server Error');
+        return res.end('500 Internal Server Error');
       }
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*'
       });
       res.end(content);
     });
@@ -148,5 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online at http://127.0.0.1:${PORT}`);
+  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
 });
