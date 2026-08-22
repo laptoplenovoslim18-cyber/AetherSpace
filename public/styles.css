@@ -133,10 +133,6 @@ button, input, select, textarea {
   color: var(--accent-emerald);
 }
 
-.action-btn.accent:hover {
-  background: rgba(16, 185, 129, 0.2);
-}
-
 .action-btn.primary {
   background-color: rgba(56, 189, 248, 0.12);
   border-color: rgba(56, 189, 248, 0.4);
@@ -284,7 +280,7 @@ button, input, select, textarea {
 
 .file-checkbox { accent-color: var(--accent-cyan); cursor: pointer; }
 
-/* MERGED WORKSPACE (CODE STUDIO + STREAMING AI DIALOGUE) */
+/* MERGED SPLIT WORKSPACE */
 .merged-workspace {
   flex: 1;
   display: flex;
@@ -292,7 +288,7 @@ button, input, select, textarea {
 }
 
 .code-studio-pane {
-  flex: 1.2;
+  flex: 1.1;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-canvas);
@@ -392,7 +388,7 @@ button, input, select, textarea {
 
 /* PANE B: AI DIALOGUE STREAM */
 .ai-dialogue-pane {
-  flex: 0.95;
+  flex: 1;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-surface);
@@ -411,7 +407,7 @@ button, input, select, textarea {
 }
 
 .dialogue-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.dialogue-header-actions { display: flex; align-items: center; gap: 8px; color: var(--accent-cyan); font-size: 11px; }
+.dialogue-meta { display: flex; align-items: center; gap: 10px; color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; }
 
 .dialogue-stream {
   flex: 1;
@@ -458,13 +454,6 @@ button, input, select, textarea {
   color: var(--text-primary);
 }
 
-.chat-bubble.error {
-  align-self: flex-start;
-  background-color: #2b1117;
-  border: 1px solid var(--accent-rose);
-  color: #fecdd3;
-}
-
 .chat-bubble-author {
   font-size: 10px;
   font-weight: 700;
@@ -480,6 +469,7 @@ button, input, select, textarea {
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 11.5px;
+  border: 1px solid var(--border-subtle);
 }
 
 .dialogue-input-area {
@@ -525,7 +515,7 @@ button, input, select, textarea {
 .status-indicator.busy { background-color: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
 .status-indicator.error { background-color: var(--accent-rose); }
 
-/* SLIDEOUT PANEL */
+/* SLIDEOUT SETTINGS */
 .settings-slideout {
   position: absolute;
   top: 0; right: 0; width: 340px; height: 100%;
