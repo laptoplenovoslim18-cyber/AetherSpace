@@ -19,18 +19,18 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace SOTA Engine]`;
+  const commitMsg = `auto-sync: ${timestamp} [deploy via AetherSpace Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Executing Git commit & push...`);
+  console.log(`[Auto-Sync] Debounce elapsed. Executing Git sync...`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Note] Git: ${error.message}`);
+      console.warn(`[Auto-Sync Info] Git notice: ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Cloudflare Pages / GitHub pipeline triggered.');
+    console.log('[Auto-Sync] Pipeline executed successfully.');
   });
 }
 
@@ -48,7 +48,7 @@ try {
   });
   console.log(`[File Watcher] Active on: ${PUBLIC_DIR}`);
 } catch (err) {
-  console.warn(`[File Watcher Warning] ${err.message}`);
+  console.warn(`[File Watcher Warning] Watcher error: ${err.message}`);
 }
 
 const MIME_TYPES = {
@@ -88,7 +88,7 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body);
         if (!payload.filename || typeof payload.content !== 'string') {
           res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Missing filename or content' }));
+          return res.end(JSON.stringify({ error: 'Invalid payload' }));
         }
 
         const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
@@ -140,5 +140,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online at http://127.0.0.1:${PORT}`);
+  console.log(`[Server] Online: http://127.0.0.1:${PORT}`);
 });
