@@ -4,10 +4,10 @@
   const state = {
     files: new Map(),
     activeFile: null,
-    chatHistory: [],
+    activeView: 'editor', // 'editor' | 'chat'
     runSettings: {
       model: 'gemini-3.7-flash',
-      systemInstructions: 'You are AetherSpace Principal Systems Architect. Deliver clean, complete, working production code without placeholders.',
+      systemInstructions: 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.',
       thinkingBudget: 4096,
       searchGrounding: false,
       autoCascade: true,
@@ -18,11 +18,6 @@
   };
 
   const dom = {
-    tabModeCode: document.getElementById('tab-mode-code'),
-    tabModeChat: document.getElementById('tab-mode-chat'),
-    viewCodeStudio: document.getElementById('view-code-studio'),
-    viewAiChat: document.getElementById('view-ai-chat'),
-
     fileTreeEmptyState: document.getElementById('file-tree-empty-state'),
     fileListItems: document.getElementById('file-list-items'),
     btnNewFile: document.getElementById('btn-new-file'),
@@ -32,6 +27,12 @@
     btnSelectAllContext: document.getElementById('btn-select-all-context'),
     btnDeselectAllContext: document.getElementById('btn-deselect-all-context'),
     hiddenFileInput: document.getElementById('hidden-file-input'),
+
+    tabModeEditor: document.getElementById('tab-mode-editor'),
+    tabModeChat: document.getElementById('tab-mode-chat'),
+    editorWorkspaceView: document.getElementById('editor-workspace-view'),
+    chatWorkspaceView: document.getElementById('chat-workspace-view'),
+    chatMessages: document.getElementById('chat-messages'),
 
     editorTabs: document.getElementById('editor-tabs'),
     codeEditor: document.getElementById('code-editor'),
@@ -44,11 +45,6 @@
     statusDot: document.getElementById('status-dot'),
     statusText: document.getElementById('status-text'),
     keyCountBadge: document.getElementById('key-count-badge'),
-
-    chatMessagesRoot: document.getElementById('chat-messages-root'),
-    chatWelcome: document.getElementById('chat-welcome'),
-    chatInputField: document.getElementById('chat-input-field'),
-    btnSendChat: document.getElementById('btn-send-chat'),
 
     btnCodepenExport: document.getElementById('btn-codepen-export'),
     btnExportBundle: document.getElementById('btn-export-bundle'),
@@ -237,15 +233,19 @@
     state.files.forEach((f, name) => {
       if (f.inContext) contextStr += `<file path="${name}">\n${f.content}\n</file>\n\n`;
     });
-    return contextStr ? `WORKSPACE CODE CONTEXT:\n${contextStr}\nTASK INSTRUCTION:\n${instruction}` : instruction;
+    return contextStr ? `WORKSPACE CONTEXT:\n${contextStr}\nTASK INSTRUCTION:\n${instruction}` : instruction;
+  }
+
+  function appendChatMessage(role, text) {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${role}`;
+    bubble.innerHTML = text.replace(/\n/g, '<br>');
+    dom.chatMessages.appendChild(bubble);
+    dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
   }
 
   function exportToCodePen() {
-    if (state.files.size === 0) {
-      alert('Workspace is empty. Create HTML/CSS/JS files first.');
-      return;
-    }
-
+    if (state.files.size === 0) return alert('Workspace is empty.');
     let htmlCode = '', cssCode = '', jsCode = '';
     state.files.forEach((f, name) => {
       if (name.endsWith('.html')) htmlCode += f.content + '\n';
@@ -253,23 +253,15 @@
       else if (name.endsWith('.js')) jsCode += f.content + '\n';
     });
 
-    const payload = {
-      title: 'AetherSpace SOTA Export',
-      html: htmlCode,
-      css: cssCode,
-      js: jsCode
-    };
-
+    const payload = { title: 'AetherSpace Export', html: htmlCode, css: cssCode, js: jsCode };
     const form = document.createElement('form');
     form.action = 'https://codepen.io/pen/define';
     form.method = 'POST';
     form.target = '_blank';
-
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = 'data';
     input.value = JSON.stringify(payload);
-
     form.appendChild(input);
     document.body.appendChild(form);
     form.submit();
@@ -285,18 +277,9 @@
         maxOutputTokens: config.maxOutputTokens
       }
     };
-
-    if (systemPrompt && systemPrompt.trim()) {
-      body.systemInstruction = { parts: [{ text: systemPrompt }] };
-    }
-
-    if (config.thinkingBudget > 0) {
-      body.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
-    }
-
-    if (config.searchGrounding) {
-      body.tools = [{ googleSearch: {} }];
-    }
+    if (systemPrompt && systemPrompt.trim()) body.systemInstruction = { parts: [{ text: systemPrompt }] };
+    if (config.thinkingBudget > 0) body.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
+    if (config.searchGrounding) body.tools = [{ googleSearch: {} }];
 
     const res = await fetch(url, {
       method: 'POST',
@@ -313,7 +296,6 @@
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       throw new Error('Malformed or empty candidate response.');
     }
-
     return data.candidates[0].content.parts.map(p => p.text || '').join('');
   }
 
@@ -347,26 +329,31 @@
 
   async function synthesize() {
     const prompt = dom.promptInput.value.trim();
-    if (!prompt) {
-      alert('Please enter a synthesis instruction.');
-      return;
-    }
+    if (!prompt) return alert('Please enter a prompt.');
 
-    syncSettings();
-    const model = state.runSettings.model;
+    state.runSettings.model = dom.settingModel.value;
+    state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
+    state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
+    state.runSettings.searchGrounding = dom.settingSearchGrounding.checked;
+    state.runSettings.autoCascade = dom.settingAutoCascade.checked;
+    state.runSettings.maxOutputTokens = parseInt(dom.settingOutputLength.value, 10);
+    state.runSettings.temperature = parseFloat(dom.settingTemp.value);
+
     let provider = 'gemini';
+    const model = state.runSettings.model;
     if (model.startsWith('llama')) provider = 'groq';
     else if (model.includes(':free')) provider = 'openrouter';
     else if (model.includes('/')) provider = 'hf';
 
     const keys = state.keys[provider] || [];
     if (keys.length === 0) {
-      alert(`No API Key found for provider: ${provider.toUpperCase()}. Open Key Vault to enter one.`);
+      alert(`No API Key found for ${provider.toUpperCase()}. Open Key Vault to enter one.`);
       dom.keyVaultModal.style.display = 'flex';
       renderVaultTable();
       return;
     }
 
+    appendChatMessage('user', prompt);
     dom.btnExecutePrompt.disabled = true;
     dom.statusDot.className = 'status-indicator busy';
     dom.statusText.textContent = `Routing request to ${model}...`;
@@ -392,7 +379,7 @@
         if (!state.runSettings.autoCascade || i === keys.length - 1) {
           dom.statusDot.className = 'status-indicator error';
           dom.statusText.textContent = `Error: ${err.message}`;
-          alert(`Inference failed: ${err.message}`);
+          appendChatMessage('ai', `⚠️ Error: ${err.message}`);
           break;
         }
       }
@@ -402,7 +389,8 @@
 
     if (success && output) {
       dom.statusDot.className = 'status-indicator ready';
-      dom.statusText.textContent = 'Synthesis complete. 0 local weight maintained.';
+      dom.statusText.textContent = 'Synthesis complete. 0 local weight active.';
+      appendChatMessage('ai', output);
       applyOutput(output);
       dom.promptInput.value = '';
     }
@@ -425,79 +413,7 @@
 
     if (state.activeFile) {
       addOrUpdateFile(state.activeFile, text, true);
-    } else {
-      addOrUpdateFile('synthesis_result.txt', text, true);
-      selectFile('synthesis_result.txt');
     }
-  }
-
-  async function sendChatMessage() {
-    const text = dom.chatInputField.value.trim();
-    if (!text) return;
-
-    if (dom.chatWelcome) dom.chatWelcome.style.display = 'none';
-
-    appendChatBubble('user', text);
-    dom.chatInputField.value = '';
-    dom.btnSendChat.disabled = true;
-
-    syncSettings();
-    const model = state.runSettings.model;
-    let provider = 'gemini';
-    if (model.startsWith('llama')) provider = 'groq';
-    else if (model.includes(':free')) provider = 'openrouter';
-    else if (model.includes('/')) provider = 'hf';
-
-    const keys = state.keys[provider] || [];
-    if (keys.length === 0) {
-      appendChatBubble('model', `[Error: No API key for ${provider.toUpperCase()}. Please configure Key Vault.]`);
-      dom.btnSendChat.disabled = false;
-      return;
-    }
-
-    let reply = '';
-    for (let i = 0; i < keys.length; i++) {
-      try {
-        if (provider === 'gemini') {
-          reply = await callGemini(keys[i].key, model, state.runSettings.systemInstructions, text, state.runSettings);
-        } else if (provider === 'groq') {
-          reply = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, text, state.runSettings);
-        } else if (provider === 'openrouter') {
-          reply = await callOpenAICompatible('https://openrouter.ai/api/v1/chat/completions', keys[i].key, model, state.runSettings.systemInstructions, text, state.runSettings);
-        }
-        break;
-      } catch (err) {
-        if (!state.runSettings.autoCascade || i === keys.length - 1) {
-          reply = `[Error executing request: ${err.message}]`;
-        }
-      }
-    }
-
-    appendChatBubble('model', reply);
-    dom.btnSendChat.disabled = false;
-  }
-
-  function appendChatBubble(role, content) {
-    const row = document.createElement('div');
-    row.className = `chat-msg-row ${role}`;
-
-    const bubble = document.createElement('div');
-    bubble.className = 'chat-msg-bubble';
-    bubble.textContent = content;
-
-    row.appendChild(bubble);
-    dom.chatMessagesRoot.appendChild(row);
-    dom.chatMessagesRoot.scrollTop = dom.chatMessagesRoot.scrollHeight;
-  }
-
-  function syncSettings() {
-    state.runSettings.model = dom.settingModel.value;
-    state.runSettings.systemInstructions = dom.settingSystemInstructions.value;
-    state.runSettings.thinkingBudget = parseInt(dom.settingThinkingLevel.value, 10);
-    state.runSettings.searchGrounding = dom.settingSearchGrounding.checked;
-    state.runSettings.autoCascade = dom.settingAutoCascade.checked;
-    state.runSettings.maxOutputTokens = parseInt(dom.settingOutputLength.value, 10);
-    state.runSettings.temperature = parseFloat(dom.settingTemp.value);
   }
 
   function renderVaultTable() {
@@ -508,7 +424,7 @@
     dom.vaultKeysTbody.innerHTML = '';
     if (keys.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys configured for ${provider.toUpperCase()}.</td>`;
+      tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">No keys stored for ${provider.toUpperCase()}.</td>`;
       dom.vaultKeysTbody.appendChild(tr);
       return;
     }
@@ -533,31 +449,23 @@
   }
 
   function initEvents() {
-    // Mode Switcher
-    dom.tabModeCode.addEventListener('click', () => {
-      dom.tabModeCode.classList.add('active');
+    // Mode Switcher (Editor vs Chat)
+    dom.tabModeEditor.addEventListener('click', () => {
+      state.activeView = 'editor';
+      dom.tabModeEditor.classList.add('active');
       dom.tabModeChat.classList.remove('active');
-      dom.viewCodeStudio.style.display = 'flex';
-      dom.viewAiChat.style.display = 'none';
+      dom.editorWorkspaceView.style.display = 'block';
+      dom.chatWorkspaceView.style.display = 'none';
     });
 
     dom.tabModeChat.addEventListener('click', () => {
+      state.activeView = 'chat';
       dom.tabModeChat.classList.add('active');
-      dom.tabModeCode.classList.remove('active');
-      dom.viewCodeStudio.style.display = 'none';
-      dom.viewAiChat.style.display = 'flex';
+      dom.tabModeEditor.classList.remove('active');
+      dom.editorWorkspaceView.style.display = 'none';
+      dom.chatWorkspaceView.style.display = 'flex';
     });
 
-    // Chat Events
-    dom.btnSendChat.addEventListener('click', sendChatMessage);
-    dom.chatInputField.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        sendChatMessage();
-      }
-    });
-
-    // Editor sync
     dom.codeEditor.addEventListener('input', () => {
       if (state.activeFile) state.files.get(state.activeFile).content = dom.codeEditor.value;
       updateGutter();
@@ -579,7 +487,6 @@
       }
     });
 
-    // Files
     dom.btnNewFile.addEventListener('click', () => {
       const name = prompt('Enter filename (e.g. index.html, styles.css):');
       if (name && name.trim()) {
@@ -684,7 +591,7 @@
     dom.settingOutputLength.addEventListener('input', () => dom.settingOutputLengthVal.textContent = dom.settingOutputLength.value);
     dom.settingTemp.addEventListener('input', () => dom.settingTempVal.textContent = parseFloat(dom.settingTemp.value).toFixed(2));
     dom.btnResetSysInst.addEventListener('click', () => {
-      dom.settingSystemInstructions.value = 'You are AetherSpace Principal Systems Architect. Deliver clean, complete, working production code without placeholders.';
+      dom.settingSystemInstructions.value = 'You are AetherSpace Principal Cloud Architect. Generate clean, complete, working production code without placeholders.';
     });
 
     dom.openKeyVaultBtn.addEventListener('click', () => {
