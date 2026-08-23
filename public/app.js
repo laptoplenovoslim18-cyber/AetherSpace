@@ -301,7 +301,7 @@
     dom.chatViewport.scrollTop = dom.chatViewport.scrollHeight;
   }
 
-  // GEMINI STREAM CALL
+  // GEMINI STREAM CALL (ROBUST SEARCH GROUNDING & 429 TRAPPING)
   async function streamGemini(apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
     const contents = state.chatHistory.map(m => ({
@@ -326,7 +326,7 @@
     }
 
     if (state.mcp.search) {
-      bodyPayload.tools = [{ google_search: {} }];
+      bodyPayload.tools = [{ googleSearch: {} }];
     }
 
     let res = await fetch(url, {
@@ -344,7 +344,10 @@
       });
     }
 
-    if (!res.ok) throw { status: res.status, message: await res.text() };
+    if (!res.ok) {
+      const errText = await res.text();
+      throw { status: res.status, message: errText };
+    }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -377,7 +380,7 @@
     return fullText;
   }
 
-  // HUGGING FACE SERVERLESS INFERENCE CALL
+  // HUGGING FACE SERVERLESS CALL
   async function streamHuggingFace(apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const endpoint = `https://api-inference.huggingface.co/models/${model}`;
     const promptText = (systemPrompt ? `[SYSTEM: ${systemPrompt}]\n` : '') + `User: ${userMessage}\nAssistant:`;
@@ -391,7 +394,10 @@
       })
     });
 
-    if (!res.ok) throw { status: res.status, message: await res.text() };
+    if (!res.ok) {
+      const errText = await res.text();
+      throw { status: res.status, message: errText };
+    }
     const json = await res.json();
     let text = '';
     if (Array.isArray(json) && json[0] && json[0].generated_text) text = json[0].generated_text;
@@ -402,7 +408,7 @@
     return text;
   }
 
-  // GROQ / OPENROUTER CALL
+  // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER)
   async function streamOpenAI(endpoint, apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const messages = [];
     if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
@@ -420,7 +426,10 @@
       })
     });
 
-    if (!res.ok) throw { status: res.status, message: await res.text() };
+    if (!res.ok) {
+      const errText = await res.text();
+      throw { status: res.status, message: errText };
+    }
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '', fullText = '';
@@ -450,27 +459,77 @@
     return fullText;
   }
 
-  async function executeSingleInference(model, promptText, bubble, onChunk) {
-    let provider = 'gemini';
-    if (model.includes('/') && !model.includes(':free')) provider = 'hf';
-    else if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
-    else if (model.includes('openrouter') || model.includes(':free')) provider = 'openrouter';
+  // UNIVERSAL CASCADE EXECUTION ENGINE (TRAPS 429/503 AND ROTATES TO NEXT MODEL/KEY)
+  async function executeWithResilientCascade(preferredModel, promptText, onChunk) {
+    const candidateChain = [];
+    const availableProviders = getAvailableProvidersWithKeys();
 
-    const keys = state.keys[provider] || [];
-    if (keys.length === 0) {
-      throw new Error(`No API Key configured for provider: ${provider.toUpperCase()}`);
+    if (availableProviders.length === 0) {
+      throw new Error('No API Keys configured. Please open Key Vault to add a key.');
     }
 
-    const key = keys[0].key;
-    if (provider === 'gemini') {
-      return await streamGemini(key, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
-    } else if (provider === 'hf') {
-      return await streamHuggingFace(key, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
-    } else if (provider === 'groq') {
-      return await streamOpenAI('https://api.groq.com/openai/v1/chat/completions', key, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
-    } else if (provider === 'openrouter') {
-      return await streamOpenAI('https://openrouter.ai/api/v1/chat/completions', key, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+    if (preferredModel) candidateChain.push(preferredModel);
+
+    // Build fallback candidate roster across active keys
+    if (availableProviders.includes('gemini')) {
+      ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'].forEach(m => {
+        if (!candidateChain.includes(m)) candidateChain.push(m);
+      });
     }
+    if (availableProviders.includes('hf')) {
+      ['Qwen/Qwen2.5-Coder-32B-Instruct', 'deepseek-ai/DeepSeek-R1', 'mistralai/Mistral-7B-Instruct-v0.3'].forEach(m => {
+        if (!candidateChain.includes(m)) candidateChain.push(m);
+      });
+    }
+    if (availableProviders.includes('groq')) {
+      ['llama-3.3-70b-versatile', 'deepseek-r1-distill-llama-70b'].forEach(m => {
+        if (!candidateChain.includes(m)) candidateChain.push(m);
+      });
+    }
+    if (availableProviders.includes('openrouter')) {
+      ['openrouter/free', 'meta-llama/llama-3.3-70b-instruct:free'].forEach(m => {
+        if (!candidateChain.includes(m)) candidateChain.push(m);
+      });
+    }
+
+    let lastError = null;
+
+    for (let c = 0; c < candidateChain.length; c++) {
+      const model = candidateChain[c];
+      let provider = 'gemini';
+      if (model.includes('/') && !model.includes(':free')) provider = 'hf';
+      else if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
+      else if (model.includes('openrouter') || model.includes(':free')) provider = 'openrouter';
+
+      const keys = state.keys[provider] || [];
+      if (keys.length === 0) continue;
+
+      for (let k = 0; k < keys.length; k++) {
+        const apiKey = keys[k].key;
+        try {
+          if (c > 0 || k > 0) {
+            showGatewayStatus(`Cascade Shift: ${model} (${provider.toUpperCase()} Key #${k + 1})`);
+          }
+
+          let text = '';
+          if (provider === 'gemini') {
+            text = await streamGemini(apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+          } else if (provider === 'hf') {
+            text = await streamHuggingFace(apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+          } else if (provider === 'groq') {
+            text = await streamOpenAI('https://api.groq.com/openai/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+          } else if (provider === 'openrouter') {
+            text = await streamOpenAI('https://openrouter.ai/api/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+          }
+          return { text, model, provider };
+        } catch (err) {
+          lastError = err;
+          console.warn(`[Gateway Cascade] ${model} on key #${k + 1} status ${err.status || err.message}. Shifting...`);
+          if (!state.runSettings.autoCascade) break;
+        }
+      }
+    }
+    throw new Error(lastError ? (lastError.message || `HTTP ${lastError.status}`) : 'All available models and keys exhausted.');
   }
 
   // MAIN SEND DISPATCHER (DIRECT, MULTI-AGENT, ORCHESTRATION)
@@ -495,57 +554,65 @@
       renderFormattedContent(bubble, '', true);
 
       try {
-        const completedText = await executeSingleInference(chosenModel, text, bubble, acc => {
+        const result = await executeWithResilientCascade(chosenModel, text, acc => {
           renderFormattedContent(bubble, acc, true);
           scrollToBottom();
         });
-        renderFormattedContent(bubble, completedText, false);
-        state.chatHistory.push({ role: 'assistant', content: completedText });
+        row.querySelector('.chat-header-meta span').textContent = result.model;
+        renderFormattedContent(bubble, result.text, false);
+        state.chatHistory.push({ role: 'assistant', content: result.text });
       } catch (err) {
-        renderFormattedContent(bubble, `Gateway Notice: ${err.message || 'Execution failed.'}`);
+        renderFormattedContent(bubble, `Gateway Cascade Notice: ${err.message}`);
       }
     }
 
-    // 2. MULTI-AGENT COLLABORATION MODE (Architect -> Reviewer)
+    // 2. TRUE 3-AGENT CONSENSUS PIPELINE (Architect -> Auditor -> Arbiter)
     else if (state.mode === 'multi') {
-      const { bubble, row } = createAssistantMessageNode('Multi-Agent Pipeline');
-      bubble.innerHTML = '<div class="agent-step-card"><div class="agent-step-header architect">⚡ Agent 1: Lead Architect drafting solution...</div><div class="agent-body-1"></div></div>';
+      const { bubble, row } = createAssistantMessageNode('Multi-Agent Consensus Pipeline');
+      bubble.innerHTML = `
+        <div class="agent-step-card"><div class="agent-step-header architect">⚡ Agent 1 (Architect): Initial Solution Drafting</div><div class="agent-body-1"></div></div>
+        <div class="agent-step-card"><div class="agent-step-header reviewer">🛡️ Agent 2 (Security & Logic Auditor): Deep Review & Verification</div><div class="agent-body-2"></div></div>
+        <div class="agent-step-card"><div class="agent-step-header arbiter">✨ Agent 3 (Arbiter): Final Production Synthesis</div><div class="agent-body-3"></div></div>
+      `;
       const body1 = bubble.querySelector('.agent-body-1');
+      const body2 = bubble.querySelector('.agent-body-2');
+      const body3 = bubble.querySelector('.agent-body-3');
 
       try {
-        showGatewayStatus('Multi-Agent: Step 1 (Lead Architect)');
-        const draft = await executeSingleInference(chosenModel, text, body1, acc => {
+        // Step 1: Architect Draft
+        showGatewayStatus('Multi-Agent: Step 1 (Architect Drafting)...');
+        const r1 = await executeWithResilientCascade(chosenModel, text, acc => {
           renderFormattedContent(body1, acc, true);
           scrollToBottom();
         });
-        renderFormattedContent(body1, draft, false);
+        renderFormattedContent(body1, r1.text, false);
 
-        // Step 2: Reviewer Agent
-        const availableHf = (state.keys.hf || []).length > 0;
-        const reviewerModel = availableHf ? 'Qwen/Qwen2.5-Coder-32B-Instruct' : 'gemini-3.6-flash';
-
-        const step2Card = document.createElement('div');
-        step2Card.className = 'agent-step-card';
-        step2Card.innerHTML = `<div class="agent-step-header reviewer">🛡️ Agent 2 (${reviewerModel}): Code Review & Security Audit...</div><div class="agent-body-2"></div>`;
-        bubble.appendChild(step2Card);
-        const body2 = step2Card.querySelector('.agent-body-2');
-
-        showGatewayStatus(`Multi-Agent: Step 2 (${reviewerModel})`);
-        const reviewPrompt = `You are the Lead Code Reviewer. Review, optimize, and output the finalized production code for:\n${draft}`;
-        const finalOutput = await executeSingleInference(reviewerModel, reviewPrompt, body2, acc => {
+        // Step 2: Auditor Review
+        showGatewayStatus('Multi-Agent: Step 2 (Security & Logic Audit)...');
+        const auditPrompt = `You are the Lead Security & Logic Auditor. Review this draft solution for bugs, edge cases, and optimizations:\n${r1.text}`;
+        const r2 = await executeWithResilientCascade(null, auditPrompt, acc => {
           renderFormattedContent(body2, acc, true);
           scrollToBottom();
         });
-        renderFormattedContent(body2, finalOutput, false);
-        state.chatHistory.push({ role: 'assistant', content: finalOutput });
+        renderFormattedContent(body2, r2.text, false);
+
+        // Step 3: Arbiter Synthesis
+        showGatewayStatus('Multi-Agent: Step 3 (Arbiter Production Synthesis)...');
+        const arbiterPrompt = `You are the Arbiter. Synthesize the final, verified, production-ready solution based on the draft and audit:\nDraft:\n${r1.text}\nAudit Findings:\n${r2.text}`;
+        const r3 = await executeWithResilientCascade(chosenModel, arbiterPrompt, acc => {
+          renderFormattedContent(body3, acc, true);
+          scrollToBottom();
+        });
+        renderFormattedContent(body3, r3.text, false);
+        state.chatHistory.push({ role: 'assistant', content: r3.text });
       } catch (err) {
-        bubble.innerHTML += `<div style="color:var(--accent-rose); margin-top:8px;">Pipeline notice: ${err.message}</div>`;
+        bubble.innerHTML += `<div style="color:var(--accent-rose); margin-top:8px;">Pipeline Cascade Notice: ${err.message}</div>`;
       }
     }
 
-    // 3. SUPERVISOR ORCHESTRATION MODE (Plan -> Execute -> Arbiter)
+    // 3. SUPERVISOR ORCHESTRATION PIPELINE (Plan -> Worker -> Arbiter)
     else if (state.mode === 'orchestrator') {
-      const { bubble } = createAssistantMessageNode('Supervisor Orchestrator');
+      const { bubble } = createAssistantMessageNode('Supervisor Orchestrator Pipeline');
       bubble.innerHTML = `
         <div class="agent-step-card"><div class="agent-step-header architect">🧠 Supervisor: Architectural DAG Plan</div><div class="orch-plan"></div></div>
         <div class="agent-step-card"><div class="agent-step-header arbiter">⚡ Worker: Complete Implementation</div><div class="orch-exec"></div></div>
@@ -554,23 +621,23 @@
       const execEl = bubble.querySelector('.orch-exec');
 
       try {
-        showGatewayStatus('Orchestrator: Supervisor generating plan...');
-        const plan = await executeSingleInference(chosenModel, `Generate a clean, step-by-step architectural breakdown for: ${text}`, planEl, acc => {
+        showGatewayStatus('Orchestrator: Supervisor generating execution plan...');
+        const rPlan = await executeWithResilientCascade(chosenModel, `Generate a clean, step-by-step architectural breakdown for: ${text}`, acc => {
           renderFormattedContent(planEl, acc, true);
           scrollToBottom();
         });
-        renderFormattedContent(planEl, plan, false);
+        renderFormattedContent(planEl, rPlan.text, false);
 
-        showGatewayStatus('Orchestrator: Worker executing full code implementation...');
-        const execPrompt = `Based on this architectural plan:\n${plan}\nImplement the complete, deterministic, production-ready code with zero placeholders for: ${text}`;
-        const execResult = await executeSingleInference(chosenModel, execPrompt, execEl, acc => {
+        showGatewayStatus('Orchestrator: Worker executing full implementation...');
+        const execPrompt = `Based on this architectural plan:\n${rPlan.text}\nImplement the complete, deterministic, production-ready code with zero placeholders for: ${text}`;
+        const rExec = await executeWithResilientCascade(null, execPrompt, acc => {
           renderFormattedContent(execEl, acc, true);
           scrollToBottom();
         });
-        renderFormattedContent(execEl, execResult, false);
-        state.chatHistory.push({ role: 'assistant', content: execResult });
+        renderFormattedContent(execEl, rExec.text, false);
+        state.chatHistory.push({ role: 'assistant', content: rExec.text });
       } catch (err) {
-        bubble.innerHTML += `<div style="color:var(--accent-rose); margin-top:8px;">Orchestrator notice: ${err.message}</div>`;
+        bubble.innerHTML += `<div style="color:var(--accent-rose); margin-top:8px;">Orchestrator Cascade Notice: ${err.message}</div>`;
       }
     }
 
