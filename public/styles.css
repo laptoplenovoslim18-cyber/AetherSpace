@@ -172,6 +172,15 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   border-radius: 4px;
 }
 
+.url-badge {
+  font-size: 11px;
+  color: var(--accent-emerald);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
 .icon-tool-btn {
   background: none;
   border: none;
@@ -323,6 +332,33 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 
 .grounding-sources-box strong { color: var(--accent-cyan); }
 
+.ai-generated-image-card {
+  margin: 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #040508;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 512px;
+}
+
+.ai-generated-image-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.ai-image-actions {
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0a0e17;
+  font-size: 12px;
+}
+
 .code-block-wrapper {
   background-color: #040508;
   border: 1px solid var(--border-subtle);
@@ -424,35 +460,6 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 }
 
 .prompt-bar-card:focus-within { border-color: var(--border-focus); }
-
-.mcp-tools-drawer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 8px;
-  flex-wrap: wrap;
-}
-
-.mcp-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--bg-canvas);
-  border: 1px solid var(--border-subtle);
-  border-radius: 9999px;
-  padding: 3px 10px;
-  font-size: 11.5px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.mcp-chip.active {
-  color: var(--accent-cyan);
-  border-color: rgba(56, 189, 248, 0.4);
-  background: rgba(56, 189, 248, 0.1);
-}
 
 .mcp-realtime-clock {
   font-family: var(--font-mono);
