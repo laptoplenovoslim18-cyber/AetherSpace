@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | Unified AI Studio</title>
+  <title>AetherSpace | AI Gateway & Studio</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 </head>
 <body>
   <div id="app-root" class="app-layout">
-    <!-- HEADER -->
+    <!-- TOP NAVIGATION BAR -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
@@ -22,65 +22,74 @@
           <span class="brand-title">AetherSpace</span>
         </div>
 
-        <div class="mode-toggle-group">
-          <button class="mode-btn active" id="btn-mode-direct" data-mode="direct">Direct Chat</button>
-          <button class="mode-btn" id="btn-mode-orchestrator" data-mode="orchestrator">Multi-Agent Orchestrator</button>
+        <div class="mode-selector">
+          <button class="mode-btn active" data-mode="direct">Direct AI</button>
+          <button class="mode-btn" data-mode="orchestration">Orchestration</button>
+          <button class="mode-btn" data-mode="multiagent">Multi-Agent</button>
         </div>
       </div>
 
       <div class="header-right">
-        <button class="action-btn" id="btn-fetch-models" title="Sync live model lists from API keys">
-          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <div class="gateway-status" id="gateway-status-pill">
+          <span class="status-indicator ready" id="status-dot"></span>
+          <span class="status-label" id="status-text">Gateway Online</span>
+        </div>
+
+        <button class="action-btn" id="btn-sync-models" title="Sync live model lists from active API providers">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
           <span>Sync Models</span>
         </button>
 
-        <button class="action-btn" id="open-key-vault-btn">
+        <button class="action-btn" id="open-key-vault-btn" title="Manage API Keys & Failover Pools">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Key Vault</span>
           <span class="badge" id="key-count-badge">0 Keys</span>
         </button>
 
-        <button class="action-btn primary" id="toggle-run-settings-btn">
+        <button class="action-btn primary" id="toggle-run-settings-btn" title="Model & Gateway Settings">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span id="active-model-nav">Select Model</span>
+          <span id="current-model-tag">gemini-2.5-flash</span>
         </button>
       </div>
     </header>
 
-    <!-- UNIFIED SINGLE SCREEN CHAT -->
-    <main class="unified-workspace">
-      <div class="chat-viewport" id="chat-viewport">
-        <div class="chat-container" id="chat-stream">
-          <!-- EMPTY STATE ON LOAD -->
-          <div class="empty-chat-hero" id="empty-chat-hero">
-            <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" fill="none" stroke-width="1.5">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
+    <!-- UNIFIED SINGLE-CANVAS WORKSPACE -->
+    <main class="chat-workspace">
+      <div class="chat-container" id="chat-container">
+        <div class="chat-stream" id="chat-stream">
+          <!-- WELCOME CARD -->
+          <div class="welcome-card" id="welcome-card">
             <h2>AetherSpace AI Gateway</h2>
-            <p>Direct real-time streaming, multi-provider key cascade, and automated model lifecycle synchronization.</p>
+            <p>Direct low-latency access to cloud AI models with client-side failover cascading, live Server-Sent Events (SSE) streaming, and automatic fallback.</p>
           </div>
         </div>
       </div>
 
-      <!-- BOTTOM INPUT HUB -->
-      <div class="input-hub">
-        <div class="input-hub-container">
-          <div class="input-wrapper">
-            <textarea class="chat-input" id="prompt-input" rows="1" placeholder="Type a message or instruction... (Enter to send, Shift+Enter for new line)"></textarea>
-            <button class="send-btn" id="btn-send-prompt" title="Send Request">
-              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2">
-                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
-            </button>
+      <!-- INPUT BAR AT BOTTOM OF SCREEN -->
+      <div class="prompt-dock">
+        <div class="prompt-dock-inner">
+          <div class="prompt-toolbar">
+            <div class="toolbar-left">
+              <label class="toolbar-btn" title="Attach file to context">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <input type="file" id="file-attachment-input" multiple style="display:none;">
+                <span>Attach</span>
+              </label>
+              <div class="context-chips" id="context-chips"></div>
+            </div>
+            <div class="toolbar-right">
+              <span class="char-counter" id="char-counter">0 chars</span>
+              <button class="icon-tool-btn" id="btn-clear-chat" title="Clear conversation history">
+                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
           </div>
-          <div class="input-meta-bar">
-            <div class="meta-left">
-              <span class="status-indicator ready" id="status-dot"></span>
-              <span id="gateway-status-text">Gateway Ready</span>
-            </div>
-            <div class="meta-right">
-              <button class="link-btn-xs" id="btn-clear-chat">Clear History</button>
-            </div>
+
+          <div class="prompt-input-wrapper">
+            <textarea class="main-prompt-textarea" id="main-prompt" rows="2" placeholder="Send a message or request code architecture... (Enter to send, Shift+Enter for new line)"></textarea>
+            <button class="send-btn" id="btn-send-prompt" title="Send message">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -91,7 +100,7 @@
       <div class="slideout-header">
         <div class="slideout-title">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span>Run Settings</span>
+          <span>Gateway & Routing Configuration</span>
         </div>
         <button class="icon-tool-btn" id="btn-close-settings">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -101,36 +110,71 @@
       <div class="slideout-content">
         <div class="form-group">
           <div class="form-label-row">
-            <label class="form-label" for="setting-model">Active Live Model</label>
-            <span class="badge" id="model-source-badge">Dynamic Pool</span>
+            <label class="form-label" for="setting-model">Active Primary Model</label>
+            <button class="link-btn" id="btn-refresh-models-list">Sync List</button>
           </div>
-          <select class="form-select" id="setting-model"></select>
+          <select class="form-select" id="setting-model">
+            <optgroup label="Google AI Studio" id="optgroup-gemini">
+              <option value="gemini-2.5-flash" selected>gemini-2.5-flash (Fast & Stable)</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro (Deep Reasoning)</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash (General)</option>
+            </optgroup>
+            <optgroup label="Groq Cloud" id="optgroup-groq">
+              <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+              <option value="deepseek-r1-distill-llama-70b">deepseek-r1-distill-llama-70b</option>
+              <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
+            </optgroup>
+            <optgroup label="OpenRouter" id="optgroup-openrouter">
+              <option value="openrouter/free">openrouter/free (Auto-Router)</option>
+              <option value="meta-llama/llama-3.3-70b-instruct:free">meta-llama/llama-3.3-70b-instruct:free</option>
+            </optgroup>
+          </select>
         </div>
 
         <div class="form-group">
           <label class="form-label" for="setting-system-instructions">System Instructions</label>
-          <textarea class="form-textarea" id="setting-system-instructions" rows="3" placeholder="Optional system prompt (default: empty)..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="setting-thinking-level">Thinking Budget</label>
-          <select class="form-select" id="setting-thinking-level">
-            <option value="0" selected>Disabled (0 tokens)</option>
-            <option value="1024">Low (1,024 tokens)</option>
-            <option value="4096">Medium (4,096 tokens)</option>
-            <option value="8192">High (8,192 tokens)</option>
-          </select>
+          <textarea class="form-textarea" id="setting-system-instructions" rows="3" placeholder="Leave empty for unconstrained model behavior..."></textarea>
         </div>
 
         <div class="toggle-setting-row">
           <div class="toggle-info">
-            <span class="toggle-title">Automatic Fallback</span>
-            <span class="toggle-desc">Rotate to alternative model on 503/429 limits</span>
+            <span class="toggle-title">Dynamic Semantic Task Router</span>
+            <span class="toggle-desc">Auto-routes coding queries to strongest code model</span>
           </div>
           <label class="switch">
-            <input type="checkbox" id="setting-auto-fallback" checked>
+            <input type="checkbox" id="setting-semantic-router" checked>
             <span class="slider"></span>
           </label>
+        </div>
+
+        <div class="toggle-setting-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Automated Cascade Failover</span>
+            <span class="toggle-desc">Silently switches on 503 Overload / 429 Quota</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-auto-cascade" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-setting-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Live Server-Sent Events (SSE)</span>
+            <span class="toggle-desc">Real-time token generation stream</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-streaming" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-row">
+            <label class="form-label">Thinking Budget (Tokens)</label>
+            <span class="range-val" id="setting-thinking-budget-val">0</span>
+          </div>
+          <input type="range" class="form-range" id="setting-thinking-budget" min="0" max="16384" step="1024" value="0">
         </div>
 
         <div class="form-group">
@@ -143,11 +187,14 @@
       </div>
     </aside>
 
-    <!-- KEY VAULT MODAL -->
+    <!-- MODAL: KEY VAULT -->
     <div class="modal-overlay" id="key-vault-modal" style="display:none;">
       <div class="modal-card">
         <div class="modal-header">
-          <h2>API Key Vault & Multi-Provider Pool</h2>
+          <div class="modal-title-group">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <h2>API Key Vault & Failover Mesh</h2>
+          </div>
           <button class="icon-tool-btn" id="btn-close-vault">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -161,7 +208,7 @@
 
         <div class="vault-body">
           <div class="key-add-bar">
-            <input type="password" class="vault-input" id="vault-key-input" placeholder="Paste API Key...">
+            <input type="password" class="vault-input" id="vault-key-input" placeholder="Enter API Key (e.g. AIzaSy... or gsk_...)">
             <input type="text" class="vault-input small" id="vault-label-input" placeholder="Label">
             <button class="btn-sm primary" id="btn-add-key">+ Save Key</button>
           </div>
@@ -173,7 +220,8 @@
                   <th>Key Mask</th>
                   <th>Label</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th>Added</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="vault-keys-tbody"></tbody>
