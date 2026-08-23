@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | AI Studio & Gateway</title>
+  <title>AetherSpace | SOTA AI Studio & Gateway</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 </head>
 <body>
   <div id="app-root" class="app-layout">
-    <!-- HEADER -->
+    <!-- TOP COMPACT HEADER -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
@@ -20,12 +20,6 @@
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
           <span class="brand-title">AetherSpace</span>
-        </div>
-
-        <div class="mode-switcher">
-          <button class="mode-btn active" id="btn-mode-chat" data-mode="chat">Direct Chat</button>
-          <button class="mode-btn" id="btn-mode-multi" data-mode="multi">Multi-Agent</button>
-          <button class="mode-btn" id="btn-mode-orchestrator" data-mode="orchestrator">Orchestration</button>
         </div>
       </div>
 
@@ -50,7 +44,7 @@
 
         <button class="action-btn primary" id="toggle-run-settings-btn" title="Run Settings">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span>Run Settings</span>
+          <span>Settings</span>
         </button>
       </div>
     </header>
@@ -61,33 +55,64 @@
         <div class="chat-messages-container" id="chat-messages">
           <div class="welcome-screen" id="welcome-screen">
             <h1 class="welcome-title">AetherSpace Studio</h1>
-            <p class="welcome-subtitle">Unified SOTA Multi-Provider AI Studio. Live Search Grounding, Automatic URL Context, and Resilient Multi-Agent Orchestration.</p>
+            <p class="welcome-subtitle">Unified SOTA Multi-Provider Hub. Zero Local KI Load, Real-Time Grounding, and Multi-Agent Orchestration.</p>
             <div class="quick-tags">
-              <button class="tag-btn" data-preset="Wie lautet das heutige Datum und die aktuelle Uhrzeit in Deutschland?">🕒 Datum & Uhrzeit</button>
+              <button class="tag-btn" data-preset="Wie lautet das heutige Datum und die aktuelle Uhrzeit in Deutschland?">🕒 Datum & Echtzeit-Check</button>
               <button class="tag-btn" data-preset="Was sind die neuesten Entwicklungen und Nachrichten zu Künstlicher Intelligenz heute?">🌐 Live Web-Suche</button>
-              <button class="tag-btn" data-preset="Generiere ein Bild von einer futuristischen Cyberpunk-Stadt im Neon-Stil.">🎨 Bild generieren</button>
               <button class="tag-btn" data-preset="Baue eine responsive Stoppuhr mit Rundenzeiten in HTML, CSS und JavaScript.">💻 Web-App Generator</button>
+              <button class="tag-btn" data-preset="Entwirf eine Microservice-Architektur mit Circuit-Breaker und Retry-Backoff.">⚡ System-Architektur</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- PROMPT BAR -->
+      <!-- PROMPT BAR WITH COMPACT NESTED DRAWER & SLASH COMMAND PALETTE -->
       <div class="prompt-bar-container">
         <div class="gateway-status-line" id="gateway-status-line" style="display:none;">
           <span class="status-dot-pulse"></span>
           <span id="gateway-status-text">Gateway active...</span>
         </div>
 
+        <!-- SLASH COMMAND AUTOCOMPLETE MENU -->
+        <div class="slash-menu" id="slash-menu" style="display:none;">
+          <div class="slash-item" data-cmd="/search"><span class="slash-key">/search</span> Live Web Search Grounding aktivieren</div>
+          <div class="slash-item" data-cmd="/multi"><span class="slash-key">/multi</span> Multi-Agent Konsens-Debatte starten</div>
+          <div class="slash-item" data-cmd="/orch"><span class="slash-key">/orch</span> Supervisor Orchestrierung ausführen</div>
+          <div class="slash-item" data-cmd="/code"><span class="slash-key">/code</span> Clean Code Generator Modus</div>
+          <div class="slash-item" data-cmd="/audit"><span class="slash-key">/audit</span> Security & Logic Code Audit</div>
+        </div>
+
         <div class="prompt-bar-card">
-          <textarea class="prompt-input" id="prompt-input" rows="2" placeholder="Ask AI, request image generation, paste URL context, or orchestrate agents (Enter to send, Shift+Enter for newline)..."></textarea>
+          <!-- NESTED CONTROLS DRAWER -->
+          <div class="nested-controls-drawer" id="nested-controls-drawer" style="display:none;">
+            <div class="drawer-section">
+              <span class="drawer-label">Modus:</span>
+              <div class="inline-mode-group">
+                <button class="mode-pill active" id="pill-mode-chat" data-mode="chat">Direct Chat</button>
+                <button class="mode-pill" id="pill-mode-multi" data-mode="multi">Multi-Agent</button>
+                <button class="mode-pill" id="pill-mode-orchestrator" data-mode="orchestrator">Orchestration</button>
+              </div>
+            </div>
+
+            <div class="drawer-section">
+              <span class="drawer-label">MCP Tools:</span>
+              <div class="inline-tools-group">
+                <button class="mcp-chip active" id="mcp-toggle-search"><span>🌐 Web-Search: ON</span></button>
+                <button class="mcp-chip active" id="mcp-toggle-url"><span>🔗 URL-Context: ON</span></button>
+                <button class="mcp-chip" id="mcp-toggle-github"><span>🐙 GitHub</span></button>
+                <button class="mcp-chip" id="mcp-toggle-youtube"><span>📺 YouTube</span></button>
+              </div>
+            </div>
+          </div>
+
+          <textarea class="prompt-input" id="prompt-input" rows="2" placeholder="Prompt eingeben, URL einfügen oder '/' für Schnellbefehle (Enter zum Senden, Shift+Enter für neue Zeile)..."></textarea>
           
           <div class="prompt-bar-actions">
             <div class="prompt-actions-left">
+              <button class="tool-chip" id="btn-toggle-nested-drawer" title="Toggle Mode & Tool Controls">⚡ Tools & Modus</button>
               <span class="mode-badge" id="active-mode-badge">Direct Chat</span>
-              <span class="url-badge" title="Auto URL & Image Context is active">⚡ Auto-Context: Active</span>
-              <button class="tool-chip" id="btn-clear-chat">Clear History</button>
-              <button class="tool-chip" id="btn-export-codepen" title="Export latest generated code to CodePen">CodePen Export</button>
+              <button class="tool-chip" id="btn-clear-chat">Clear</button>
+              <button class="tool-chip" id="btn-export-codepen" title="Export to CodePen">CodePen</button>
             </div>
             <div class="prompt-actions-right">
               <span class="mcp-realtime-clock" id="mcp-realtime-clock">--:--:--</span>

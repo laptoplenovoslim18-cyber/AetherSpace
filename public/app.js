@@ -1,18 +1,16 @@
 (function () {
   'use strict';
 
-  // PRUNED SOTA ROSTER (Top-Tier Flagships Only)
+  // STRICT SOTA ROSTER (Flash-Lite permanently purged)
   const PRUNED_SOTA_ROSTER = {
     gemini: [
       { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (SOTA Code & Agentic)' },
       { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Fast Agentic)' },
-      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)' },
-      { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (High-Throughput)' }
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)' }
     ],
     hf: [
       { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (Top Open Code SOTA)' },
       { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 (Open Reasoning SOTA)' },
-      { id: 'meta-llama/Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B (HF Router SOTA)' },
       { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (Fast Utility SOTA)' }
     ],
     groq: [
@@ -41,6 +39,12 @@
       temperature: 0.70,
       maxOutputTokens: 8192
     },
+    mcp: {
+      search: true,
+      urlContext: true,
+      github: false,
+      youtube: false
+    },
     keys: { gemini: [], hf: [], groq: [], openrouter: [] }
   };
 
@@ -55,13 +59,21 @@
     gatewayStatusLine: document.getElementById('gateway-status-line'),
     gatewayStatusText: document.getElementById('gateway-status-text'),
     activeModeBadge: document.getElementById('active-mode-badge'),
-    btnModeChat: document.getElementById('btn-mode-chat'),
-    btnModeMulti: document.getElementById('btn-mode-multi'),
-    btnModeOrchestrator: document.getElementById('btn-mode-orchestrator'),
     btnToggleAutoRouter: document.getElementById('btn-toggle-auto-router'),
     quickModelSelect: document.getElementById('quick-model-select'),
     btnFetchLiveModels: document.getElementById('btn-fetch-live-models'),
     keyCountBadge: document.getElementById('key-count-badge'),
+
+    slashMenu: document.getElementById('slash-menu'),
+    btnToggleNestedDrawer: document.getElementById('btn-toggle-nested-drawer'),
+    nestedControlsDrawer: document.getElementById('nested-controls-drawer'),
+    pillModeChat: document.getElementById('pill-mode-chat'),
+    pillModeMulti: document.getElementById('pill-mode-multi'),
+    pillModeOrchestrator: document.getElementById('pill-mode-orchestrator'),
+    mcpToggleSearch: document.getElementById('mcp-toggle-search'),
+    mcpToggleUrl: document.getElementById('mcp-toggle-url'),
+    mcpToggleGithub: document.getElementById('mcp-toggle-github'),
+    mcpToggleYoutube: document.getElementById('mcp-toggle-youtube'),
     mcpRealtimeClock: document.getElementById('mcp-realtime-clock'),
 
     toggleRunSettingsBtn: document.getElementById('toggle-run-settings-btn'),
@@ -87,7 +99,8 @@
     autoClassifyPreview: document.getElementById('auto-classify-preview'),
     vaultKeysTbody: document.getElementById('vault-keys-tbody'),
 
-    tagBtns: document.querySelectorAll('.tag-btn')
+    tagBtns: document.querySelectorAll('.tag-btn'),
+    slashItems: document.querySelectorAll('.slash-item')
   };
 
   function loadState() {
@@ -170,76 +183,11 @@
     }
   }
 
-  // STRICT PRUNING OF EXPERIMENTAL / CLUTTERED GOOGLE MODELS
-  function pruneAndFilterGoogleModels(rawModels) {
-    const blacklistRegex = /veo|tts|translate|image|customtools|banana|bison|aqa|embed|deprecated|legacy/i;
-    const cleanList = [
-      { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (SOTA Code & Agentic)' },
-      { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Fast Agentic)' },
-      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)' },
-      { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (High-Throughput)' }
-    ];
-
-    rawModels.forEach(m => {
-      const cleanId = m.name.replace(/^models\//, '');
-      if (!blacklistRegex.test(cleanId) && !cleanList.some(item => item.id === cleanId)) {
-        if (cleanId.includes('3.7') || cleanId.includes('3.6') || cleanId.includes('3.1') || cleanId.includes('3.5')) {
-          cleanList.push({ id: cleanId, name: `${m.displayName || cleanId} (${cleanId})` });
-        }
-      }
-    });
-
-    return cleanList;
-  }
-
   function getRealtimeTemporalSystemContext() {
     const now = new Date();
     const timeStr = now.toLocaleString('de-DE', { dateStyle: 'full', timeStyle: 'long' });
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return `[CURRENT REAL-TIME CONTEXT: Datum & Uhrzeit: ${timeStr} | Zeitzone: ${tz} | ISO-8601: ${now.toISOString()}]\nAnswer questions about date, time, or live events using this exact temporal reference.`;
-  }
-
-  // AUTOMATED URL CONTEXT INGESTION (GitHub, YouTube, Web)
-  async function detectAndIngestUrlContext(promptText) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const matches = promptText.match(urlRegex);
-    if (!matches || matches.length === 0) return promptText;
-
-    let enrichedContext = promptText + '\n\n[AUTOMATED URL CONTEXT INGESTION]:\n';
-
-    for (const url of matches) {
-      // 1. YouTube URL Detection
-      if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
-        const videoId = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('youtu.be/')[1].split('?')[0];
-        enrichedContext += `• [YouTube Video ID: ${videoId} | URL: ${url}] (Live Grounding search requested for this video).\n`;
-      }
-      // 2. GitHub Raw File Ingestion
-      else if (url.includes('github.com') && (url.includes('/blob/') || url.includes('/raw/'))) {
-        try {
-          const rawUrl = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
-          const res = await fetch(rawUrl);
-          if (res.ok) {
-            const content = await res.text();
-            enrichedContext += `• [GitHub File Content from ${url}]:\n\`\`\`\n${content.substring(0, 3000)}\n\`\`\`\n`;
-          }
-        } catch (e) {
-          enrichedContext += `• [GitHub URL: ${url}]\n`;
-        }
-      }
-      // 3. Generic Web URL
-      else {
-        enrichedContext += `• [Web Reference: ${url}]\n`;
-      }
-    }
-
-    return enrichedContext;
-  }
-
-  // AUTOMATED IMAGE GENERATION INTENT DETECTOR
-  function detectImageGenerationIntent(promptText) {
-    const lower = promptText.toLowerCase();
-    const triggers = ['generiere ein bild', 'erstelle ein bild', 'zeichne', 'generate an image', 'create an image', 'draw a picture', 'photo of', 'illustration of'];
-    return triggers.some(t => lower.includes(t));
+    return `[CURRENT REAL-TIME CONTEXT: Datum & Uhrzeit: ${timeStr} | Zeitzone: ${tz} | ISO-8601: ${now.toISOString()}]\nProvide real-time answers based on this exact live baseline.`;
   }
 
   function decideModelKeyAware(prompt) {
@@ -347,20 +295,6 @@
     targetElement.innerHTML = html;
   }
 
-  function renderGeneratedImage(targetElement, imageUrl, promptText) {
-    const card = document.createElement('div');
-    card.className = 'ai-generated-image-card';
-    card.innerHTML = `
-      <img src="${escapeHtml(imageUrl)}" alt="AI Generated Image" loading="lazy" />
-      <div class="ai-image-actions">
-        <span>🎨 ${escapeHtml(promptText.substring(0, 40))}...</span>
-        <a href="${escapeHtml(imageUrl)}" target="_blank" download="aetherspace-art.png" class="btn-xs" style="color:var(--accent-cyan);">Download</a>
-      </div>
-    `;
-    targetElement.appendChild(card);
-    scrollToBottom();
-  }
-
   function escapeHtml(str) {
     return (str || '')
       .replace(/&/g, '&amp;')
@@ -374,7 +308,28 @@
     dom.chatViewport.scrollTop = dom.chatViewport.scrollHeight;
   }
 
-  // GEMINI STREAM CALL (WITH SAFE SEARCH GROUNDING & TEMPORAL CONTEXT)
+  // URL CONTEXT INGESTION DETECTOR
+  async function resolveUrlContextIfPresent(promptText) {
+    if (!state.mcp.urlContext) return promptText;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = promptText.match(urlRegex);
+    if (!urls || urls.length === 0) return promptText;
+
+    showGatewayStatus(`MCP Tool: Extracting live web context from ${urls[0]}...`);
+    try {
+      const res = await fetch(`/api/fetch-url?url=${encodeURIComponent(urls[0])}`);
+      if (!res.ok) return promptText;
+      const data = await res.json();
+      if (data.content) {
+        return `[GROUNDED LIVE URL CONTEXT FROM ${urls[0]}]:\n${data.content}\n\n[USER QUERY]:\n${promptText}`;
+      }
+    } catch (e) {
+      console.warn('URL context extract note:', e.message);
+    }
+    return promptText;
+  }
+
+  // GEMINI STREAM CALL (WITH LIVE TEMPORAL & GROUNDING PARSING)
   async function streamGemini(apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
     const temporalContext = getRealtimeTemporalSystemContext();
@@ -391,12 +346,15 @@
       generationConfig: {
         temperature: config.temperature,
         maxOutputTokens: config.maxOutputTokens
-      },
-      tools: [{ googleSearch: {} }]
+      }
     };
 
     if (config.thinkingBudget > 0) {
       bodyPayload.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
+    }
+
+    if (state.mcp.search) {
+      bodyPayload.tools = [{ googleSearch: {} }];
     }
 
     let res = await fetch(url, {
@@ -405,7 +363,7 @@
       body: JSON.stringify(bodyPayload)
     });
 
-    if (!res.ok) {
+    if (!res.ok && state.mcp.search) {
       delete bodyPayload.tools;
       res = await fetch(url, {
         method: 'POST',
@@ -461,14 +419,15 @@
     return { text: fullText, sources };
   }
 
-  // HUGGING FACE UNIVERSAL CALL (FALLBACK TO REST PIPELINE IF ROUTER REJECTS)
+  // HUGGING FACE SERVERLESS CALL
   async function streamHuggingFace(apiKey, model, systemPrompt, userMessage, config, onChunk) {
+    const endpoint = 'https://router.huggingface.co/hf-inference/v1/chat/completions';
     const temporalContext = getRealtimeTemporalSystemContext();
     const fullSystem = (systemPrompt ? `${systemPrompt}\n\n` : '') + temporalContext;
-    const promptText = `[SYSTEM: ${fullSystem}]\nUser: ${userMessage}\nAssistant:`;
 
-    // 1. Direct Pipeline Inference
-    const endpoint = `https://api-inference.huggingface.co/models/${model}`;
+    const messages = [{ role: 'system', content: fullSystem }];
+    state.chatHistory.forEach(m => messages.push({ role: m.role, content: m.content }));
+
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -476,8 +435,11 @@
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        inputs: promptText,
-        parameters: { max_new_tokens: Math.min(config.maxOutputTokens, 2048), temperature: config.temperature, return_full_text: false }
+        model: model,
+        messages: messages,
+        temperature: config.temperature,
+        max_tokens: Math.min(config.maxOutputTokens, 2048),
+        stream: true
       })
     });
 
@@ -486,17 +448,36 @@
       throw { status: res.status, message: errText };
     }
 
-    const json = await res.json();
-    let text = '';
-    if (Array.isArray(json) && json[0] && json[0].generated_text) text = json[0].generated_text;
-    else if (json.generated_text) text = json.generated_text;
-    else text = JSON.stringify(json);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '', fullText = '';
 
-    onChunk(text, []);
-    return { text, sources: [] };
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.trim().startsWith('data: ')) {
+          const payload = line.trim().substring(6).trim();
+          if (payload === '[DONE]') break;
+          try {
+            const json = JSON.parse(payload);
+            const delta = json.choices && json.choices[0] && json.choices[0].delta ? json.choices[0].delta.content : '';
+            if (delta) {
+              fullText += delta;
+              onChunk(fullText, []);
+            }
+          } catch (e) {}
+        }
+      }
+    }
+    return { text: fullText, sources: [] };
   }
 
-  // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER)
+  // GROQ / OPENROUTER CALL
   async function streamOpenAI(endpoint, apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const messages = [];
     const temporalContext = getRealtimeTemporalSystemContext();
@@ -549,25 +530,25 @@
     return { text: fullText, sources: [] };
   }
 
-  // RESILIENT CASCADE EXECUTION CONTROLLER
+  // RESILIENT CASCADE (PURGED OF 3.5 FLASH LITE)
   async function executeWithResilientCascade(preferredModel, promptText, onChunk) {
     const candidateChain = [];
     const availableProviders = getAvailableProvidersWithKeys();
 
     if (availableProviders.length === 0) {
-      throw new Error('No API Keys found in Vault. Please open Key Vault to add a key.');
+      throw new Error('No API Keys configured. Please open Key Vault to add a key.');
     }
 
     if (preferredModel) candidateChain.push(preferredModel);
 
-    // Build hierarchical cascade chain across active providers
+    // Strictly SOTA fallback paths
     if (availableProviders.includes('gemini')) {
-      ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'].forEach(m => {
+      ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.1-pro-preview'].forEach(m => {
         if (!candidateChain.includes(m)) candidateChain.push(m);
       });
     }
     if (availableProviders.includes('hf')) {
-      ['Qwen/Qwen2.5-Coder-32B-Instruct', 'meta-llama/Llama-3.3-70B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3'].forEach(m => {
+      ['Qwen/Qwen2.5-Coder-32B-Instruct', 'deepseek-ai/DeepSeek-R1', 'mistralai/Mistral-7B-Instruct-v0.3'].forEach(m => {
         if (!candidateChain.includes(m)) candidateChain.push(m);
       });
     }
@@ -613,66 +594,58 @@
           }
 
           if (!resObj.text || resObj.text.trim().length === 0) {
-            throw new Error('Empty stream response.');
+            throw new Error('Empty response from model stream.');
           }
 
           return { text: resObj.text, sources: resObj.sources, model, provider };
         } catch (err) {
           lastError = err;
-          console.warn(`[Cascade Shift] ${model} failed:`, err.status || err.message);
+          console.warn(`[Gateway Cascade] ${model} on key #${k + 1} status ${err.status || err.message}. Shifting...`);
           if (!state.runSettings.autoCascade) break;
         }
       }
     }
-    throw new Error(lastError ? (lastError.message || `HTTP ${lastError.status}`) : 'All models in pool exhausted.');
+    throw new Error(lastError ? (lastError.message || `HTTP ${lastError.status}`) : 'All available models and keys exhausted.');
   }
 
-  // MAIN SEND DISPATCHER (AUTOMATED URL CONTEXT + AUTO IMAGE GEN + MULTI-AGENT)
+  // MAIN SEND DISPATCHER (DIRECT, MULTI-AGENT, ORCHESTRATION)
   async function handleSend() {
-    const rawText = dom.promptInput.value.trim();
+    let rawText = dom.promptInput.value.trim();
     if (!rawText) return;
 
     dom.promptInput.value = '';
+    dom.slashMenu.style.display = 'none';
     dom.btnSendPrompt.disabled = true;
+
+    // Check for slash command prefixes
+    if (rawText.startsWith('/search ')) {
+      state.mcp.search = true;
+      rawText = rawText.replace('/search ', '');
+    } else if (rawText.startsWith('/multi ')) {
+      setOperationalMode('multi');
+      rawText = rawText.replace('/multi ', '');
+    } else if (rawText.startsWith('/orch ')) {
+      setOperationalMode('orchestrator');
+      rawText = rawText.replace('/orch ', '');
+    }
 
     appendUserMessage(rawText);
 
-    // 1. AUTOMATIC IMAGE GENERATION INTENT
-    if (detectImageGenerationIntent(rawText)) {
-      const { bubble } = createAssistantMessageNode('Image Synthesis Engine');
-      bubble.innerHTML = '<div>🎨 Generating high-resolution image...</div>';
-      showGatewayStatus('Generating FLUX Image Synthesis...');
-
-      const encodedPrompt = encodeURIComponent(rawText);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`;
-
-      setTimeout(() => {
-        bubble.innerHTML = '';
-        renderGeneratedImage(bubble, imageUrl, rawText);
-        hideGatewayStatus();
-        dom.btnSendPrompt.disabled = false;
-        state.chatHistory.push({ role: 'assistant', content: `[Generated Image for: ${rawText}]` });
-      }, 1500);
-      return;
-    }
-
-    // 2. AUTOMATIC URL CONTEXT INGESTION
-    showGatewayStatus('Analyzing prompt & URL context...');
-    const enrichedPrompt = await detectAndIngestUrlContext(rawText);
+    const groundedText = await resolveUrlContextIfPresent(rawText);
 
     let chosenModel = state.runSettings.customModel || state.activeModel;
     if (state.autoRouter && !state.runSettings.customModel) {
-      chosenModel = decideModelKeyAware(enrichedPrompt);
+      chosenModel = decideModelKeyAware(groundedText);
       showGatewayStatus(`Key-Aware Auto Router: Selected ${chosenModel}`);
     }
 
-    // DIRECT CHAT MODE
+    // 1. DIRECT CHAT MODE
     if (state.mode === 'chat') {
       const { bubble, row } = createAssistantMessageNode(chosenModel);
       renderFormattedContent(bubble, '', true);
 
       try {
-        const result = await executeWithResilientCascade(chosenModel, enrichedPrompt, (acc, sources) => {
+        const result = await executeWithResilientCascade(chosenModel, groundedText, (acc, sources) => {
           renderFormattedContent(bubble, acc, true, sources);
           scrollToBottom();
         });
@@ -684,7 +657,7 @@
       }
     }
 
-    // MULTI-AGENT CONSENSUS PIPELINE
+    // 2. TRUE CROSS-PROVIDER MULTI-AGENT PIPELINE
     else if (state.mode === 'multi') {
       const { bubble } = createAssistantMessageNode('Multi-Agent Consensus Pipeline');
       bubble.innerHTML = `
@@ -697,30 +670,27 @@
       const body3 = bubble.querySelector('.agent-body-3');
 
       try {
-        // Step 1: Architect Draft
         showGatewayStatus('Multi-Agent: Step 1 (Architect Drafting)...');
-        const r1 = await executeWithResilientCascade(chosenModel, enrichedPrompt, (acc, sources) => {
+        const r1 = await executeWithResilientCascade(chosenModel, groundedText, (acc, sources) => {
           renderFormattedContent(body1, acc, true, sources);
           scrollToBottom();
         });
         renderFormattedContent(body1, r1.text, false, r1.sources);
 
-        // Step 2: Auditor Review
         const availableHf = (state.keys.hf || []).length > 0;
-        const auditorModel = availableHf ? 'Qwen/Qwen2.5-Coder-32B-Instruct' : 'gemini-3.6-flash';
+        const auditorModel = availableHf ? 'Qwen/Qwen2.5-Coder-32B-Instruct' : (r1.model === 'gemini-3.6-flash' ? 'gemini-3.1-pro-preview' : 'gemini-3.6-flash');
         bubble.querySelector('.agent-step-header.reviewer').textContent = `🛡️ Agent 2 (${auditorModel}): Cross-Model Security & Logic Review`;
 
         showGatewayStatus(`Multi-Agent: Step 2 (${auditorModel} Audit)...`);
-        const auditPrompt = `You are the Lead Security & Code Auditor. Review this draft solution for correctness, date accuracy, and security vulnerabilities:\n${r1.text}`;
+        const auditPrompt = `You are the Lead Security & Code Auditor. Review this draft solution for bugs, edge cases, date accuracy, and optimizations:\n${r1.text}`;
         const r2 = await executeWithResilientCascade(auditorModel, auditPrompt, (acc, sources) => {
           renderFormattedContent(body2, acc, true, sources);
           scrollToBottom();
         });
         renderFormattedContent(body2, r2.text, false, r2.sources);
 
-        // Step 3: Arbiter Synthesis
         showGatewayStatus('Multi-Agent: Step 3 (Arbiter Production Synthesis)...');
-        const arbiterPrompt = `You are the Arbiter. Synthesize the final, verified, production-ready solution incorporating the draft and audit findings:\nDraft:\n${r1.text}\nAudit Findings:\n${r2.text}`;
+        const arbiterPrompt = `You are the Arbiter. Synthesize the final, verified, production-ready solution incorporating the draft and audit:\nDraft:\n${r1.text}\nAudit Findings:\n${r2.text}`;
         const r3 = await executeWithResilientCascade(chosenModel, arbiterPrompt, (acc, sources) => {
           renderFormattedContent(body3, acc, true, sources);
           scrollToBottom();
@@ -732,7 +702,7 @@
       }
     }
 
-    // SUPERVISOR ORCHESTRATION PIPELINE
+    // 3. SUPERVISOR ORCHESTRATION PIPELINE
     else if (state.mode === 'orchestrator') {
       const { bubble } = createAssistantMessageNode('Supervisor Orchestrator Pipeline');
       bubble.innerHTML = `
@@ -744,14 +714,14 @@
 
       try {
         showGatewayStatus('Orchestrator: Supervisor generating execution plan...');
-        const rPlan = await executeWithResilientCascade(chosenModel, `Generate a clean, step-by-step architectural breakdown for: ${enrichedPrompt}`, (acc, sources) => {
+        const rPlan = await executeWithResilientCascade(chosenModel, `Generate a clean, step-by-step architectural breakdown for: ${groundedText}`, (acc, sources) => {
           renderFormattedContent(planEl, acc, true, sources);
           scrollToBottom();
         });
         renderFormattedContent(planEl, rPlan.text, false, rPlan.sources);
 
         showGatewayStatus('Orchestrator: Worker executing full implementation...');
-        const execPrompt = `Based on this architectural plan:\n${rPlan.text}\nImplement the complete, deterministic, production-ready solution for: ${enrichedPrompt}`;
+        const execPrompt = `Based on this architectural plan:\n${rPlan.text}\nImplement the complete, deterministic, production-ready code with zero placeholders for: ${groundedText}`;
         const rExec = await executeWithResilientCascade(null, execPrompt, (acc, sources) => {
           renderFormattedContent(execEl, acc, true, sources);
           scrollToBottom();
@@ -765,6 +735,16 @@
 
     hideGatewayStatus();
     dom.btnSendPrompt.disabled = false;
+  }
+
+  function setOperationalMode(mode) {
+    state.mode = mode;
+    dom.pillModeChat.classList.toggle('active', mode === 'chat');
+    dom.pillModeMulti.classList.toggle('active', mode === 'multi');
+    dom.pillModeOrchestrator.classList.toggle('active', mode === 'orchestrator');
+
+    const labels = { chat: 'Direct Chat', multi: 'Multi-Agent', orchestrator: 'Orchestration' };
+    dom.activeModeBadge.textContent = labels[mode] || 'Direct Chat';
   }
 
   function exportLatestCodeToCodePen() {
@@ -848,6 +828,23 @@
       }
     });
 
+    dom.promptInput.addEventListener('input', () => {
+      const val = dom.promptInput.value;
+      if (val.startsWith('/')) {
+        dom.slashMenu.style.display = 'flex';
+      } else {
+        dom.slashMenu.style.display = 'none';
+      }
+    });
+
+    dom.slashItems.forEach(item => {
+      item.addEventListener('click', () => {
+        dom.promptInput.value = item.dataset.cmd + ' ';
+        dom.promptInput.focus();
+        dom.slashMenu.style.display = 'none';
+      });
+    });
+
     dom.btnSendPrompt.addEventListener('click', handleSend);
     dom.btnExportCodepen.addEventListener('click', exportLatestCodeToCodePen);
 
@@ -867,34 +864,42 @@
       });
     });
 
+    dom.btnToggleNestedDrawer.addEventListener('click', () => {
+      const isHidden = dom.nestedControlsDrawer.style.display === 'none';
+      dom.nestedControlsDrawer.style.display = isHidden ? 'flex' : 'none';
+      dom.btnToggleNestedDrawer.classList.toggle('active', isHidden);
+    });
+
+    dom.pillModeChat.addEventListener('click', () => setOperationalMode('chat'));
+    dom.pillModeMulti.addEventListener('click', () => setOperationalMode('multi'));
+    dom.pillModeOrchestrator.addEventListener('click', () => setOperationalMode('orchestrator'));
+
+    dom.mcpToggleSearch.addEventListener('click', () => {
+      state.mcp.search = !state.mcp.search;
+      dom.mcpToggleSearch.classList.toggle('active', state.mcp.search);
+      dom.mcpToggleSearch.querySelector('span').textContent = `🌐 Web-Search: ${state.mcp.search ? 'ON' : 'OFF'}`;
+    });
+
+    dom.mcpToggleUrl.addEventListener('click', () => {
+      state.mcp.urlContext = !state.mcp.urlContext;
+      dom.mcpToggleUrl.classList.toggle('active', state.mcp.urlContext);
+      dom.mcpToggleUrl.querySelector('span').textContent = `🔗 URL-Context: ${state.mcp.urlContext ? 'ON' : 'OFF'}`;
+    });
+
+    dom.mcpToggleGithub.addEventListener('click', () => {
+      state.mcp.github = !state.mcp.github;
+      dom.mcpToggleGithub.classList.toggle('active', state.mcp.github);
+    });
+
+    dom.mcpToggleYoutube.addEventListener('click', () => {
+      state.mcp.youtube = !state.mcp.youtube;
+      dom.mcpToggleYoutube.classList.toggle('active', state.mcp.youtube);
+    });
+
     dom.btnToggleAutoRouter.addEventListener('click', () => {
       state.autoRouter = !state.autoRouter;
       dom.btnToggleAutoRouter.classList.toggle('active', state.autoRouter);
       dom.btnToggleAutoRouter.querySelector('.pill-text').textContent = `Auto-Router: ${state.autoRouter ? 'ON' : 'OFF'}`;
-    });
-
-    dom.btnModeChat.addEventListener('click', () => {
-      state.mode = 'chat';
-      dom.btnModeChat.classList.add('active');
-      dom.btnModeMulti.classList.remove('active');
-      dom.btnModeOrchestrator.classList.remove('active');
-      dom.activeModeBadge.textContent = 'Direct Chat';
-    });
-
-    dom.btnModeMulti.addEventListener('click', () => {
-      state.mode = 'multi';
-      dom.btnModeMulti.classList.add('active');
-      dom.btnModeChat.classList.remove('active');
-      dom.btnModeOrchestrator.classList.remove('active');
-      dom.activeModeBadge.textContent = 'Multi-Agent';
-    });
-
-    dom.btnModeOrchestrator.addEventListener('click', () => {
-      state.mode = 'orchestrator';
-      dom.btnModeOrchestrator.classList.add('active');
-      dom.btnModeChat.classList.remove('active');
-      dom.btnModeMulti.classList.remove('active');
-      dom.activeModeBadge.textContent = 'Orchestration';
     });
 
     dom.quickModelSelect.addEventListener('change', () => {
@@ -920,9 +925,9 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.models && Array.isArray(data.models)) {
-          state.models.gemini = pruneAndFilterGoogleModels(data.models);
+          state.models.gemini = PRUNED_SOTA_ROSTER.gemini;
           populateModelSelectors();
-          showGatewayStatus(`Pruned inventory active. ${state.models.gemini.length} SOTA models retained.`);
+          showGatewayStatus(`Pruned inventory active. SOTA models retained.`);
           setTimeout(hideGatewayStatus, 3000);
         }
       } catch (e) {
