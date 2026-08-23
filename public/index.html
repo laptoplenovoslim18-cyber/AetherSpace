@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace</title>
+  <title>AetherSpace | Unified AI Gateway & Studio</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app-root" class="app-layout">
-    
-    <!-- HEADER -->
+    <!-- TOP HEADER -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
@@ -23,55 +22,70 @@
           <span class="brand-title">AetherSpace</span>
         </div>
 
-        <!-- MODE SELECTOR -->
-        <div class="mode-toggles">
-          <button class="mode-btn active" id="mode-direct" data-mode="direct">Direct LLM</button>
-          <button class="mode-btn" id="mode-multiagent" data-mode="multiagent">Multi-Agent</button>
-          <button class="mode-btn" id="mode-orchestration" data-mode="orchestration">Orchestration</button>
+        <!-- MODE SELECTOR PILLS -->
+        <div class="mode-pills">
+          <button class="mode-pill active" data-mode="direct">Direct Chat</button>
+          <button class="mode-pill" data-mode="orchestration">Orchestration</button>
+          <button class="mode-pill" data-mode="multiagent">Multi-Agent Debate</button>
         </div>
       </div>
 
       <div class="header-right">
-        <!-- DYNAMIC MODEL SELECTOR -->
-        <div class="model-select-wrapper">
-          <select class="header-select" id="header-model-select">
-            <option value="" disabled selected>Select Model (Fetch via Vault)</option>
-          </select>
-          <button class="icon-tool-btn" id="btn-refresh-models" title="Live Refresh Models from Provider API">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          </button>
-        </div>
+        <!-- DYNAMIC ACTIVE MODEL BADGE -->
+        <button class="model-badge-btn" id="btn-open-settings" title="Change Model & Parameters">
+          <span class="model-status-indicator" id="header-status-indicator"></span>
+          <span class="model-name-text" id="header-active-model">Fetching Live Models...</span>
+        </button>
 
-        <button class="action-btn" id="btn-open-vault">
-          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <button class="action-btn" id="btn-open-vault" title="Manage API Keys">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Key Vault</span>
           <span class="badge" id="key-count-badge">0 Keys</span>
         </button>
 
-        <button class="action-btn primary" id="btn-toggle-settings">
-          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span>Run Settings</span>
+        <button class="action-btn" id="btn-codepen-export" title="Export Current Code to CodePen">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
+          <span>CodePen</span>
         </button>
       </div>
     </header>
 
-    <!-- UNIFIED SINGLE SCREEN VIEWPORT -->
-    <main class="chat-viewport">
+    <!-- UNIFIED SINGLE SCREEN WORKSPACE -->
+    <main class="unified-workspace">
       
-      <!-- STREAMING MESSAGE CONTAINER -->
-      <div class="message-feed" id="message-feed">
-        <!-- Dynamic Chat Messages & Streaming Output -->
+      <!-- TOP STATUS / CONTEXT BAR -->
+      <div class="workspace-top-bar">
+        <div class="workspace-top-left">
+          <span class="mode-tag" id="current-mode-tag">Direct Chat Mode</span>
+          <span class="gateway-tag" id="gateway-status-tag">Gateway: Auto-Fallback 503/429 Active</span>
+        </div>
+        <div class="workspace-top-right">
+          <button class="text-tool-btn" id="btn-clear-chat">Clear History</button>
+          <button class="text-tool-btn" id="btn-refresh-models" title="Sync available models from provider APIs">↻ Refresh Live Models</button>
+        </div>
       </div>
 
-      <!-- INPUT BAR -->
-      <div class="input-deck">
-        <div class="input-wrapper">
-          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Type a message or instruction (Enter to send, Shift+Enter for new line)..."></textarea>
-          <div class="input-actions">
-            <button class="btn-clear" id="btn-clear-feed" title="Clear Dialogue">Clear</button>
-            <button class="btn-send" id="btn-send-message">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
+      <!-- MAIN STREAM DISPLAY -->
+      <div class="stream-container" id="stream-container">
+        <!-- CONVERSATION FLOW STREAM -->
+      </div>
+
+      <!-- BOTTOM UNIFIED PROMPT & CONTROL INPUT BAR -->
+      <div class="input-panel-wrapper">
+        <div class="input-container">
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Type a message, prompt, or technical instruction... (Enter to send, Shift+Enter for new line)"></textarea>
+          
+          <div class="input-actions-bar">
+            <div class="input-meta-left">
+              <span class="shortcut-tip">Enter ↵ to Send</span>
+              <span class="active-fallback-indicator" id="fallback-status-text">Fallback: Enabled</span>
+            </div>
+            <div class="input-actions-right">
+              <button class="send-btn" id="btn-send-prompt">
+                <span>Send</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -80,106 +94,126 @@
     <!-- RUN SETTINGS DRAWER -->
     <aside class="settings-drawer" id="settings-drawer">
       <div class="drawer-header">
-        <span class="drawer-title">Run Settings</span>
-        <button class="icon-tool-btn" id="btn-close-settings">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+        <div class="drawer-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Gateway & Model Settings</span>
+        </div>
+        <button class="icon-close-btn" id="btn-close-settings">&times;</button>
       </div>
 
-      <div class="drawer-body">
+      <div class="drawer-content">
         <div class="form-group">
-          <label class="form-label" for="setting-system-instructions">System Instructions</label>
-          <textarea class="form-textarea" id="setting-system-instructions" rows="4" placeholder="(Optional) Set behavior or persona..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="setting-thinking-budget">Thinking Budget (Tokens)</label>
-          <select class="form-select" id="setting-thinking-budget">
-            <option value="0" selected>0 (Off / Default)</option>
-            <option value="1024">1,024</option>
-            <option value="4096">4,096</option>
-            <option value="8192">8,192</option>
+          <label class="form-label" for="select-active-model">Primary Model</label>
+          <select class="form-select" id="select-active-model">
+            <!-- DYNAMICALLY POPULATED -->
           </select>
         </div>
 
         <div class="form-group">
-          <div class="toggle-row">
-            <span class="toggle-label">Search Grounding (Google)</span>
-            <label class="switch">
-              <input type="checkbox" id="setting-search-grounding">
-              <span class="slider"></span>
-            </label>
-          </div>
+          <label class="form-label" for="select-fallback-model">Secondary Fallback (on 503 / 429)</label>
+          <select class="form-select" id="select-fallback-model">
+            <!-- DYNAMICALLY POPULATED -->
+          </select>
         </div>
 
         <div class="form-group">
-          <div class="toggle-row">
-            <span class="toggle-label">Automatic Failover Cascade</span>
-            <label class="switch">
-              <input type="checkbox" id="setting-auto-cascade" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
+          <label class="form-label" for="setting-system-instructions">System Instructions (Optional)</label>
+          <textarea class="form-textarea" id="setting-system-instructions" rows="3" placeholder="Leave empty for direct clean responses..."></textarea>
         </div>
 
         <div class="form-group">
-          <div class="slider-header">
+          <label class="form-label" for="setting-thinking-budget">Thinking Budget</label>
+          <select class="form-select" id="setting-thinking-budget">
+            <option value="0">0 (Instant Output / Standard)</option>
+            <option value="2048">2,048 Tokens (Balanced Reasoning)</option>
+            <option value="8192">8,192 Tokens (Deep Reasoning)</option>
+          </select>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-meta">
+            <span class="toggle-title">Real-Time Streaming (SSE)</span>
+            <span class="toggle-desc">Live word-by-word streaming generation.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-streaming-toggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-meta">
+            <span class="toggle-title">Automatic 503/429 Fallback</span>
+            <span class="toggle-desc">Auto-reroute to secondary model on load spikes.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-auto-fallback" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-meta">
+            <span class="toggle-title">Search Grounding</span>
+            <span class="toggle-desc">Enable live web search tool (Gemini API).</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-search-grounding">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-split">
             <label class="form-label">Temperature</label>
-            <span class="slider-value" id="val-temperature">0.70</span>
+            <span class="val-display" id="temp-val-display">0.70</span>
           </div>
-          <input type="range" class="form-range" id="setting-temperature" min="0" max="2" step="0.05" value="0.70">
-        </div>
-
-        <div class="form-group">
-          <div class="slider-header">
-            <label class="form-label">Max Output Tokens</label>
-            <span class="slider-value" id="val-max-tokens">8192</span>
-          </div>
-          <input type="range" class="form-range" id="setting-max-tokens" min="256" max="32768" step="256" value="8192">
+          <input type="range" class="form-range" id="setting-temperature" min="0.0" max="2.0" step="0.05" value="0.70">
         </div>
       </div>
     </aside>
 
     <!-- KEY VAULT MODAL -->
-    <div class="modal-backdrop" id="vault-modal" style="display:none;">
-      <div class="modal-container">
+    <div class="modal-overlay" id="vault-modal" style="display:none;">
+      <div class="modal-card">
         <div class="modal-header">
-          <span class="modal-title">API Key Vault & Dynamic Discovery</span>
-          <button class="icon-tool-btn" id="btn-close-vault">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+          <div class="modal-title-group">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <h2>API Key Vault & Provider Pool</h2>
+          </div>
+          <button class="icon-close-btn" id="btn-close-vault">&times;</button>
         </div>
 
-        <div class="vault-tabs">
-          <button class="vault-tab-btn active" data-provider="gemini">Google AI Studio</button>
-          <button class="vault-tab-btn" data-provider="groq">Groq Cloud</button>
-          <button class="vault-tab-btn" data-provider="openrouter">OpenRouter</button>
+        <div class="vault-provider-tabs">
+          <button class="vtab-btn active" data-provider="gemini">Google AI Studio</button>
+          <button class="vtab-btn" data-provider="groq">Groq Cloud</button>
+          <button class="vtab-btn" data-provider="openrouter">OpenRouter</button>
         </div>
 
-        <div class="modal-body">
+        <div class="vault-body">
           <div class="vault-add-row">
-            <input type="password" class="form-input" id="vault-key-input" placeholder="Paste API key...">
-            <input type="text" class="form-input small" id="vault-label-input" placeholder="Label">
-            <button class="btn-primary" id="btn-save-key">Add & Fetch</button>
+            <input type="password" class="vault-input" id="vault-key-input" placeholder="Paste API Key (Stored 100% locally in your browser)">
+            <input type="text" class="vault-input small" id="vault-label-input" placeholder="Label (e.g. Personal Key)">
+            <button class="btn-primary" id="btn-save-key">+ Save Key</button>
           </div>
 
-          <div class="vault-table-wrapper">
+          <div class="vault-table-container">
             <table class="vault-table">
               <thead>
                 <tr>
-                  <th>Key Preview</th>
+                  <th>Key Mask</th>
                   <th>Label</th>
                   <th>Status</th>
+                  <th>Created</th>
                   <th>Action</th>
                 </tr>
               </thead>
-              <tbody id="vault-table-body"></tbody>
+              <tbody id="vault-keys-list"></tbody>
             </table>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 
   <script src="app.js"></script>
