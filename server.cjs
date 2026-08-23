@@ -19,18 +19,18 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Update]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Initiating deploy: ${cmd}`);
+  console.log(`[Auto-Sync] Initiating Git push...`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Note] ${error.message}`);
+      console.warn(`[Auto-Sync Info] ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Push executed.');
+    console.log('[Auto-Sync] Live deploy synchronised.');
   });
 }
 
@@ -46,9 +46,9 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
+  console.log(`[Watcher] Monitoring directory: ${PUBLIC_DIR}`);
 } catch (err) {
-  console.warn(`[Watcher Notice] ${err.message}`);
+  console.warn(`[Watcher Warning] ${err.message}`);
 }
 
 const MIME_TYPES = {
@@ -127,7 +127,7 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        return res.end('500 Internal Server Error');
+        return res.end('500 Server Error');
       }
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
