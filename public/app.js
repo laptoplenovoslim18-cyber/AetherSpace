@@ -1,43 +1,39 @@
 (function () {
   'use strict';
 
-  const DEFAULT_MODELS = {
+  // TOP-TIER SOTA ROSTER (Obsolete and covered models purged)
+  const SOTA_ROSTER = {
     gemini: [
-      { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (Top Coding / Agentic)' },
-      { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Fast Agentic Fallback)' },
-      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)' },
-      { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (High-Throughput)' }
+      { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (SOTA Code & Agentic)' },
+      { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Fast Agentic)' },
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deepest Reasoning)' }
     ],
     hf: [
-      { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (HF Free)' },
-      { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 (HF Free)' },
-      { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek V3 (HF Free)' },
-      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (HF Free)' },
-      { id: 'meta-llama/Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B (HF Free)' }
+      { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (Top Open Code SOTA)' },
+      { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 (Open Reasoning SOTA)' },
+      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (Fast Open Utility)' }
     ],
     groq: [
-      { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Groq)' },
-      { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B (Groq)' },
-      { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant (Groq)' }
+      { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Groq LPU)' },
+      { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B (Groq LPU)' }
     ],
     openrouter: [
       { id: 'openrouter/free', name: 'OpenRouter Auto Free Router' },
-      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)' },
-      { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free)' }
+      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B Instruct (Free)' }
     ]
   };
 
   const state = {
     mode: 'chat', // 'chat' | 'multi' | 'orchestrator'
     autoRouter: true,
-    models: Object.assign({}, DEFAULT_MODELS),
+    models: Object.assign({}, SOTA_ROSTER),
     activeModel: 'gemini-3.7-flash',
     chatHistory: [],
     runSettings: {
       customModel: '',
       systemInstructions: '',
       thinkingBudget: 0,
-      searchGrounding: false,
+      searchGrounding: true,
       autoCascade: true,
       rateGovernor: true,
       temperature: 0.70,
@@ -46,8 +42,7 @@
     mcp: {
       search: true,
       github: false,
-      youtube: false,
-      customServerUrl: ''
+      youtube: false
     },
     keys: { gemini: [], hf: [], groq: [], openrouter: [] }
   };
@@ -70,7 +65,11 @@
     quickModelSelect: document.getElementById('quick-model-select'),
     btnFetchLiveModels: document.getElementById('btn-fetch-live-models'),
     keyCountBadge: document.getElementById('key-count-badge'),
-    mcpToolsBadge: document.getElementById('mcp-tools-badge'),
+
+    mcpToggleSearch: document.getElementById('mcp-toggle-search'),
+    mcpToggleGithub: document.getElementById('mcp-toggle-github'),
+    mcpToggleYoutube: document.getElementById('mcp-toggle-youtube'),
+    mcpRealtimeClock: document.getElementById('mcp-realtime-clock'),
 
     toggleRunSettingsBtn: document.getElementById('toggle-run-settings-btn'),
     settingsSlideout: document.getElementById('settings-slideout'),
@@ -95,14 +94,6 @@
     autoClassifyPreview: document.getElementById('auto-classify-preview'),
     vaultKeysTbody: document.getElementById('vault-keys-tbody'),
 
-    mcpModal: document.getElementById('mcp-modal'),
-    openMcpModalBtn: document.getElementById('open-mcp-modal-btn'),
-    btnCloseMcp: document.getElementById('btn-close-mcp'),
-    mcpToolSearch: document.getElementById('mcp-tool-search'),
-    mcpToolGithub: document.getElementById('mcp-tool-github'),
-    mcpToolYoutube: document.getElementById('mcp-tool-youtube'),
-    mcpCustomServerUrl: document.getElementById('mcp-custom-server-url'),
-
     tagBtns: document.querySelectorAll('.tag-btn')
   };
 
@@ -110,37 +101,21 @@
     try {
       const rawKeys = localStorage.getItem('aetherspace_vault_keys');
       if (rawKeys) state.keys = Object.assign({ gemini: [], hf: [], groq: [], openrouter: [] }, JSON.parse(rawKeys));
-      const rawMcp = localStorage.getItem('aetherspace_mcp_config');
-      if (rawMcp) state.mcp = Object.assign(state.mcp, JSON.parse(rawMcp));
     } catch (e) {
       console.warn('Storage notice', e);
     }
     updateKeyBadge();
-    updateMcpBadge();
   }
 
   function saveKeys() {
     localStorage.setItem('aetherspace_vault_keys', JSON.stringify(state.keys));
     updateKeyBadge();
-  }
-
-  function saveMcpConfig() {
-    localStorage.setItem('aetherspace_mcp_config', JSON.stringify(state.mcp));
-    updateMcpBadge();
+    populateModelSelectors();
   }
 
   function updateKeyBadge() {
     const total = Object.values(state.keys).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
-  }
-
-  function updateMcpBadge() {
-    let count = 0;
-    if (state.mcp.search) count++;
-    if (state.mcp.github) count++;
-    if (state.mcp.youtube) count++;
-    if (state.mcp.customServerUrl) count++;
-    dom.mcpToolsBadge.textContent = `${count} Active`;
   }
 
   function classifyApiKey(key) {
@@ -152,19 +127,33 @@
     return 'gemini';
   }
 
+  function getAvailableProvidersWithKeys() {
+    return Object.keys(state.keys).filter(p => (state.keys[p] || []).length > 0);
+  }
+
+  // PRUNE UNCONFIGURED PROVIDERS FROM DROPDOWN
   function populateModelSelectors() {
     dom.quickModelSelect.innerHTML = '';
     dom.settingModelSelect.innerHTML = '';
 
-    const labels = { gemini: 'Google AI Studio', hf: 'Hugging Face Free', groq: 'Groq Cloud', openrouter: 'OpenRouter' };
+    const available = getAvailableProvidersWithKeys();
+    const labels = { gemini: 'Google AI Studio', hf: 'Hugging Face SOTA', groq: 'Groq Cloud', openrouter: 'OpenRouter' };
 
-    Object.keys(state.models).forEach((provider) => {
+    if (available.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = '⚠️ Add Key in Vault to Unlock Models';
+      dom.quickModelSelect.appendChild(opt);
+      dom.settingModelSelect.appendChild(opt.cloneNode(true));
+      return;
+    }
+
+    available.forEach((provider) => {
       const optGroup1 = document.createElement('optgroup');
       optGroup1.label = labels[provider] || provider;
       const optGroup2 = document.createElement('optgroup');
       optGroup2.label = labels[provider] || provider;
 
-      state.models[provider].forEach((m) => {
+      (state.models[provider] || []).forEach((m) => {
         const opt1 = document.createElement('option');
         opt1.value = m.id;
         opt1.textContent = m.name;
@@ -181,10 +170,19 @@
       dom.quickModelSelect.appendChild(optGroup1);
       dom.settingModelSelect.appendChild(optGroup2);
     });
+
+    if (!available.some(p => (state.models[p] || []).some(m => m.id === state.activeModel))) {
+      state.activeModel = state.models[available[0]][0].id;
+      dom.quickModelSelect.value = state.activeModel;
+      dom.settingModelSelect.value = state.activeModel;
+    }
   }
 
-  function getAvailableProvidersWithKeys() {
-    return Object.keys(state.keys).filter(p => (state.keys[p] || []).length > 0);
+  function getRealtimeTemporalSystemContext() {
+    const now = new Date();
+    const timeStr = now.toLocaleString('de-DE', { dateStyle: 'full', timeStyle: 'long' });
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return `[CURRENT REAL-TIME CONTEXT: Datum & Uhrzeit: ${timeStr} | Zeitzone: ${tz} | ISO-8601: ${now.toISOString()}]\nHandle user queries using this exact live temporal baseline.`;
   }
 
   function decideModelKeyAware(prompt) {
@@ -211,11 +209,7 @@
       return 'llama-3.3-70b-versatile';
     }
 
-    if (available.includes('openrouter')) {
-      return 'openrouter/free';
-    }
-
-    return state.activeModel;
+    return state.models[available[0]][0].id;
   }
 
   function showGatewayStatus(text) {
@@ -256,7 +250,7 @@
     return { row, bubble };
   }
 
-  function renderFormattedContent(targetElement, rawText, isStreaming = false) {
+  function renderFormattedContent(targetElement, rawText, isStreaming = false, groundingSources = []) {
     const codeBlockRegex = /```([a-zA-Z0-9_\-\+\.]*)\n([\s\S]*?)```/g;
     let html = '';
     let lastIndex = 0;
@@ -284,6 +278,14 @@
     const remaining = rawText.substring(lastIndex);
     html += escapeHtml(remaining).replace(/\n/g, '<br>');
 
+    if (groundingSources && groundingSources.length > 0) {
+      html += '<div class="grounding-sources-box"><strong>🔍 Live Web Grounding Quellen:</strong><br>';
+      groundingSources.forEach(s => {
+        html += `• <a href="${escapeHtml(s.uri)}" target="_blank" style="color:var(--accent-cyan);">${escapeHtml(s.title || s.uri)}</a><br>`;
+      });
+      html += '</div>';
+    }
+
     if (isStreaming) html += '<span class="streaming-cursor"></span>';
     targetElement.innerHTML = html;
   }
@@ -301,9 +303,12 @@
     dom.chatViewport.scrollTop = dom.chatViewport.scrollHeight;
   }
 
-  // GEMINI STREAM CALL (ROBUST SEARCH GROUNDING & 429 TRAPPING)
+  // GEMINI STREAM CALL (WITH LIVE TEMPORAL & GROUNDING PARSING)
   async function streamGemini(apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    const temporalContext = getRealtimeTemporalSystemContext();
+    const fullSystem = (systemPrompt ? `${systemPrompt}\n\n` : '') + temporalContext;
+
     const contents = state.chatHistory.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }]
@@ -311,15 +316,12 @@
 
     const bodyPayload = {
       contents: contents,
+      systemInstruction: { parts: [{ text: fullSystem }] },
       generationConfig: {
         temperature: config.temperature,
         maxOutputTokens: config.maxOutputTokens
       }
     };
-
-    if (systemPrompt && systemPrompt.trim()) {
-      bodyPayload.systemInstruction = { parts: [{ text: systemPrompt }] };
-    }
 
     if (config.thinkingBudget > 0) {
       bodyPayload.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
@@ -352,6 +354,7 @@
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '', fullText = '';
+    const sources = [];
 
     while (true) {
       const { done, value } = await reader.read();
@@ -364,26 +367,37 @@
         if (line.trim().startsWith('data: ')) {
           try {
             const json = JSON.parse(line.trim().substring(6));
-            if (json.candidates && json.candidates[0] && json.candidates[0].content) {
-              const parts = json.candidates[0].content.parts || [];
-              for (const part of parts) {
-                if (part.text) {
-                  fullText += part.text;
-                  onChunk(fullText);
+            if (json.candidates && json.candidates[0]) {
+              const cand = json.candidates[0];
+              if (cand.content && cand.content.parts) {
+                for (const part of cand.content.parts) {
+                  if (part.text) {
+                    fullText += part.text;
+                    onChunk(fullText, sources);
+                  }
                 }
+              }
+              if (cand.groundingMetadata && cand.groundingMetadata.groundingChunks) {
+                cand.groundingMetadata.groundingChunks.forEach(c => {
+                  if (c.web && c.web.uri && !sources.some(s => s.uri === c.web.uri)) {
+                    sources.push({ uri: c.web.uri, title: c.web.title || c.web.uri });
+                  }
+                });
+                onChunk(fullText, sources);
               }
             }
           } catch (e) {}
         }
       }
     }
-    return fullText;
+    return { text: fullText, sources };
   }
 
   // HUGGING FACE SERVERLESS CALL
   async function streamHuggingFace(apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const endpoint = `https://api-inference.huggingface.co/models/${model}`;
-    const promptText = (systemPrompt ? `[SYSTEM: ${systemPrompt}]\n` : '') + `User: ${userMessage}\nAssistant:`;
+    const temporalContext = getRealtimeTemporalSystemContext();
+    const promptText = `[SYSTEM: ${(systemPrompt ? `${systemPrompt} ` : '')}${temporalContext}]\nUser: ${userMessage}\nAssistant:`;
 
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -404,14 +418,16 @@
     else if (json.generated_text) text = json.generated_text;
     else text = JSON.stringify(json);
 
-    onChunk(text);
-    return text;
+    onChunk(text, []);
+    return { text, sources: [] };
   }
 
   // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER)
   async function streamOpenAI(endpoint, apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const messages = [];
-    if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
+    const temporalContext = getRealtimeTemporalSystemContext();
+    const fullSystem = (systemPrompt ? `${systemPrompt}\n\n` : '') + temporalContext;
+    messages.push({ role: 'system', content: fullSystem });
     state.chatHistory.forEach(m => messages.push({ role: m.role, content: m.content }));
 
     const res = await fetch(endpoint, {
@@ -450,13 +466,13 @@
             const delta = json.choices && json.choices[0] && json.choices[0].delta ? json.choices[0].delta.content : '';
             if (delta) {
               fullText += delta;
-              onChunk(fullText);
+              onChunk(fullText, []);
             }
           } catch (e) {}
         }
       }
     }
-    return fullText;
+    return { text: fullText, sources: [] };
   }
 
   // UNIVERSAL CASCADE EXECUTION ENGINE (TRAPS 429/503 AND ROTATES TO NEXT MODEL/KEY)
@@ -472,7 +488,7 @@
 
     // Build fallback candidate roster across active keys
     if (availableProviders.includes('gemini')) {
-      ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'].forEach(m => {
+      ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.1-pro-preview'].forEach(m => {
         if (!candidateChain.includes(m)) candidateChain.push(m);
       });
     }
@@ -511,17 +527,17 @@
             showGatewayStatus(`Cascade Shift: ${model} (${provider.toUpperCase()} Key #${k + 1})`);
           }
 
-          let text = '';
+          let resObj = null;
           if (provider === 'gemini') {
-            text = await streamGemini(apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+            resObj = await streamGemini(apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
           } else if (provider === 'hf') {
-            text = await streamHuggingFace(apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+            resObj = await streamHuggingFace(apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
           } else if (provider === 'groq') {
-            text = await streamOpenAI('https://api.groq.com/openai/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+            resObj = await streamOpenAI('https://api.groq.com/openai/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
           } else if (provider === 'openrouter') {
-            text = await streamOpenAI('https://openrouter.ai/api/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+            resObj = await streamOpenAI('https://openrouter.ai/api/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
           }
-          return { text, model, provider };
+          return { text: resObj.text, sources: resObj.sources, model, provider };
         } catch (err) {
           lastError = err;
           console.warn(`[Gateway Cascade] ${model} on key #${k + 1} status ${err.status || err.message}. Shifting...`);
@@ -554,63 +570,67 @@
       renderFormattedContent(bubble, '', true);
 
       try {
-        const result = await executeWithResilientCascade(chosenModel, text, acc => {
-          renderFormattedContent(bubble, acc, true);
+        const result = await executeWithResilientCascade(chosenModel, text, (acc, sources) => {
+          renderFormattedContent(bubble, acc, true, sources);
           scrollToBottom();
         });
         row.querySelector('.chat-header-meta span').textContent = result.model;
-        renderFormattedContent(bubble, result.text, false);
+        renderFormattedContent(bubble, result.text, false, result.sources);
         state.chatHistory.push({ role: 'assistant', content: result.text });
       } catch (err) {
         renderFormattedContent(bubble, `Gateway Cascade Notice: ${err.message}`);
       }
     }
 
-    // 2. TRUE 3-AGENT CONSENSUS PIPELINE (Architect -> Auditor -> Arbiter)
+    // 2. TRUE CROSS-PROVIDER MULTI-AGENT PIPELINE
     else if (state.mode === 'multi') {
       const { bubble, row } = createAssistantMessageNode('Multi-Agent Consensus Pipeline');
       bubble.innerHTML = `
-        <div class="agent-step-card"><div class="agent-step-header architect">⚡ Agent 1 (Architect): Initial Solution Drafting</div><div class="agent-body-1"></div></div>
-        <div class="agent-step-card"><div class="agent-step-header reviewer">🛡️ Agent 2 (Security & Logic Auditor): Deep Review & Verification</div><div class="agent-body-2"></div></div>
-        <div class="agent-step-card"><div class="agent-step-header arbiter">✨ Agent 3 (Arbiter): Final Production Synthesis</div><div class="agent-body-3"></div></div>
+        <div class="agent-step-card"><div class="agent-step-header architect">⚡ Agent 1 (Architect / Lead): Drafting Solution...</div><div class="agent-body-1"></div></div>
+        <div class="agent-step-card"><div class="agent-step-header reviewer">🛡️ Agent 2 (Auditor): Cross-Model Security & Logic Review...</div><div class="agent-body-2"></div></div>
+        <div class="agent-step-card"><div class="agent-step-header arbiter">✨ Agent 3 (Arbiter): Final Production Synthesis...</div><div class="agent-body-3"></div></div>
       `;
       const body1 = bubble.querySelector('.agent-body-1');
       const body2 = bubble.querySelector('.agent-body-2');
       const body3 = bubble.querySelector('.agent-body-3');
 
       try {
-        // Step 1: Architect Draft
+        // Step 1: Architect Draft (Gemini or Primary Key)
         showGatewayStatus('Multi-Agent: Step 1 (Architect Drafting)...');
-        const r1 = await executeWithResilientCascade(chosenModel, text, acc => {
-          renderFormattedContent(body1, acc, true);
+        const r1 = await executeWithResilientCascade(chosenModel, text, (acc, sources) => {
+          renderFormattedContent(body1, acc, true, sources);
           scrollToBottom();
         });
-        renderFormattedContent(body1, r1.text, false);
+        renderFormattedContent(body1, r1.text, false, r1.sources);
 
-        // Step 2: Auditor Review
-        showGatewayStatus('Multi-Agent: Step 2 (Security & Logic Audit)...');
-        const auditPrompt = `You are the Lead Security & Logic Auditor. Review this draft solution for bugs, edge cases, and optimizations:\n${r1.text}`;
-        const r2 = await executeWithResilientCascade(null, auditPrompt, acc => {
-          renderFormattedContent(body2, acc, true);
+        // Step 2: Auditor Review (Hugging Face Qwen 2.5 Coder or secondary model)
+        const availableHf = (state.keys.hf || []).length > 0;
+        const auditorModel = availableHf ? 'Qwen/Qwen2.5-Coder-32B-Instruct' : (r1.model === 'gemini-3.6-flash' ? 'gemini-3.1-pro-preview' : 'gemini-3.6-flash');
+        bubble.querySelector('.agent-step-header.reviewer').textContent = `🛡️ Agent 2 (${auditorModel}): Cross-Model Security & Logic Review`;
+
+        showGatewayStatus(`Multi-Agent: Step 2 (${auditorModel} Audit)...`);
+        const auditPrompt = `You are the Lead Security & Code Auditor. Review this draft solution for bugs, edge cases, date accuracy, and optimizations:\n${r1.text}`;
+        const r2 = await executeWithResilientCascade(auditorModel, auditPrompt, (acc, sources) => {
+          renderFormattedContent(body2, acc, true, sources);
           scrollToBottom();
         });
-        renderFormattedContent(body2, r2.text, false);
+        renderFormattedContent(body2, r2.text, false, r2.sources);
 
-        // Step 3: Arbiter Synthesis
+        // Step 3: Arbiter Synthesis (Final Production Code)
         showGatewayStatus('Multi-Agent: Step 3 (Arbiter Production Synthesis)...');
-        const arbiterPrompt = `You are the Arbiter. Synthesize the final, verified, production-ready solution based on the draft and audit:\nDraft:\n${r1.text}\nAudit Findings:\n${r2.text}`;
-        const r3 = await executeWithResilientCascade(chosenModel, arbiterPrompt, acc => {
-          renderFormattedContent(body3, acc, true);
+        const arbiterPrompt = `You are the Arbiter. Synthesize the final, verified, production-ready solution incorporating the draft and audit:\nDraft:\n${r1.text}\nAudit Findings:\n${r2.text}`;
+        const r3 = await executeWithResilientCascade(chosenModel, arbiterPrompt, (acc, sources) => {
+          renderFormattedContent(body3, acc, true, sources);
           scrollToBottom();
         });
-        renderFormattedContent(body3, r3.text, false);
+        renderFormattedContent(body3, r3.text, false, r3.sources);
         state.chatHistory.push({ role: 'assistant', content: r3.text });
       } catch (err) {
         bubble.innerHTML += `<div style="color:var(--accent-rose); margin-top:8px;">Pipeline Cascade Notice: ${err.message}</div>`;
       }
     }
 
-    // 3. SUPERVISOR ORCHESTRATION PIPELINE (Plan -> Worker -> Arbiter)
+    // 3. SUPERVISOR ORCHESTRATION PIPELINE
     else if (state.mode === 'orchestrator') {
       const { bubble } = createAssistantMessageNode('Supervisor Orchestrator Pipeline');
       bubble.innerHTML = `
@@ -622,19 +642,19 @@
 
       try {
         showGatewayStatus('Orchestrator: Supervisor generating execution plan...');
-        const rPlan = await executeWithResilientCascade(chosenModel, `Generate a clean, step-by-step architectural breakdown for: ${text}`, acc => {
-          renderFormattedContent(planEl, acc, true);
+        const rPlan = await executeWithResilientCascade(chosenModel, `Generate a clean, step-by-step architectural breakdown for: ${text}`, (acc, sources) => {
+          renderFormattedContent(planEl, acc, true, sources);
           scrollToBottom();
         });
-        renderFormattedContent(planEl, rPlan.text, false);
+        renderFormattedContent(planEl, rPlan.text, false, rPlan.sources);
 
         showGatewayStatus('Orchestrator: Worker executing full implementation...');
         const execPrompt = `Based on this architectural plan:\n${rPlan.text}\nImplement the complete, deterministic, production-ready code with zero placeholders for: ${text}`;
-        const rExec = await executeWithResilientCascade(null, execPrompt, acc => {
-          renderFormattedContent(execEl, acc, true);
+        const rExec = await executeWithResilientCascade(null, execPrompt, (acc, sources) => {
+          renderFormattedContent(execEl, acc, true, sources);
           scrollToBottom();
         });
-        renderFormattedContent(execEl, rExec.text, false);
+        renderFormattedContent(execEl, rExec.text, false, rExec.sources);
         state.chatHistory.push({ role: 'assistant', content: rExec.text });
       } catch (err) {
         bubble.innerHTML += `<div style="color:var(--accent-rose); margin-top:8px;">Orchestrator Cascade Notice: ${err.message}</div>`;
@@ -710,7 +730,15 @@
     });
   }
 
+  function updateLiveClock() {
+    const now = new Date();
+    dom.mcpRealtimeClock.textContent = now.toLocaleTimeString('de-DE');
+  }
+
   function initEvents() {
+    setInterval(updateLiveClock, 1000);
+    updateLiveClock();
+
     dom.promptInput.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -735,6 +763,22 @@
         dom.promptInput.value = b.dataset.preset;
         dom.promptInput.focus();
       });
+    });
+
+    dom.mcpToggleSearch.addEventListener('click', () => {
+      state.mcp.search = !state.mcp.search;
+      dom.mcpToggleSearch.classList.toggle('active', state.mcp.search);
+      dom.mcpToggleSearch.querySelector('span').textContent = `🌐 Web-Search: ${state.mcp.search ? 'ON' : 'OFF'}`;
+    });
+
+    dom.mcpToggleGithub.addEventListener('click', () => {
+      state.mcp.github = !state.mcp.github;
+      dom.mcpToggleGithub.classList.toggle('active', state.mcp.github);
+    });
+
+    dom.mcpToggleYoutube.addEventListener('click', () => {
+      state.mcp.youtube = !state.mcp.youtube;
+      dom.mcpToggleYoutube.classList.toggle('active', state.mcp.youtube);
     });
 
     dom.btnToggleAutoRouter.addEventListener('click', () => {
@@ -853,14 +897,6 @@
       dom.autoClassifyPreview.textContent = 'Paste an API key above for instant automatic provider classification.';
       renderVaultKeys();
     });
-
-    dom.openMcpModalBtn.addEventListener('click', () => dom.mcpModal.style.display = 'flex');
-    dom.btnCloseMcp.addEventListener('click', () => dom.mcpModal.style.display = 'none');
-
-    dom.mcpToolSearch.addEventListener('change', () => { state.mcp.search = dom.mcpToolSearch.checked; saveMcpConfig(); });
-    dom.mcpToolGithub.addEventListener('change', () => { state.mcp.github = dom.mcpToolGithub.checked; saveMcpConfig(); });
-    dom.mcpToolYoutube.addEventListener('change', () => { state.mcp.youtube = dom.mcpToolYoutube.checked; saveMcpConfig(); });
-    dom.mcpCustomServerUrl.addEventListener('input', () => { state.mcp.customServerUrl = dom.mcpCustomServerUrl.value.trim(); saveMcpConfig(); });
   }
 
   function init() {
