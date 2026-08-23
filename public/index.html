@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AetherSpace | AI Studio</title>
+  <title>AetherSpace</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,6 @@
 </head>
 <body>
   <div id="app-root" class="app-layout">
-    <!-- TOP NAVIGATION BAR -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
@@ -21,140 +20,130 @@
           </svg>
           <span class="brand-title">AetherSpace</span>
         </div>
-
-        <div class="model-picker-wrapper">
+        <div class="model-selector-wrapper">
           <select id="model-select" class="header-select" title="Active Model">
-            <option value="auto">Auto-Select (Dynamic Fetch)</option>
+            <option value="" disabled selected>No API key configured</option>
           </select>
-          <button id="btn-refresh-models" class="icon-tool-btn" title="Fetch Live Models from API">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <button id="btn-refresh-models" class="icon-tool-btn" title="Refresh Live Model Catalog">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
         </div>
       </div>
 
       <div class="header-right">
-        <button class="action-btn" id="btn-codepen" title="Export Current Code Artifacts to CodePen">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
-          <span>CodePen</span>
-        </button>
-
-        <button class="action-btn" id="btn-key-vault">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Key Vault</span>
+        <button class="action-btn" id="open-key-vault-btn" title="Key Vault">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Keys</span>
           <span class="badge" id="key-count-badge">0</span>
         </button>
 
-        <button class="action-btn" id="btn-toggle-settings" title="Engine Settings">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-
-        <button class="action-btn" id="btn-clear-chat" title="Clear Conversation History">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        <button class="action-btn" id="toggle-settings-btn" title="Settings">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Parameters</span>
         </button>
       </div>
     </header>
 
-    <!-- UNIFIED MAIN VIEWPORT -->
-    <main class="chat-viewport">
-      <div class="chat-stream-container" id="chat-stream">
-        <div class="chat-welcome-box" id="welcome-box">
-          <h2>Unified AI Gateway</h2>
-          <p>Direct API integration with dynamic model fetching and automated fallback.</p>
+    <main class="chat-main-container">
+      <div class="chat-stream" id="chat-stream">
+        <div class="chat-empty-view" id="chat-empty-view">
+          <div class="empty-icon-circle">
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h2>Unified AI Workspace</h2>
+          <p>Direct live streaming, automatic failover retry, and multi-provider dynamic routing.</p>
         </div>
       </div>
 
-      <!-- BOTTOM PROMPT DOCK -->
-      <div class="prompt-dock">
-        <div class="prompt-status-bar" id="gateway-status-bar">
-          <span class="status-indicator ready" id="gateway-status-dot"></span>
-          <span id="gateway-status-text">Gateway Ready (BYOK Client Mode)</span>
-        </div>
-        <div class="prompt-input-container">
-          <textarea id="prompt-input" rows="1" placeholder="Type prompt, ask question, or request code (Enter to send, Shift+Enter for newline)..." autofocus></textarea>
-          <button id="btn-send" class="send-btn" title="Execute Prompt">
+      <div class="chat-composer-area">
+        <div class="composer-box">
+          <textarea id="prompt-input" rows="1" placeholder="Send a message or code task (Ctrl+Enter to send)..."></textarea>
+          <button id="btn-send" class="send-btn" title="Execute">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
+        </div>
+        <div class="composer-status-bar">
+          <span id="status-text" class="status-indicator">Ready</span>
         </div>
       </div>
     </main>
 
-    <!-- SETTINGS SLIDEOUT DRAWER -->
-    <aside class="settings-drawer" id="settings-drawer">
-      <div class="drawer-header">
-        <h3>Engine Settings</h3>
-        <button id="btn-close-settings" class="icon-tool-btn">&times;</button>
-      </div>
-      <div class="drawer-body">
-        <div class="form-group">
-          <label for="system-instructions">System Instructions</label>
-          <textarea id="system-instructions" rows="4" placeholder="Optional system instruction (leave empty for default)..."></textarea>
-        </div>
-        <div class="form-group">
-          <label for="thinking-budget">Thinking Budget (Tokens)</label>
-          <select id="thinking-budget" class="form-select">
-            <option value="0">0 (Disabled / Instant)</option>
-            <option value="1024">1,024 (Low)</option>
-            <option value="4096" selected>4,096 (Medium)</option>
-            <option value="16384">16,384 (Deep Reasoning)</option>
-          </select>
-        </div>
-        <div class="form-group toggle-group">
-          <label for="search-grounding">Search Grounding</label>
-          <input type="checkbox" id="search-grounding">
-        </div>
-        <div class="form-group toggle-group">
-          <label for="auto-fallback">Auto-Fallback Mesh</label>
-          <input type="checkbox" id="auto-fallback" checked>
-        </div>
-        <div class="form-group">
-          <div class="range-header">
-            <label>Max Output Tokens</label>
-            <span id="output-tokens-val">8192</span>
-          </div>
-          <input type="range" id="max-output-tokens" min="512" max="65536" step="512" value="8192">
-        </div>
-        <div class="form-group">
-          <div class="range-header">
-            <label>Temperature</label>
-            <span id="temp-val">0.70</span>
-          </div>
-          <input type="range" id="temperature" min="0" max="2" step="0.05" value="0.70">
-        </div>
-      </div>
-    </aside>
-
     <!-- KEY VAULT MODAL -->
-    <div class="modal-backdrop" id="vault-modal" style="display: none;">
-      <div class="modal-box">
+    <div class="modal-overlay" id="key-vault-modal" style="display:none;">
+      <div class="modal-card">
         <div class="modal-header">
-          <h3>API Key Vault</h3>
-          <button id="btn-close-vault" class="icon-tool-btn">&times;</button>
+          <h2>Key Vault & Provider Pool</h2>
+          <button class="icon-tool-btn" id="btn-close-vault">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
-        <div class="modal-tabs">
-          <button class="tab-btn active" data-provider="gemini">Google AI Studio</button>
-          <button class="tab-btn" data-provider="groq">Groq Cloud</button>
-          <button class="tab-btn" data-provider="openrouter">OpenRouter</button>
+
+        <div class="vault-tabs">
+          <button class="vault-tab-btn active" data-provider="gemini">Google AI Studio</button>
+          <button class="vault-tab-btn" data-provider="groq">Groq Cloud</button>
+          <button class="vault-tab-btn" data-provider="openrouter">OpenRouter</button>
         </div>
-        <div class="modal-body">
-          <div class="input-row">
-            <input type="password" id="vault-key-input" placeholder="Paste API Key (e.g. AIzaSy... or gsk_...)">
-            <button id="btn-add-key" class="btn-primary">+ Save Key</button>
+
+        <div class="vault-body">
+          <div class="key-add-bar">
+            <input type="password" class="vault-input" id="vault-key-input" placeholder="Paste API Key">
+            <input type="text" class="vault-input small" id="vault-label-input" placeholder="Label">
+            <button class="btn-sm primary" id="btn-add-key">+ Save</button>
           </div>
-          <div class="key-list-wrapper">
-            <table class="key-table">
+          <div class="vault-table-wrapper">
+            <table class="vault-table">
               <thead>
-                <tr>
-                  <th>Key Mask</th>
-                  <th>Created</th>
-                  <th>Action</th>
-                </tr>
+                <tr><th>Key</th><th>Label</th><th>Action</th></tr>
               </thead>
-              <tbody id="key-table-body"></tbody>
+              <tbody id="vault-keys-tbody"></tbody>
             </table>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- SETTINGS DRAWER -->
+    <aside class="settings-slideout" id="settings-slideout">
+      <div class="slideout-header">
+        <h3>Parameters</h3>
+        <button class="icon-tool-btn" id="btn-close-settings">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="slideout-content">
+        <div class="form-group">
+          <label class="form-label" for="setting-system-instructions">System Instructions</label>
+          <textarea class="form-textarea" id="setting-system-instructions" rows="4" placeholder="Optional system prompt..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="setting-thinking-level">Thinking Budget</label>
+          <select class="form-select" id="setting-thinking-level">
+            <option value="0" selected>Disabled (0 tokens)</option>
+            <option value="1024">1,024</option>
+            <option value="4096">4,096</option>
+            <option value="16384">16,384</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-row">
+            <label class="form-label">Temperature</label>
+            <span class="range-val" id="setting-temp-val">0.70</span>
+          </div>
+          <input type="range" class="form-range" id="setting-temp" min="0.0" max="2.0" step="0.05" value="0.70">
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-row">
+            <label class="form-label">Max Output Tokens</label>
+            <span class="range-val" id="setting-output-length-val">8192</span>
+          </div>
+          <input type="range" class="form-range" id="setting-output-length" min="256" max="65536" step="256" value="8192">
+        </div>
+      </div>
+    </aside>
   </div>
 
   <script src="app.js"></script>

@@ -19,17 +19,17 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Engine]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Unified Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Debounce triggered. Running Git sync...`);
-  exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
+  console.log(`[Auto-Sync] Executing: ${cmd}`);
+  exec(cmd, { cwd: __dirname }, (error, stdout) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Notice] ${error.message}`);
+      console.warn(`[Auto-Sync Note] ${error.message}`);
       return;
     }
-    if (stdout) console.log(`[Git]\n${stdout}`);
+    if (stdout) console.log(`[Git] ${stdout.trim()}`);
   });
 }
 
@@ -45,7 +45,7 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[File Watcher] Active on ${PUBLIC_DIR}`);
+  console.log(`[Watcher] Active on: ${PUBLIC_DIR}`);
 } catch (err) {
   console.warn(`[Watcher Warning] ${err.message}`);
 }
@@ -63,45 +63,7 @@ const MIME_TYPES = {
 
 const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = parsedUrl.pathname;
-
-  if (pathname === '/api/status' && req.method === 'GET') {
-    const mem = process.memoryUsage();
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    return res.end(JSON.stringify({
-      status: 'online',
-      uptime: process.uptime(),
-      memoryRssMb: (mem.rss / (1024 * 1024)).toFixed(2)
-    }));
-  }
-
-  if (pathname === '/api/save' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
-      try {
-        const payload = JSON.parse(body);
-        if (!payload.filename || typeof payload.content !== 'string') {
-          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Payload missing parameters' }));
-        }
-
-        const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
-        const targetPath = path.join(PUBLIC_DIR, safeFilename);
-
-        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-        fs.writeFileSync(targetPath, payload.content, 'utf8');
-
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify({ success: true, path: safeFilename }));
-      } catch (e) {
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-
+  let pathname = parsedUrl.pathname;
   let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
   const ext = path.extname(filePath).toLowerCase();
 
@@ -135,5 +97,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
+  console.log(`[AetherSpace] Running at http://127.0.0.1:${PORT}`);
 });
