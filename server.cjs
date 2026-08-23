@@ -19,18 +19,18 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Update]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Engine]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Initiating Git push...`);
-  exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
+  console.log(`[Auto-Sync] Changes detected. Executing Git sync...`);
+  exec(cmd, { cwd: __dirname }, (error, stdout) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Info] ${error.message}`);
+      console.warn(`[Auto-Sync Info] Note: ${error.message}`);
       return;
     }
-    if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Live deploy synchronised.');
+    if (stdout) console.log(`[Git Output]\n${stdout}`);
+    console.log('[Auto-Sync] Cloudflare Pages / GitHub deploy triggered.');
   });
 }
 
@@ -46,7 +46,7 @@ try {
     if (filename && (filename.startsWith('.') || filename.includes('node_modules'))) return;
     scheduleSync();
   });
-  console.log(`[Watcher] Monitoring directory: ${PUBLIC_DIR}`);
+  console.log(`[Watcher] Monitoring distribution directory: ${PUBLIC_DIR}`);
 } catch (err) {
   console.warn(`[Watcher Warning] ${err.message}`);
 }
@@ -80,33 +80,6 @@ const server = http.createServer((req, res) => {
     }));
   }
 
-  if (pathname === '/api/save' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
-      try {
-        const payload = JSON.parse(body);
-        if (!payload.filename || typeof payload.content !== 'string') {
-          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Missing parameters' }));
-        }
-
-        const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
-        const targetPath = path.join(PUBLIC_DIR, safeFilename);
-
-        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-        fs.writeFileSync(targetPath, payload.content, 'utf8');
-
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify({ success: true, path: safeFilename }));
-      } catch (e) {
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-
   let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
   const ext = path.extname(filePath).toLowerCase();
 
@@ -127,7 +100,7 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        return res.end('500 Server Error');
+        return res.end('500 Internal Server Error');
       }
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
