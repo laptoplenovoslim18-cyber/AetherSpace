@@ -19,27 +19,24 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [deploy via AetherSpace SOTA Gateway]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Update]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] 2.5s debounce elapsed. Executing: ${cmd}`);
+  console.log(`[Auto-Sync] Debounce elapsed. Executing: ${cmd}`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {
-      console.warn(`[Auto-Sync Notice] Git pipeline note: ${error.message}`);
+      console.warn(`[Auto-Sync Notice] ${error.message}`);
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    if (stderr) console.log(`[Git stderr]\n${stderr}`);
-    console.log('[Auto-Sync] Pipeline deployed successfully to Cloudflare Pages.');
+    console.log('[Auto-Sync] Cloudflare Pages deployment updated.');
   });
 }
 
 function scheduleSync() {
   if (syncTimeout) clearTimeout(syncTimeout);
-  syncTimeout = setTimeout(() => {
-    triggerGitSync();
-  }, DEBOUNCE_MS);
+  syncTimeout = setTimeout(() => triggerGitSync(), DEBOUNCE_MS);
 }
 
 try {
@@ -79,33 +76,6 @@ const server = http.createServer((req, res) => {
     }));
   }
 
-  if (pathname === '/api/save' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
-      try {
-        const payload = JSON.parse(body);
-        if (!payload.filename || typeof payload.content !== 'string') {
-          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ error: 'Missing parameters' }));
-        }
-
-        const safeFilename = path.normalize(payload.filename).replace(/^(\.\.[\/\\])+/, '');
-        const targetPath = path.join(PUBLIC_DIR, safeFilename);
-
-        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-        fs.writeFileSync(targetPath, payload.content, 'utf8');
-
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify({ success: true, path: safeFilename }));
-      } catch (e) {
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-
   let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
   const ext = path.extname(filePath).toLowerCase();
 
@@ -140,5 +110,4 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[AetherSpace Server] Online: http://127.0.0.1:${PORT}`);
-  console.log(`[AetherSpace Server] Serving distribution from: ${PUBLIC_DIR}`);
 });

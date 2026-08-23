@@ -30,57 +30,59 @@
       </div>
 
       <div class="header-right">
-        <!-- AUTO-DECISION ROUTER TOGGLE -->
-        <button class="pill-toggle active" id="btn-toggle-auto-router" title="Auto-select optimal model based on prompt complexity">
+        <!-- AUTO-ROUTER TOGGLE -->
+        <button class="pill-toggle active" id="btn-toggle-auto-router" title="Key-Aware Auto Router">
           <span class="pill-indicator online"></span>
           <span class="pill-text">Auto-Router: ON</span>
         </button>
 
-        <!-- MODEL SELECTOR -->
+        <!-- DYNAMIC MODEL PICKER -->
         <div class="header-model-picker">
           <select id="quick-model-select" class="header-select"></select>
-          <button class="icon-tool-btn" id="btn-fetch-live-models" title="Fetch live provider inventory">
+          <button class="icon-tool-btn" id="btn-fetch-live-models" title="Fetch live models from provider">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
           </button>
         </div>
 
-        <button class="action-btn" id="open-space-manager-btn" title="Manage Connected Hugging Face Spaces">
-          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-          <span>HF Spaces</span>
-          <span class="badge" id="space-count-badge">0 Active</span>
+        <!-- MCP TOOLS MODAL TRIGGER -->
+        <button class="action-btn" id="open-mcp-modal-btn" title="Model Context Protocol & Tools">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>MCP Tools</span>
+          <span class="badge" id="mcp-tools-badge">1 Active</span>
         </button>
 
-        <button class="action-btn" id="open-key-vault-btn" title="API Key Vault & Auto-Regex Classifier">
+        <!-- KEY VAULT -->
+        <button class="action-btn" id="open-key-vault-btn" title="API Key Vault">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Key Vault</span>
           <span class="badge" id="key-count-badge">0 Keys</span>
         </button>
 
-        <button class="action-btn primary" id="toggle-run-settings-btn" title="Run Settings & Architecture">
+        <button class="action-btn primary" id="toggle-run-settings-btn" title="Run Settings">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Run Settings</span>
         </button>
       </div>
     </header>
 
-    <!-- UNIFIED SINGLE-SCREEN CANVAS -->
+    <!-- UNIFIED CANVAS -->
     <main class="main-canvas">
       <div class="chat-viewport" id="chat-viewport">
         <div class="chat-messages-container" id="chat-messages">
           <div class="welcome-screen" id="welcome-screen">
-            <h1 class="welcome-title">AetherSpace Gateway</h1>
-            <p class="welcome-subtitle">Unified Multi-Provider AI Studio with 100% Zero Local Load. Bring Your Own Keys or connect Hugging Face Spaces.</p>
+            <h1 class="welcome-title">AetherSpace Studio</h1>
+            <p class="welcome-subtitle">Unified Multi-Provider AI Studio with 100% Zero Local KI Load. Direct Chat, Multi-Agent Collaboration, and Supervisor Orchestration.</p>
             <div class="quick-tags">
               <button class="tag-btn" data-preset="Build a full-stack dashboard with real-time charts and dark theme.">💻 Full-Stack Application</button>
               <button class="tag-btn" data-preset="Architect a distributed microservice architecture with resilience patterns.">⚡ System Architecture</button>
               <button class="tag-btn" data-preset="Audit the codebase for security vulnerabilities, race conditions, and memory leaks.">🛡️ Deep Code Audit</button>
-              <button class="tag-btn" data-preset="Design a multi-agent orchestration pipeline with Arbiter consensus.">🤖 Multi-Agent Pipeline</button>
+              <button class="tag-btn" data-preset="Design an orchestration pipeline with Arbiter consensus.">🤖 Multi-Agent Pipeline</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- BOTTOM FLOATING PROMPT BAR -->
+      <!-- PROMPT BAR -->
       <div class="prompt-bar-container">
         <div class="gateway-status-line" id="gateway-status-line" style="display:none;">
           <span class="status-dot-pulse"></span>
@@ -88,7 +90,7 @@
         </div>
 
         <div class="prompt-bar-card">
-          <textarea class="prompt-input" id="prompt-input" rows="2" placeholder="Ask AI, instruct code synthesis, or orchestrate agents (Enter to send, Shift+Enter for newline)..."></textarea>
+          <textarea class="prompt-input" id="prompt-input" rows="2" placeholder="Send prompt, code instruction, or multi-agent task (Enter to send, Shift+Enter for newline)..."></textarea>
           <div class="prompt-bar-actions">
             <div class="prompt-actions-left">
               <span class="mode-badge" id="active-mode-badge">Direct Chat</span>
@@ -106,7 +108,7 @@
       </div>
     </main>
 
-    <!-- SLIDE-OUT RUN SETTINGS -->
+    <!-- RUN SETTINGS -->
     <aside class="settings-slideout" id="settings-slideout">
       <div class="slideout-header">
         <h2>Run Settings</h2>
@@ -119,6 +121,11 @@
         <div class="form-group">
           <label class="form-label" for="setting-model-select">Active Model</label>
           <select class="form-select" id="setting-model-select"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="setting-custom-model">Custom Model ID (Hugging Face / OpenRouter)</label>
+          <input type="text" class="form-input" id="setting-custom-model" placeholder="e.g. Qwen/Qwen2.5-Coder-32B-Instruct">
         </div>
 
         <div class="form-group">
@@ -153,23 +160,10 @@
           <div class="toggle-row">
             <div>
               <div class="toggle-label">80% Rate-Limit Governor</div>
-              <div class="toggle-desc">Proactively shifts keys before reaching provider hard lock.</div>
+              <div class="toggle-desc">Proactively rotates keys before reaching provider hard locks.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-rate-governor" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <div class="toggle-row">
-            <div>
-              <div class="toggle-label">Google Search Grounding</div>
-              <div class="toggle-desc">Live web retrieval tools in Gemini API calls.</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="setting-search-grounding">
               <span class="slider"></span>
             </label>
           </div>
@@ -222,7 +216,7 @@
                   <th>Provider</th>
                   <th>Key Mask</th>
                   <th>Label</th>
-                  <th>Tier / Status</th>
+                  <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -233,29 +227,54 @@
       </div>
     </div>
 
-    <!-- HUGGING FACE SPACE MANAGER MODAL -->
-    <div class="modal-overlay" id="space-manager-modal" style="display:none;">
-      <div class="modal-card">
+    <!-- MCP TOOLS MODAL -->
+    <div class="modal-overlay" id="mcp-modal" style="display:none;">
+      <div class="modal-card wide">
         <div class="modal-header">
-          <h2>Connected Hugging Face Spaces</h2>
-          <button class="icon-tool-btn" id="btn-close-space-manager">
+          <h2>Model Context Protocol (MCP) & Tools</h2>
+          <button class="icon-tool-btn" id="btn-close-mcp">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
-        <div class="space-manager-body">
-          <div class="space-guide-box">
-            <p><strong>Connect Free Hugging Face Spaces (BYOC):</strong></p>
-            <p>You can connect your own Hugging Face Spaces (e.g. Static Gradio-Lite, Transformers.js, or Docker endpoints). Saved 100% in your local browser.</p>
+        <div class="mcp-body">
+          <div class="mcp-tool-row">
+            <div>
+              <div class="toggle-label">🌐 Web Search Tool (Google / Grounding)</div>
+              <div class="toggle-desc">Allows models to query live search index during reasoning.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="mcp-tool-search" checked>
+              <span class="slider"></span>
+            </label>
           </div>
 
-          <div class="space-add-bar">
-            <input type="text" class="vault-input" id="space-url-input" placeholder="Space URL (e.g. https://your-name-space.hf.space)">
-            <input type="text" class="vault-input small" id="space-name-input" placeholder="Space Label (e.g. Space #1)">
-            <button class="btn-sm primary" id="btn-add-space">+ Link Space</button>
+          <div class="mcp-tool-row">
+            <div>
+              <div class="toggle-label">🐙 GitHub Repository Connector</div>
+              <div class="toggle-desc">Fetches live files and repositories directly into prompt context.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="mcp-tool-github">
+              <span class="slider"></span>
+            </label>
           </div>
 
-          <div class="space-list" id="space-items-list"></div>
+          <div class="mcp-tool-row">
+            <div>
+              <div class="toggle-label">📺 YouTube Transcript Extractor</div>
+              <div class="toggle-desc">Extracts captions and summaries directly from YouTube URLs.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="mcp-tool-youtube">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="mcp-custom-server-box">
+            <label class="form-label">Custom MCP Server URL (SSE / JSON-RPC)</label>
+            <input type="text" class="vault-input" id="mcp-custom-server-url" placeholder="e.g. http://localhost:3000/sse or https://mcp.your-domain.com">
+          </div>
         </div>
       </div>
     </div>

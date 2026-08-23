@@ -8,6 +8,13 @@
       { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)' },
       { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (High-Throughput)' }
     ],
+    hf: [
+      { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (HF Free)' },
+      { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 (HF Free)' },
+      { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek V3 (HF Free)' },
+      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (HF Free)' },
+      { id: 'meta-llama/Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B (HF Free)' }
+    ],
     groq: [
       { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Groq)' },
       { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B (Groq)' },
@@ -17,11 +24,6 @@
       { id: 'openrouter/free', name: 'OpenRouter Auto Free Router' },
       { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)' },
       { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free)' }
-    ],
-    hf: [
-      { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (HF Free)' },
-      { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 (HF Free)' },
-      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (HF Free)' }
     ]
   };
 
@@ -32,6 +34,7 @@
     activeModel: 'gemini-3.7-flash',
     chatHistory: [],
     runSettings: {
+      customModel: '',
       systemInstructions: '',
       thinkingBudget: 0,
       searchGrounding: false,
@@ -40,9 +43,13 @@
       temperature: 0.70,
       maxOutputTokens: 8192
     },
-    keys: { gemini: [], groq: [], openrouter: [], hf: [], youtube: [] },
-    spaces: [],
-    requestCounters: {}
+    mcp: {
+      search: true,
+      github: false,
+      youtube: false,
+      customServerUrl: ''
+    },
+    keys: { gemini: [], hf: [], groq: [], openrouter: [] }
   };
 
   const dom = {
@@ -63,17 +70,17 @@
     quickModelSelect: document.getElementById('quick-model-select'),
     btnFetchLiveModels: document.getElementById('btn-fetch-live-models'),
     keyCountBadge: document.getElementById('key-count-badge'),
-    spaceCountBadge: document.getElementById('space-count-badge'),
+    mcpToolsBadge: document.getElementById('mcp-tools-badge'),
 
     toggleRunSettingsBtn: document.getElementById('toggle-run-settings-btn'),
     settingsSlideout: document.getElementById('settings-slideout'),
     btnCloseSettings: document.getElementById('btn-close-settings'),
     settingModelSelect: document.getElementById('setting-model-select'),
+    settingCustomModel: document.getElementById('setting-custom-model'),
     settingSystemInstructions: document.getElementById('setting-system-instructions'),
     settingThinkingBudget: document.getElementById('setting-thinking-budget'),
     settingAutoCascade: document.getElementById('setting-auto-cascade'),
     settingRateGovernor: document.getElementById('setting-rate-governor'),
-    settingSearchGrounding: document.getElementById('setting-search-grounding'),
     settingTemp: document.getElementById('setting-temp'),
     settingTempVal: document.getElementById('setting-temp-val'),
     settingMaxTokens: document.getElementById('setting-max-tokens'),
@@ -88,13 +95,13 @@
     autoClassifyPreview: document.getElementById('auto-classify-preview'),
     vaultKeysTbody: document.getElementById('vault-keys-tbody'),
 
-    spaceManagerModal: document.getElementById('space-manager-modal'),
-    openSpaceManagerBtn: document.getElementById('open-space-manager-btn'),
-    btnCloseSpaceManager: document.getElementById('btn-close-space-manager'),
-    spaceUrlInput: document.getElementById('space-url-input'),
-    spaceNameInput: document.getElementById('space-name-input'),
-    btnAddSpace: document.getElementById('btn-add-space'),
-    spaceItemsList: document.getElementById('space-items-list'),
+    mcpModal: document.getElementById('mcp-modal'),
+    openMcpModalBtn: document.getElementById('open-mcp-modal-btn'),
+    btnCloseMcp: document.getElementById('btn-close-mcp'),
+    mcpToolSearch: document.getElementById('mcp-tool-search'),
+    mcpToolGithub: document.getElementById('mcp-tool-github'),
+    mcpToolYoutube: document.getElementById('mcp-tool-youtube'),
+    mcpCustomServerUrl: document.getElementById('mcp-custom-server-url'),
 
     tagBtns: document.querySelectorAll('.tag-btn')
   };
@@ -102,14 +109,14 @@
   function loadState() {
     try {
       const rawKeys = localStorage.getItem('aetherspace_vault_keys');
-      if (rawKeys) state.keys = Object.assign({ gemini: [], groq: [], openrouter: [], hf: [], youtube: [] }, JSON.parse(rawKeys));
-      const rawSpaces = localStorage.getItem('aetherspace_user_spaces');
-      if (rawSpaces) state.spaces = JSON.parse(rawSpaces);
+      if (rawKeys) state.keys = Object.assign({ gemini: [], hf: [], groq: [], openrouter: [] }, JSON.parse(rawKeys));
+      const rawMcp = localStorage.getItem('aetherspace_mcp_config');
+      if (rawMcp) state.mcp = Object.assign(state.mcp, JSON.parse(rawMcp));
     } catch (e) {
-      console.warn('Storage parse notice', e);
+      console.warn('Storage notice', e);
     }
     updateKeyBadge();
-    updateSpaceBadge();
+    updateMcpBadge();
   }
 
   function saveKeys() {
@@ -117,9 +124,9 @@
     updateKeyBadge();
   }
 
-  function saveSpaces() {
-    localStorage.setItem('aetherspace_user_spaces', JSON.stringify(state.spaces));
-    updateSpaceBadge();
+  function saveMcpConfig() {
+    localStorage.setItem('aetherspace_mcp_config', JSON.stringify(state.mcp));
+    updateMcpBadge();
   }
 
   function updateKeyBadge() {
@@ -127,17 +134,21 @@
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
   }
 
-  function updateSpaceBadge() {
-    dom.spaceCountBadge.textContent = `${state.spaces.length} Active`;
+  function updateMcpBadge() {
+    let count = 0;
+    if (state.mcp.search) count++;
+    if (state.mcp.github) count++;
+    if (state.mcp.youtube) count++;
+    if (state.mcp.customServerUrl) count++;
+    dom.mcpToolsBadge.textContent = `${count} Active`;
   }
 
   function classifyApiKey(key) {
     const k = key.trim();
     if (/^AIzaSy[A-Za-z0-9_-]{33}$/.test(k)) return 'gemini';
+    if (/^hf_[A-Za-z0-9]{34,}$/.test(k)) return 'hf';
     if (/^gsk_[A-Za-z0-9]{48,}$/.test(k)) return 'groq';
     if (/^sk-or-v1-[a-f0-9]{64}$/.test(k)) return 'openrouter';
-    if (/^hf_[A-Za-z0-9]{34,}$/.test(k)) return 'hf';
-    if (/^AIza[0-9A-Za-z-_]{35}$/.test(k)) return 'youtube';
     return 'gemini';
   }
 
@@ -145,7 +156,7 @@
     dom.quickModelSelect.innerHTML = '';
     dom.settingModelSelect.innerHTML = '';
 
-    const labels = { gemini: 'Google AI Studio', groq: 'Groq Cloud', openrouter: 'OpenRouter', hf: 'Hugging Face' };
+    const labels = { gemini: 'Google AI Studio', hf: 'Hugging Face Free', groq: 'Groq Cloud', openrouter: 'OpenRouter' };
 
     Object.keys(state.models).forEach((provider) => {
       const optGroup1 = document.createElement('optgroup');
@@ -172,34 +183,39 @@
     });
   }
 
-  async function fetchLiveModels() {
-    const geminiKeys = state.keys.gemini || [];
-    if (geminiKeys.length === 0) {
-      alert('Please store at least one Google AI Studio key in Key Vault.');
-      return;
-    }
+  function getAvailableProvidersWithKeys() {
+    return Object.keys(state.keys).filter(p => (state.keys[p] || []).length > 0);
+  }
 
-    try {
-      showGatewayStatus('Fetching live inventory from Google AI Studio...');
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKeys[0].key}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+  function decideModelKeyAware(prompt) {
+    const available = getAvailableProvidersWithKeys();
+    if (available.length === 0) return state.activeModel;
 
-      if (data.models && Array.isArray(data.models)) {
-        state.models.gemini = data.models
-          .filter(m => m.name && (m.supportedGenerationMethods || []).includes('generateContent'))
-          .map(m => {
-            const cleanId = m.name.replace(/^models\//, '');
-            return { id: cleanId, name: `${m.displayName || cleanId} (${cleanId})` };
-          });
-        populateModelSelectors();
-        showGatewayStatus(`Live sync complete. ${state.models.gemini.length} models updated.`);
-        setTimeout(hideGatewayStatus, 3000);
+    const lower = prompt.toLowerCase();
+
+    if (available.includes('gemini')) {
+      if (lower.includes('architect') || lower.includes('microservice') || lower.includes('orchestrat')) {
+        return 'gemini-3.1-pro-preview';
       }
-    } catch (e) {
-      showGatewayStatus(`Live sync notice: ${e.message}`);
-      setTimeout(hideGatewayStatus, 3000);
+      return 'gemini-3.7-flash';
     }
+
+    if (available.includes('hf')) {
+      if (lower.includes('code') || lower.includes('html') || lower.includes('css') || lower.includes('js')) {
+        return 'Qwen/Qwen2.5-Coder-32B-Instruct';
+      }
+      return 'deepseek-ai/DeepSeek-R1';
+    }
+
+    if (available.includes('groq')) {
+      return 'llama-3.3-70b-versatile';
+    }
+
+    if (available.includes('openrouter')) {
+      return 'openrouter/free';
+    }
+
+    return state.activeModel;
   }
 
   function showGatewayStatus(text) {
@@ -285,7 +301,7 @@
     dom.chatViewport.scrollTop = dom.chatViewport.scrollHeight;
   }
 
-  // GEMINI SSE STREAM
+  // GEMINI STREAM CALL
   async function streamGemini(apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
     const contents = state.chatHistory.map(m => ({
@@ -301,15 +317,32 @@
       }
     };
 
-    if (systemPrompt && systemPrompt.trim()) bodyPayload.systemInstruction = { parts: [{ text: systemPrompt }] };
-    if (config.thinkingBudget > 0) bodyPayload.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
-    if (config.searchGrounding) bodyPayload.tools = [{ googleSearch: {} }];
+    if (systemPrompt && systemPrompt.trim()) {
+      bodyPayload.systemInstruction = { parts: [{ text: systemPrompt }] };
+    }
 
-    const res = await fetch(url, {
+    if (config.thinkingBudget > 0) {
+      bodyPayload.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
+    }
+
+    if (state.mcp.search) {
+      bodyPayload.tools = [{ google_search: {} }];
+    }
+
+    let res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bodyPayload)
     });
+
+    if (!res.ok && state.mcp.search) {
+      delete bodyPayload.tools;
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyPayload)
+      });
+    }
 
     if (!res.ok) throw { status: res.status, message: await res.text() };
 
@@ -344,7 +377,32 @@
     return fullText;
   }
 
-  // OPENAI-COMPATIBLE SSE STREAM (GROQ / OPENROUTER)
+  // HUGGING FACE SERVERLESS INFERENCE CALL
+  async function streamHuggingFace(apiKey, model, systemPrompt, userMessage, config, onChunk) {
+    const endpoint = `https://api-inference.huggingface.co/models/${model}`;
+    const promptText = (systemPrompt ? `[SYSTEM: ${systemPrompt}]\n` : '') + `User: ${userMessage}\nAssistant:`;
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        inputs: promptText,
+        parameters: { max_new_tokens: Math.min(config.maxOutputTokens, 2048), temperature: config.temperature, return_full_text: false }
+      })
+    });
+
+    if (!res.ok) throw { status: res.status, message: await res.text() };
+    const json = await res.json();
+    let text = '';
+    if (Array.isArray(json) && json[0] && json[0].generated_text) text = json[0].generated_text;
+    else if (json.generated_text) text = json.generated_text;
+    else text = JSON.stringify(json);
+
+    onChunk(text);
+    return text;
+  }
+
+  // GROQ / OPENROUTER CALL
   async function streamOpenAI(endpoint, apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const messages = [];
     if (systemPrompt && systemPrompt.trim()) messages.push({ role: 'system', content: systemPrompt });
@@ -363,7 +421,6 @@
     });
 
     if (!res.ok) throw { status: res.status, message: await res.text() };
-
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '', fullText = '';
@@ -393,44 +450,30 @@
     return fullText;
   }
 
-  // HUGGING FACE SERVERLESS INFERENCE API
-  async function streamHuggingFace(apiKey, model, systemPrompt, userMessage, config, onChunk) {
-    const endpoint = `https://api-inference.huggingface.co/models/${model}`;
-    const prompt = (systemPrompt ? `System: ${systemPrompt}\n` : '') + `User: ${userMessage}\nAssistant:`;
+  async function executeSingleInference(model, promptText, bubble, onChunk) {
+    let provider = 'gemini';
+    if (model.includes('/') && !model.includes(':free')) provider = 'hf';
+    else if (model.startsWith('llama') || model.startsWith('deepseek-r1-distill')) provider = 'groq';
+    else if (model.includes('openrouter') || model.includes(':free')) provider = 'openrouter';
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: { max_new_tokens: 2048, temperature: config.temperature, return_full_text: false }
-      })
-    });
+    const keys = state.keys[provider] || [];
+    if (keys.length === 0) {
+      throw new Error(`No API Key configured for provider: ${provider.toUpperCase()}`);
+    }
 
-    if (!res.ok) throw { status: res.status, message: await res.text() };
-    const json = await res.json();
-    let text = '';
-    if (Array.isArray(json) && json[0] && json[0].generated_text) text = json[0].generated_text;
-    else if (json.generated_text) text = json.generated_text;
-    else text = JSON.stringify(json);
-
-    onChunk(text);
-    return text;
+    const key = keys[0].key;
+    if (provider === 'gemini') {
+      return await streamGemini(key, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+    } else if (provider === 'hf') {
+      return await streamHuggingFace(key, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+    } else if (provider === 'groq') {
+      return await streamOpenAI('https://api.groq.com/openai/v1/chat/completions', key, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+    } else if (provider === 'openrouter') {
+      return await streamOpenAI('https://openrouter.ai/api/v1/chat/completions', key, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
+    }
   }
 
-  // SEMANTIC ROUTER
-  function decideModelAutomatically(prompt) {
-    const lower = prompt.toLowerCase();
-    if (lower.includes('architect') || lower.includes('microservice') || lower.includes('consensus') || lower.includes('orchestrat')) {
-      return 'gemini-3.1-pro-preview';
-    }
-    if (lower.includes('html') || lower.includes('css') || lower.includes('javascript') || lower.includes('code') || lower.includes('function') || lower.includes('class')) {
-      return 'gemini-3.7-flash';
-    }
-    return 'llama-3.3-70b-versatile';
-  }
-
-  // GATEWAY DISPATCHER
+  // MAIN SEND DISPATCHER (DIRECT, MULTI-AGENT, ORCHESTRATION)
   async function handleSend() {
     const text = dom.promptInput.value.trim();
     if (!text) return;
@@ -440,90 +483,99 @@
 
     appendUserMessage(text);
 
-    let chosenModel = state.activeModel;
-    if (state.autoRouter) {
-      chosenModel = decideModelAutomatically(text);
-      showGatewayStatus(`Auto-Router: Assigned ${chosenModel}`);
+    let chosenModel = state.runSettings.customModel || state.activeModel;
+    if (state.autoRouter && !state.runSettings.customModel) {
+      chosenModel = decideModelKeyAware(text);
+      showGatewayStatus(`Key-Aware Auto Router: Selected ${chosenModel}`);
     }
 
-    let provider = 'gemini';
-    if (chosenModel.startsWith('llama') || chosenModel.startsWith('deepseek-r1-distill')) provider = 'groq';
-    else if (chosenModel.includes('openrouter') || chosenModel.includes(':free')) provider = 'openrouter';
-    else if (chosenModel.includes('/') && !chosenModel.includes(':free')) provider = 'hf';
+    // 1. DIRECT CHAT MODE
+    if (state.mode === 'chat') {
+      const { bubble, row } = createAssistantMessageNode(chosenModel);
+      renderFormattedContent(bubble, '', true);
 
-    const keysList = state.keys[provider] || [];
-    if (keysList.length === 0) {
-      const { bubble } = createAssistantMessageNode('Gateway');
-      renderFormattedContent(bubble, `No API Key found for **${provider.toUpperCase()}**. Please open Key Vault to add a key.`);
-      dom.btnSendPrompt.disabled = false;
-      return;
+      try {
+        const completedText = await executeSingleInference(chosenModel, text, bubble, acc => {
+          renderFormattedContent(bubble, acc, true);
+          scrollToBottom();
+        });
+        renderFormattedContent(bubble, completedText, false);
+        state.chatHistory.push({ role: 'assistant', content: completedText });
+      } catch (err) {
+        renderFormattedContent(bubble, `Gateway Notice: ${err.message || 'Execution failed.'}`);
+      }
     }
 
-    const modelChain = [chosenModel];
-    if (provider === 'gemini') {
-      ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'].forEach(f => {
-        if (!modelChain.includes(f)) modelChain.push(f);
-      });
+    // 2. MULTI-AGENT COLLABORATION MODE (Architect -> Reviewer)
+    else if (state.mode === 'multi') {
+      const { bubble, row } = createAssistantMessageNode('Multi-Agent Pipeline');
+      bubble.innerHTML = '<div class="agent-step-card"><div class="agent-step-header architect">⚡ Agent 1: Lead Architect drafting solution...</div><div class="agent-body-1"></div></div>';
+      const body1 = bubble.querySelector('.agent-body-1');
+
+      try {
+        showGatewayStatus('Multi-Agent: Step 1 (Lead Architect)');
+        const draft = await executeSingleInference(chosenModel, text, body1, acc => {
+          renderFormattedContent(body1, acc, true);
+          scrollToBottom();
+        });
+        renderFormattedContent(body1, draft, false);
+
+        // Step 2: Reviewer Agent
+        const availableHf = (state.keys.hf || []).length > 0;
+        const reviewerModel = availableHf ? 'Qwen/Qwen2.5-Coder-32B-Instruct' : 'gemini-3.6-flash';
+
+        const step2Card = document.createElement('div');
+        step2Card.className = 'agent-step-card';
+        step2Card.innerHTML = `<div class="agent-step-header reviewer">🛡️ Agent 2 (${reviewerModel}): Code Review & Security Audit...</div><div class="agent-body-2"></div>`;
+        bubble.appendChild(step2Card);
+        const body2 = step2Card.querySelector('.agent-body-2');
+
+        showGatewayStatus(`Multi-Agent: Step 2 (${reviewerModel})`);
+        const reviewPrompt = `You are the Lead Code Reviewer. Review, optimize, and output the finalized production code for:\n${draft}`;
+        const finalOutput = await executeSingleInference(reviewerModel, reviewPrompt, body2, acc => {
+          renderFormattedContent(body2, acc, true);
+          scrollToBottom();
+        });
+        renderFormattedContent(body2, finalOutput, false);
+        state.chatHistory.push({ role: 'assistant', content: finalOutput });
+      } catch (err) {
+        bubble.innerHTML += `<div style="color:var(--accent-rose); margin-top:8px;">Pipeline notice: ${err.message}</div>`;
+      }
     }
 
-    const { bubble, row } = createAssistantMessageNode(chosenModel);
-    renderFormattedContent(bubble, '', true);
+    // 3. SUPERVISOR ORCHESTRATION MODE (Plan -> Execute -> Arbiter)
+    else if (state.mode === 'orchestrator') {
+      const { bubble } = createAssistantMessageNode('Supervisor Orchestrator');
+      bubble.innerHTML = `
+        <div class="agent-step-card"><div class="agent-step-header architect">🧠 Supervisor: Architectural DAG Plan</div><div class="orch-plan"></div></div>
+        <div class="agent-step-card"><div class="agent-step-header arbiter">⚡ Worker: Complete Implementation</div><div class="orch-exec"></div></div>
+      `;
+      const planEl = bubble.querySelector('.orch-plan');
+      const execEl = bubble.querySelector('.orch-exec');
 
-    let executionSuccess = false;
-    let completedText = '';
+      try {
+        showGatewayStatus('Orchestrator: Supervisor generating plan...');
+        const plan = await executeSingleInference(chosenModel, `Generate a clean, step-by-step architectural breakdown for: ${text}`, planEl, acc => {
+          renderFormattedContent(planEl, acc, true);
+          scrollToBottom();
+        });
+        renderFormattedContent(planEl, plan, false);
 
-    for (let k = 0; k < keysList.length && !executionSuccess; k++) {
-      const currentKey = keysList[k].key;
-
-      for (let m = 0; m < modelChain.length && !executionSuccess; m++) {
-        const candidateModel = modelChain[m];
-
-        try {
-          if (candidateModel !== chosenModel) {
-            showGatewayStatus(`Cascade Shift: ${candidateModel} (Key #${k + 1})`);
-          }
-
-          if (provider === 'gemini') {
-            completedText = await streamGemini(currentKey, candidateModel, state.runSettings.systemInstructions, text, state.runSettings, acc => {
-              renderFormattedContent(bubble, acc, true);
-              scrollToBottom();
-            });
-          } else if (provider === 'groq') {
-            completedText = await streamOpenAI('https://api.groq.com/openai/v1/chat/completions', currentKey, candidateModel, state.runSettings.systemInstructions, text, state.runSettings, acc => {
-              renderFormattedContent(bubble, acc, true);
-              scrollToBottom();
-            });
-          } else if (provider === 'openrouter') {
-            completedText = await streamOpenAI('https://openrouter.ai/api/v1/chat/completions', currentKey, candidateModel, state.runSettings.systemInstructions, text, state.runSettings, acc => {
-              renderFormattedContent(bubble, acc, true);
-              scrollToBottom();
-            });
-          } else if (provider === 'hf') {
-            completedText = await streamHuggingFace(currentKey, candidateModel, state.runSettings.systemInstructions, text, state.runSettings, acc => {
-              renderFormattedContent(bubble, acc, true);
-              scrollToBottom();
-            });
-          }
-
-          executionSuccess = true;
-          row.querySelector('.chat-header-meta span').textContent = candidateModel;
-          break;
-        } catch (err) {
-          console.warn(`Gateway notice: ${candidateModel} error:`, err.status || err.message);
-          if (!state.runSettings.autoCascade) break;
-        }
+        showGatewayStatus('Orchestrator: Worker executing full code implementation...');
+        const execPrompt = `Based on this architectural plan:\n${plan}\nImplement the complete, deterministic, production-ready code with zero placeholders for: ${text}`;
+        const execResult = await executeSingleInference(chosenModel, execPrompt, execEl, acc => {
+          renderFormattedContent(execEl, acc, true);
+          scrollToBottom();
+        });
+        renderFormattedContent(execEl, execResult, false);
+        state.chatHistory.push({ role: 'assistant', content: execResult });
+      } catch (err) {
+        bubble.innerHTML += `<div style="color:var(--accent-rose); margin-top:8px;">Orchestrator notice: ${err.message}</div>`;
       }
     }
 
     hideGatewayStatus();
     dom.btnSendPrompt.disabled = false;
-
-    if (executionSuccess && completedText) {
-      renderFormattedContent(bubble, completedText, false);
-      state.chatHistory.push({ role: 'assistant', content: completedText });
-    } else {
-      renderFormattedContent(bubble, 'Gateway Notice: Request could not be completed across active keys. Please check Key Vault.');
-    }
   }
 
   function exportLatestCodeToCodePen() {
@@ -561,7 +613,7 @@
     const all = [];
     Object.keys(state.keys).forEach(p => {
       (state.keys[p] || []).forEach((k, idx) => {
-        all.push({ provider: p, key: k.key, label: k.label, created: k.created, idx });
+        all.push({ provider: p, key: k.key, label: k.label, idx });
       });
     });
 
@@ -588,32 +640,6 @@
         renderVaultKeys();
       });
       dom.vaultKeysTbody.appendChild(tr);
-    });
-  }
-
-  function renderSpacesList() {
-    dom.spaceItemsList.innerHTML = '';
-    if (state.spaces.length === 0) {
-      dom.spaceItemsList.innerHTML = '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:12px;">No custom Hugging Face spaces connected yet.</div>';
-      return;
-    }
-
-    state.spaces.forEach((s, idx) => {
-      const div = document.createElement('div');
-      div.className = 'space-item';
-      div.innerHTML = `
-        <div>
-          <strong>${escapeHtml(s.name)}</strong>
-          <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(s.url)}</div>
-        </div>
-        <button class="tool-chip" data-del-space="${idx}" style="color:var(--accent-rose);">Remove</button>
-      `;
-      div.querySelector('[data-del-space]').addEventListener('click', () => {
-        state.spaces.splice(idx, 1);
-        saveSpaces();
-        renderSpacesList();
-      });
-      dom.spaceItemsList.appendChild(div);
     });
   }
 
@@ -684,7 +710,31 @@
       dom.quickModelSelect.value = state.activeModel;
     });
 
-    dom.btnFetchLiveModels.addEventListener('click', fetchLiveModels);
+    dom.settingCustomModel.addEventListener('input', () => {
+      state.runSettings.customModel = dom.settingCustomModel.value.trim();
+    });
+
+    dom.btnFetchLiveModels.addEventListener('click', async () => {
+      const geminiKeys = state.keys.gemini || [];
+      if (geminiKeys.length === 0) return alert('Store a Google AI Studio key first.');
+      try {
+        showGatewayStatus('Fetching live model inventory...');
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKeys[0].key}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data.models && Array.isArray(data.models)) {
+          state.models.gemini = data.models
+            .filter(m => m.name && (m.supportedGenerationMethods || []).includes('generateContent'))
+            .map(m => ({ id: m.name.replace(/^models\//, ''), name: `${m.displayName || m.name} (${m.name.replace(/^models\//, '')})` }));
+          populateModelSelectors();
+          showGatewayStatus(`Live sync complete. ${state.models.gemini.length} models ready.`);
+          setTimeout(hideGatewayStatus, 3000);
+        }
+      } catch (e) {
+        showGatewayStatus(`Sync notice: ${e.message}`);
+        setTimeout(hideGatewayStatus, 3000);
+      }
+    });
 
     dom.toggleRunSettingsBtn.addEventListener('click', () => dom.settingsSlideout.classList.toggle('open'));
     dom.btnCloseSettings.addEventListener('click', () => dom.settingsSlideout.classList.remove('open'));
@@ -699,10 +749,6 @@
 
     dom.settingRateGovernor.addEventListener('change', () => {
       state.runSettings.rateGovernor = dom.settingRateGovernor.checked;
-    });
-
-    dom.settingSearchGrounding.addEventListener('change', () => {
-      state.runSettings.searchGrounding = dom.settingSearchGrounding.checked;
     });
 
     dom.settingTemp.addEventListener('input', () => {
@@ -741,22 +787,13 @@
       renderVaultKeys();
     });
 
-    dom.openSpaceManagerBtn.addEventListener('click', () => {
-      dom.spaceManagerModal.style.display = 'flex';
-      renderSpacesList();
-    });
-    dom.btnCloseSpaceManager.addEventListener('click', () => dom.spaceManagerModal.style.display = 'none');
+    dom.openMcpModalBtn.addEventListener('click', () => dom.mcpModal.style.display = 'flex');
+    dom.btnCloseMcp.addEventListener('click', () => dom.mcpModal.style.display = 'none');
 
-    dom.btnAddSpace.addEventListener('click', () => {
-      const url = dom.spaceUrlInput.value.trim();
-      const name = dom.spaceNameInput.value.trim() || 'Custom Space';
-      if (!url) return alert('Please enter a space URL.');
-      state.spaces.push({ url, name });
-      saveSpaces();
-      dom.spaceUrlInput.value = '';
-      dom.spaceNameInput.value = '';
-      renderSpacesList();
-    });
+    dom.mcpToolSearch.addEventListener('change', () => { state.mcp.search = dom.mcpToolSearch.checked; saveMcpConfig(); });
+    dom.mcpToolGithub.addEventListener('change', () => { state.mcp.github = dom.mcpToolGithub.checked; saveMcpConfig(); });
+    dom.mcpToolYoutube.addEventListener('change', () => { state.mcp.youtube = dom.mcpToolYoutube.checked; saveMcpConfig(); });
+    dom.mcpCustomServerUrl.addEventListener('input', () => { state.mcp.customServerUrl = dom.mcpCustomServerUrl.value.trim(); saveMcpConfig(); });
   }
 
   function init() {
