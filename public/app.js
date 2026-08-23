@@ -1,17 +1,17 @@
 (function () {
   'use strict';
 
-  // TOP-TIER SOTA ROSTER (Obsolete and covered models purged)
-  const SOTA_ROSTER = {
+  // STRICT PRUNED SOTA ROSTER (Top-Tier Specialists Only)
+  const PRUNED_SOTA_ROSTER = {
     gemini: [
       { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (SOTA Code & Agentic)' },
       { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Fast Agentic)' },
-      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deepest Reasoning)' }
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)' }
     ],
     hf: [
       { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (Top Open Code SOTA)' },
       { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 (Open Reasoning SOTA)' },
-      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (Fast Open Utility)' }
+      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (Fast Utility SOTA)' }
     ],
     groq: [
       { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Groq LPU)' },
@@ -24,9 +24,9 @@
   };
 
   const state = {
-    mode: 'chat', // 'chat' | 'multi' | 'orchestrator'
+    mode: 'chat',
     autoRouter: true,
-    models: Object.assign({}, SOTA_ROSTER),
+    models: Object.assign({}, PRUNED_SOTA_ROSTER),
     activeModel: 'gemini-3.7-flash',
     chatHistory: [],
     runSettings: {
@@ -41,6 +41,7 @@
     },
     mcp: {
       search: true,
+      image: false,
       github: false,
       youtube: false
     },
@@ -66,7 +67,10 @@
     btnFetchLiveModels: document.getElementById('btn-fetch-live-models'),
     keyCountBadge: document.getElementById('key-count-badge'),
 
+    btnToggleToolsDrawer: document.getElementById('btn-toggle-tools-drawer'),
+    mcpToolsDrawer: document.getElementById('mcp-tools-drawer'),
     mcpToggleSearch: document.getElementById('mcp-toggle-search'),
+    mcpToggleImage: document.getElementById('mcp-toggle-image'),
     mcpToggleGithub: document.getElementById('mcp-toggle-github'),
     mcpToggleYoutube: document.getElementById('mcp-toggle-youtube'),
     mcpRealtimeClock: document.getElementById('mcp-realtime-clock'),
@@ -131,7 +135,6 @@
     return Object.keys(state.keys).filter(p => (state.keys[p] || []).length > 0);
   }
 
-  // PRUNE UNCONFIGURED PROVIDERS FROM DROPDOWN
   function populateModelSelectors() {
     dom.quickModelSelect.innerHTML = '';
     dom.settingModelSelect.innerHTML = '';
@@ -176,6 +179,32 @@
       dom.quickModelSelect.value = state.activeModel;
       dom.settingModelSelect.value = state.activeModel;
     }
+  }
+
+  // MODEL PRUNING & DEDUPLICATION ENGINE
+  function pruneAndFilterGoogleModels(rawModels) {
+    const blacklistRegex = /customtools|deprecated|nano-banana|legacy|embed|vision-preview|aqa|bison/i;
+    const cleanList = [];
+
+    const priorityList = [
+      { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (SOTA Code & Agentic)' },
+      { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Fast Agentic)' },
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)' },
+      { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (High-Throughput)' }
+    ];
+
+    priorityList.forEach(p => cleanList.push(p));
+
+    rawModels.forEach(m => {
+      const cleanId = m.name.replace(/^models\//, '');
+      if (!blacklistRegex.test(cleanId) && !cleanList.some(item => item.id === cleanId)) {
+        if (cleanId.includes('3.7') || cleanId.includes('3.6') || cleanId.includes('3.1') || cleanId.includes('3.5')) {
+          cleanList.push({ id: cleanId, name: `${m.displayName || cleanId} (${cleanId})` });
+        }
+      }
+    });
+
+    return cleanList;
   }
 
   function getRealtimeTemporalSystemContext() {
@@ -393,18 +422,27 @@
     return { text: fullText, sources };
   }
 
-  // HUGGING FACE SERVERLESS CALL
+  // HUGGING FACE SERVERLESS CALL (CORS-COMPLIANT ROUTER)
   async function streamHuggingFace(apiKey, model, systemPrompt, userMessage, config, onChunk) {
-    const endpoint = `https://api-inference.huggingface.co/models/${model}`;
+    const endpoint = 'https://router.huggingface.co/hf-inference/v1/chat/completions';
     const temporalContext = getRealtimeTemporalSystemContext();
-    const promptText = `[SYSTEM: ${(systemPrompt ? `${systemPrompt} ` : '')}${temporalContext}]\nUser: ${userMessage}\nAssistant:`;
+    const fullSystem = (systemPrompt ? `${systemPrompt}\n\n` : '') + temporalContext;
+
+    const messages = [{ role: 'system', content: fullSystem }];
+    state.chatHistory.forEach(m => messages.push({ role: m.role, content: m.content }));
 
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        inputs: promptText,
-        parameters: { max_new_tokens: Math.min(config.maxOutputTokens, 2048), temperature: config.temperature, return_full_text: false }
+        model: model,
+        messages: messages,
+        temperature: config.temperature,
+        max_tokens: Math.min(config.maxOutputTokens, 2048),
+        stream: true
       })
     });
 
@@ -412,14 +450,34 @@
       const errText = await res.text();
       throw { status: res.status, message: errText };
     }
-    const json = await res.json();
-    let text = '';
-    if (Array.isArray(json) && json[0] && json[0].generated_text) text = json[0].generated_text;
-    else if (json.generated_text) text = json.generated_text;
-    else text = JSON.stringify(json);
 
-    onChunk(text, []);
-    return { text, sources: [] };
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '', fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.trim().startsWith('data: ')) {
+          const payload = line.trim().substring(6).trim();
+          if (payload === '[DONE]') break;
+          try {
+            const json = JSON.parse(payload);
+            const delta = json.choices && json.choices[0] && json.choices[0].delta ? json.choices[0].delta.content : '';
+            if (delta) {
+              fullText += delta;
+              onChunk(fullText, []);
+            }
+          } catch (e) {}
+        }
+      }
+    }
+    return { text: fullText, sources: [] };
   }
 
   // OPENAI-COMPATIBLE CALL (GROQ / OPENROUTER)
@@ -537,6 +595,11 @@
           } else if (provider === 'openrouter') {
             resObj = await streamOpenAI('https://openrouter.ai/api/v1/chat/completions', apiKey, model, state.runSettings.systemInstructions, promptText, state.runSettings, onChunk);
           }
+
+          if (!resObj.text || resObj.text.trim().length === 0) {
+            throw new Error('Empty response from model stream.');
+          }
+
           return { text: resObj.text, sources: resObj.sources, model, provider };
         } catch (err) {
           lastError = err;
@@ -584,9 +647,9 @@
 
     // 2. TRUE CROSS-PROVIDER MULTI-AGENT PIPELINE
     else if (state.mode === 'multi') {
-      const { bubble, row } = createAssistantMessageNode('Multi-Agent Consensus Pipeline');
+      const { bubble } = createAssistantMessageNode('Multi-Agent Consensus Pipeline');
       bubble.innerHTML = `
-        <div class="agent-step-card"><div class="agent-step-header architect">⚡ Agent 1 (Architect / Lead): Drafting Solution...</div><div class="agent-body-1"></div></div>
+        <div class="agent-step-card"><div class="agent-step-header architect">⚡ Agent 1 (Architect): Initial Solution Drafting...</div><div class="agent-body-1"></div></div>
         <div class="agent-step-card"><div class="agent-step-header reviewer">🛡️ Agent 2 (Auditor): Cross-Model Security & Logic Review...</div><div class="agent-body-2"></div></div>
         <div class="agent-step-card"><div class="agent-step-header arbiter">✨ Agent 3 (Arbiter): Final Production Synthesis...</div><div class="agent-body-3"></div></div>
       `;
@@ -765,10 +828,22 @@
       });
     });
 
+    dom.btnToggleToolsDrawer.addEventListener('click', () => {
+      const isHidden = dom.mcpToolsDrawer.style.display === 'none';
+      dom.mcpToolsDrawer.style.display = isHidden ? 'flex' : 'none';
+      dom.btnToggleToolsDrawer.classList.toggle('active', isHidden);
+    });
+
     dom.mcpToggleSearch.addEventListener('click', () => {
       state.mcp.search = !state.mcp.search;
       dom.mcpToggleSearch.classList.toggle('active', state.mcp.search);
       dom.mcpToggleSearch.querySelector('span').textContent = `🌐 Web-Search: ${state.mcp.search ? 'ON' : 'OFF'}`;
+    });
+
+    dom.mcpToggleImage.addEventListener('click', () => {
+      state.mcp.image = !state.mcp.image;
+      dom.mcpToggleImage.classList.toggle('active', state.mcp.image);
+      dom.mcpToggleImage.querySelector('span').textContent = `🎨 Image Gen: ${state.mcp.image ? 'ON' : 'OFF'}`;
     });
 
     dom.mcpToggleGithub.addEventListener('click', () => {
@@ -829,16 +904,14 @@
       const geminiKeys = state.keys.gemini || [];
       if (geminiKeys.length === 0) return alert('Store a Google AI Studio key first.');
       try {
-        showGatewayStatus('Fetching live model inventory...');
+        showGatewayStatus('Refreshing & Pruning live model inventory...');
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKeys[0].key}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.models && Array.isArray(data.models)) {
-          state.models.gemini = data.models
-            .filter(m => m.name && (m.supportedGenerationMethods || []).includes('generateContent'))
-            .map(m => ({ id: m.name.replace(/^models\//, ''), name: `${m.displayName || m.name} (${m.name.replace(/^models\//, '')})` }));
+          state.models.gemini = pruneAndFilterGoogleModels(data.models);
           populateModelSelectors();
-          showGatewayStatus(`Live sync complete. ${state.models.gemini.length} models ready.`);
+          showGatewayStatus(`Pruned inventory active. ${state.models.gemini.length} SOTA models retained.`);
           setTimeout(hideGatewayStatus, 3000);
         }
       } catch (e) {

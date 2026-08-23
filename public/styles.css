@@ -20,11 +20,7 @@
   --font-mono: 'JetBrains Mono', Consolas, monospace;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   width: 100%;
@@ -37,11 +33,7 @@ html, body {
   overflow: hidden;
 }
 
-button, input, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
-}
+button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 
 .app-layout {
   display: flex;
@@ -63,11 +55,7 @@ button, input, select, textarea {
   z-index: 20;
 }
 
-.header-left, .header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.header-left, .header-right { display: flex; align-items: center; gap: 12px; }
 
 .brand-logo {
   display: flex;
@@ -78,11 +66,7 @@ button, input, select, textarea {
   letter-spacing: -0.02em;
 }
 
-.brand-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--accent-cyan);
-}
+.brand-icon { width: 20px; height: 20px; color: var(--accent-cyan); }
 
 .mode-switcher {
   display: flex;
@@ -155,7 +139,7 @@ button, input, select, textarea {
   outline: none;
   cursor: pointer;
   padding: 4px;
-  max-width: 260px;
+  max-width: 280px;
 }
 
 .action-btn {
@@ -172,10 +156,7 @@ button, input, select, textarea {
   transition: all 0.15s ease;
 }
 
-.action-btn:hover {
-  background-color: #1a2233;
-  border-color: var(--border-active);
-}
+.action-btn:hover { background-color: #1a2233; border-color: var(--border-active); }
 
 .action-btn.primary {
   background-color: rgba(56, 189, 248, 0.12);
@@ -204,7 +185,6 @@ button, input, select, textarea {
 
 .icon-tool-btn:hover { color: var(--text-primary); }
 
-/* MAIN VIEWPORT */
 .main-canvas {
   flex: 1;
   display: flex;
@@ -252,12 +232,7 @@ button, input, select, textarea {
   margin-bottom: 24px;
 }
 
-.quick-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-}
+.quick-tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 
 .tag-btn {
   background-color: var(--bg-surface);
@@ -276,14 +251,7 @@ button, input, select, textarea {
   background-color: var(--bg-surface-elevated);
 }
 
-/* CHAT BUBBLES */
-.chat-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
+.chat-row { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 .chat-row.user { align-items: flex-end; }
 .chat-row.assistant { align-items: flex-start; }
 
@@ -295,10 +263,7 @@ button, input, select, textarea {
   color: var(--text-muted);
 }
 
-.model-tag {
-  color: var(--accent-cyan);
-  font-weight: 600;
-}
+.model-tag { color: var(--accent-cyan); font-weight: 600; }
 
 .chat-bubble {
   padding: 16px 20px;
@@ -323,7 +288,6 @@ button, input, select, textarea {
   width: 100%;
 }
 
-/* MULTI-AGENT & ORCHESTRATION PIPELINE CARDS */
 .agent-step-card {
   background-color: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
@@ -353,13 +317,11 @@ button, input, select, textarea {
   background: #05070a;
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-secondary);
 }
 
-.grounding-sources-box strong {
-  color: var(--accent-cyan);
-}
+.grounding-sources-box strong { color: var(--accent-cyan); }
 
 .code-block-wrapper {
   background-color: #040508;
@@ -410,12 +372,8 @@ button, input, select, textarea {
   animation: blink 0.8s infinite;
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-/* PROMPT BAR & INLINE MCP CONTROLS */
 .prompt-bar-container {
   position: absolute;
   bottom: 0;
@@ -467,12 +425,13 @@ button, input, select, textarea {
 
 .prompt-bar-card:focus-within { border-color: var(--border-focus); }
 
-.inline-mcp-toolbar {
+.mcp-tools-drawer {
   display: flex;
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .mcp-chip {
@@ -496,10 +455,10 @@ button, input, select, textarea {
 }
 
 .mcp-realtime-clock {
-  margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text-muted);
+  margin-right: 6px;
 }
 
 .prompt-input {
@@ -520,11 +479,7 @@ button, input, select, textarea {
   align-items: center;
 }
 
-.prompt-actions-left, .prompt-actions-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.prompt-actions-left, .prompt-actions-right { display: flex; align-items: center; gap: 8px; }
 
 .mode-badge {
   font-size: 11.5px;
@@ -563,7 +518,6 @@ button, input, select, textarea {
 
 .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* SETTINGS SLIDEOUT */
 .settings-slideout {
   position: fixed;
   top: 0;
@@ -636,7 +590,6 @@ input:checked + .slider:before { transform: translateX(16px); }
 
 .doc-link:hover { text-decoration: underline; }
 
-/* MODALS */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;

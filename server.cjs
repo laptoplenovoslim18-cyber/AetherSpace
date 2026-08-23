@@ -30,7 +30,7 @@ function triggerGitSync() {
       return;
     }
     if (stdout) console.log(`[Git stdout]\n${stdout}`);
-    console.log('[Auto-Sync] Cloudflare Pages deployment triggered.');
+    console.log('[Auto-Sync] Cloudflare Pages deployment updated.');
   });
 }
 
