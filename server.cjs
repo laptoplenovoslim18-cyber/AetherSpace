@@ -19,10 +19,10 @@ function triggerGitSync() {
   isSyncing = true;
 
   const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-  const commitMsg = `auto-sync: ${timestamp} [AetherSpace Gateway Update]`;
+  const commitMsg = `auto-sync: ${timestamp} [AetherSpace SOTA Gateway Update]`;
   const cmd = `git add -A && git commit -m "${commitMsg}" && git push origin main`;
 
-  console.log(`[Auto-Sync] Debounce elapsed. Executing: ${cmd}`);
+  console.log(`[Auto-Sync] 2.5s elapsed. Executing: ${cmd}`);
   exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     isSyncing = false;
     if (error) {

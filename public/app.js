@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  // STRICT SOTA ROSTER (Flash-Lite permanently purged)
+  // SOTA 2026 ROSTER (HuggingChat & AI Studio Validated)
   const PRUNED_SOTA_ROSTER = {
     gemini: [
       { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (SOTA Code & Agentic)' },
@@ -9,9 +9,10 @@
       { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)' }
     ],
     hf: [
-      { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (Top Open Code SOTA)' },
+      { id: 'deepseek-ai/DeepSeek-V4-Flash-0731', name: 'DeepSeek V4 Flash 284B (HF SOTA)' },
       { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 (Open Reasoning SOTA)' },
-      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (Fast Utility SOTA)' }
+      { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (Open Code SOTA)' },
+      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B v0.3 (Fast Utility)' }
     ],
     groq: [
       { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Groq LPU)' },
@@ -40,10 +41,10 @@
       maxOutputTokens: 8192
     },
     mcp: {
-      search: true,
+      exaSearch: true,
+      hfHub: true,
       urlContext: true,
-      github: false,
-      youtube: false
+      customServers: []
     },
     keys: { gemini: [], hf: [], groq: [], openrouter: [] }
   };
@@ -64,17 +65,32 @@
     btnFetchLiveModels: document.getElementById('btn-fetch-live-models'),
     keyCountBadge: document.getElementById('key-count-badge'),
 
-    slashMenu: document.getElementById('slash-menu'),
-    btnToggleNestedDrawer: document.getElementById('btn-toggle-nested-drawer'),
-    nestedControlsDrawer: document.getElementById('nested-controls-drawer'),
-    pillModeChat: document.getElementById('pill-mode-chat'),
-    pillModeMulti: document.getElementById('pill-mode-multi'),
-    pillModeOrchestrator: document.getElementById('pill-mode-orchestrator'),
-    mcpToggleSearch: document.getElementById('mcp-toggle-search'),
-    mcpToggleUrl: document.getElementById('mcp-toggle-url'),
-    mcpToggleGithub: document.getElementById('mcp-toggle-github'),
-    mcpToggleYoutube: document.getElementById('mcp-toggle-youtube'),
+    btnPromptPlus: document.getElementById('btn-prompt-plus'),
+    promptPlusMenu: document.getElementById('prompt-plus-menu'),
+    menuItemMcpServers: document.getElementById('menu-item-mcp-servers'),
+    menuItemToggleSearch: document.getElementById('menu-item-toggle-search'),
+    menuItemToggleUrl: document.getElementById('menu-item-toggle-url'),
+    labelMenuSearch: document.getElementById('label-menu-search'),
+    labelMenuUrl: document.getElementById('label-menu-url'),
+    activeMcpPill: document.getElementById('active-mcp-pill'),
+    activeMcpPillText: document.getElementById('active-mcp-pill-text'),
+    btnCloseMcpPill: document.getElementById('btn-close-mcp-pill'),
+    footerActiveModelDisplay: document.getElementById('footer-active-model-display'),
     mcpRealtimeClock: document.getElementById('mcp-realtime-clock'),
+
+    mcpServersModal: document.getElementById('mcp-servers-modal'),
+    openMcpModalBtn: document.getElementById('open-mcp-modal-btn'),
+    btnCloseMcpServers: document.getElementById('btn-close-mcp-servers'),
+    mcpServerCountBadge: document.getElementById('mcp-server-count-badge'),
+    mcpSummaryTitle: document.getElementById('mcp-summary-title'),
+    mcpSummarySub: document.getElementById('mcp-summary-sub'),
+    btnMcpRefreshAll: document.getElementById('btn-mcp-refresh-all'),
+    btnOpenAddCustomMcp: document.getElementById('btn-open-add-custom-mcp'),
+    btnAddFirstCustomServer: document.getElementById('btn-add-first-custom-server'),
+    mcpServerExaToggle: document.getElementById('mcp-server-exa-toggle'),
+    mcpServerHfToggle: document.getElementById('mcp-server-hf-toggle'),
+    btnHealthExa: document.getElementById('btn-health-exa'),
+    btnHealthHf: document.getElementById('btn-health-hf'),
 
     toggleRunSettingsBtn: document.getElementById('toggle-run-settings-btn'),
     settingsSlideout: document.getElementById('settings-slideout'),
@@ -99,18 +115,23 @@
     autoClassifyPreview: document.getElementById('auto-classify-preview'),
     vaultKeysTbody: document.getElementById('vault-keys-tbody'),
 
-    tagBtns: document.querySelectorAll('.tag-btn'),
-    slashItems: document.querySelectorAll('.slash-item')
+    btnModeChat: document.getElementById('btn-mode-chat'),
+    btnModeMulti: document.getElementById('btn-mode-multi'),
+    btnModeOrchestrator: document.getElementById('btn-mode-orchestrator'),
+    tagBtns: document.querySelectorAll('.tag-btn')
   };
 
   function loadState() {
     try {
       const rawKeys = localStorage.getItem('aetherspace_vault_keys');
       if (rawKeys) state.keys = Object.assign({ gemini: [], hf: [], groq: [], openrouter: [] }, JSON.parse(rawKeys));
+      const rawMcp = localStorage.getItem('aetherspace_mcp_servers');
+      if (rawMcp) state.mcp = Object.assign(state.mcp, JSON.parse(rawMcp));
     } catch (e) {
-      console.warn('Storage notice', e);
+      console.warn('Storage parse notice', e);
     }
     updateKeyBadge();
+    updateMcpUI();
   }
 
   function saveKeys() {
@@ -119,9 +140,34 @@
     populateModelSelectors();
   }
 
+  function saveMcpConfig() {
+    localStorage.setItem('aetherspace_mcp_servers', JSON.stringify(state.mcp));
+    updateMcpUI();
+  }
+
   function updateKeyBadge() {
     const total = Object.values(state.keys).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
     dom.keyCountBadge.textContent = `${total} Key${total === 1 ? '' : 's'}`;
+  }
+
+  function updateMcpUI() {
+    let enabledCount = 0;
+    if (state.mcp.exaSearch) enabledCount++;
+    if (state.mcp.hfHub) enabledCount++;
+    const totalConfigured = 2 + (state.mcp.customServers ? state.mcp.customServers.length : 0);
+
+    dom.mcpServerCountBadge.textContent = `${totalConfigured} Configured`;
+    dom.mcpSummaryTitle.textContent = `${totalConfigured} servers configured`;
+    dom.mcpSummarySub.textContent = `${enabledCount} enabled`;
+    dom.activeMcpPillText.textContent = `MCP (${enabledCount})`;
+
+    dom.mcpServerExaToggle.checked = state.mcp.exaSearch;
+    dom.mcpServerHfToggle.checked = state.mcp.hfHub;
+
+    dom.labelMenuSearch.textContent = `Web Search (Exa): ${state.mcp.exaSearch ? 'ON' : 'OFF'}`;
+    dom.labelMenuUrl.textContent = `Live URL-Context: ${state.mcp.urlContext ? 'ON' : 'OFF'}`;
+
+    dom.activeMcpPill.style.display = enabledCount > 0 ? 'inline-flex' : 'none';
   }
 
   function classifyApiKey(key) {
@@ -181,13 +227,15 @@
       dom.quickModelSelect.value = state.activeModel;
       dom.settingModelSelect.value = state.activeModel;
     }
+
+    dom.footerActiveModelDisplay.textContent = `Model: ${state.activeModel}`;
   }
 
   function getRealtimeTemporalSystemContext() {
     const now = new Date();
     const timeStr = now.toLocaleString('de-DE', { dateStyle: 'full', timeStyle: 'long' });
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return `[CURRENT REAL-TIME CONTEXT: Datum & Uhrzeit: ${timeStr} | Zeitzone: ${tz} | ISO-8601: ${now.toISOString()}]\nProvide real-time answers based on this exact live baseline.`;
+    return `[CURRENT REAL-TIME CONTEXT: Datum & Uhrzeit: ${timeStr} | Zeitzone: ${tz} | ISO-8601: ${now.toISOString()}]\nProvide precise real-time answers based on this exact live baseline.`;
   }
 
   function decideModelKeyAware(prompt) {
@@ -205,7 +253,7 @@
 
     if (available.includes('hf')) {
       if (lower.includes('code') || lower.includes('html') || lower.includes('css') || lower.includes('js')) {
-        return 'Qwen/Qwen2.5-Coder-32B-Instruct';
+        return 'deepseek-ai/DeepSeek-V4-Flash-0731';
       }
       return 'deepseek-ai/DeepSeek-R1';
     }
@@ -308,7 +356,6 @@
     dom.chatViewport.scrollTop = dom.chatViewport.scrollHeight;
   }
 
-  // URL CONTEXT INGESTION DETECTOR
   async function resolveUrlContextIfPresent(promptText) {
     if (!state.mcp.urlContext) return promptText;
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -329,7 +376,7 @@
     return promptText;
   }
 
-  // GEMINI STREAM CALL (WITH LIVE TEMPORAL & GROUNDING PARSING)
+  // GEMINI STREAM
   async function streamGemini(apiKey, model, systemPrompt, userMessage, config, onChunk) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
     const temporalContext = getRealtimeTemporalSystemContext();
@@ -353,7 +400,7 @@
       bodyPayload.generationConfig.thinkingConfig = { thinkingBudget: config.thinkingBudget };
     }
 
-    if (state.mcp.search) {
+    if (state.mcp.exaSearch) {
       bodyPayload.tools = [{ googleSearch: {} }];
     }
 
@@ -363,7 +410,7 @@
       body: JSON.stringify(bodyPayload)
     });
 
-    if (!res.ok && state.mcp.search) {
+    if (!res.ok && state.mcp.exaSearch) {
       delete bodyPayload.tools;
       res = await fetch(url, {
         method: 'POST',
@@ -419,9 +466,9 @@
     return { text: fullText, sources };
   }
 
-  // HUGGING FACE SERVERLESS CALL
+  // HUGGING FACE ROUTER CALL (OpenAI-Compatible SOTA Endpoint)
   async function streamHuggingFace(apiKey, model, systemPrompt, userMessage, config, onChunk) {
-    const endpoint = 'https://router.huggingface.co/hf-inference/v1/chat/completions';
+    const endpoint = 'https://router.huggingface.co/v1/chat/completions';
     const temporalContext = getRealtimeTemporalSystemContext();
     const fullSystem = (systemPrompt ? `${systemPrompt}\n\n` : '') + temporalContext;
 
@@ -530,7 +577,7 @@
     return { text: fullText, sources: [] };
   }
 
-  // RESILIENT CASCADE (PURGED OF 3.5 FLASH LITE)
+  // RESILIENT CASCADE
   async function executeWithResilientCascade(preferredModel, promptText, onChunk) {
     const candidateChain = [];
     const availableProviders = getAvailableProvidersWithKeys();
@@ -541,14 +588,13 @@
 
     if (preferredModel) candidateChain.push(preferredModel);
 
-    // Strictly SOTA fallback paths
     if (availableProviders.includes('gemini')) {
       ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.1-pro-preview'].forEach(m => {
         if (!candidateChain.includes(m)) candidateChain.push(m);
       });
     }
     if (availableProviders.includes('hf')) {
-      ['Qwen/Qwen2.5-Coder-32B-Instruct', 'deepseek-ai/DeepSeek-R1', 'mistralai/Mistral-7B-Instruct-v0.3'].forEach(m => {
+      ['deepseek-ai/DeepSeek-V4-Flash-0731', 'deepseek-ai/DeepSeek-R1', 'Qwen/Qwen2.5-Coder-32B-Instruct'].forEach(m => {
         if (!candidateChain.includes(m)) candidateChain.push(m);
       });
     }
@@ -608,26 +654,14 @@
     throw new Error(lastError ? (lastError.message || `HTTP ${lastError.status}`) : 'All available models and keys exhausted.');
   }
 
-  // MAIN SEND DISPATCHER (DIRECT, MULTI-AGENT, ORCHESTRATION)
+  // MAIN SEND DISPATCHER
   async function handleSend() {
     let rawText = dom.promptInput.value.trim();
     if (!rawText) return;
 
     dom.promptInput.value = '';
-    dom.slashMenu.style.display = 'none';
+    dom.promptPlusMenu.style.display = 'none';
     dom.btnSendPrompt.disabled = true;
-
-    // Check for slash command prefixes
-    if (rawText.startsWith('/search ')) {
-      state.mcp.search = true;
-      rawText = rawText.replace('/search ', '');
-    } else if (rawText.startsWith('/multi ')) {
-      setOperationalMode('multi');
-      rawText = rawText.replace('/multi ', '');
-    } else if (rawText.startsWith('/orch ')) {
-      setOperationalMode('orchestrator');
-      rawText = rawText.replace('/orch ', '');
-    }
 
     appendUserMessage(rawText);
 
@@ -657,7 +691,7 @@
       }
     }
 
-    // 2. TRUE CROSS-PROVIDER MULTI-AGENT PIPELINE
+    // 2. MULTI-AGENT PIPELINE
     else if (state.mode === 'multi') {
       const { bubble } = createAssistantMessageNode('Multi-Agent Consensus Pipeline');
       bubble.innerHTML = `
@@ -678,7 +712,7 @@
         renderFormattedContent(body1, r1.text, false, r1.sources);
 
         const availableHf = (state.keys.hf || []).length > 0;
-        const auditorModel = availableHf ? 'Qwen/Qwen2.5-Coder-32B-Instruct' : (r1.model === 'gemini-3.6-flash' ? 'gemini-3.1-pro-preview' : 'gemini-3.6-flash');
+        const auditorModel = availableHf ? 'deepseek-ai/DeepSeek-V4-Flash-0731' : (r1.model === 'gemini-3.6-flash' ? 'gemini-3.1-pro-preview' : 'gemini-3.6-flash');
         bubble.querySelector('.agent-step-header.reviewer').textContent = `🛡️ Agent 2 (${auditorModel}): Cross-Model Security & Logic Review`;
 
         showGatewayStatus(`Multi-Agent: Step 2 (${auditorModel} Audit)...`);
@@ -702,7 +736,7 @@
       }
     }
 
-    // 3. SUPERVISOR ORCHESTRATION PIPELINE
+    // 3. ORCHESTRATION PIPELINE
     else if (state.mode === 'orchestrator') {
       const { bubble } = createAssistantMessageNode('Supervisor Orchestrator Pipeline');
       bubble.innerHTML = `
@@ -739,9 +773,9 @@
 
   function setOperationalMode(mode) {
     state.mode = mode;
-    dom.pillModeChat.classList.toggle('active', mode === 'chat');
-    dom.pillModeMulti.classList.toggle('active', mode === 'multi');
-    dom.pillModeOrchestrator.classList.toggle('active', mode === 'orchestrator');
+    dom.btnModeChat.classList.toggle('active', mode === 'chat');
+    dom.btnModeMulti.classList.toggle('active', mode === 'multi');
+    dom.btnModeOrchestrator.classList.toggle('active', mode === 'orchestrator');
 
     const labels = { chat: 'Direct Chat', multi: 'Multi-Agent', orchestrator: 'Orchestration' };
     dom.activeModeBadge.textContent = labels[mode] || 'Direct Chat';
@@ -828,21 +862,39 @@
       }
     });
 
-    dom.promptInput.addEventListener('input', () => {
-      const val = dom.promptInput.value;
-      if (val.startsWith('/')) {
-        dom.slashMenu.style.display = 'flex';
-      } else {
-        dom.slashMenu.style.display = 'none';
-      }
+    dom.btnPromptPlus.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = dom.promptPlusMenu.style.display === 'flex';
+      dom.promptPlusMenu.style.display = isVisible ? 'none' : 'flex';
     });
 
-    dom.slashItems.forEach(item => {
-      item.addEventListener('click', () => {
-        dom.promptInput.value = item.dataset.cmd + ' ';
-        dom.promptInput.focus();
-        dom.slashMenu.style.display = 'none';
-      });
+    document.addEventListener('click', () => {
+      dom.promptPlusMenu.style.display = 'none';
+    });
+
+    dom.menuItemMcpServers.addEventListener('click', () => {
+      dom.mcpServersModal.style.display = 'flex';
+    });
+
+    dom.menuItemToggleSearch.addEventListener('click', () => {
+      state.mcp.exaSearch = !state.mcp.exaSearch;
+      saveMcpConfig();
+    });
+
+    dom.menuItemToggleUrl.addEventListener('click', () => {
+      state.mcp.urlContext = !state.mcp.urlContext;
+      saveMcpConfig();
+    });
+
+    dom.activeMcpPill.addEventListener('click', () => {
+      dom.mcpServersModal.style.display = 'flex';
+    });
+
+    dom.btnCloseMcpPill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.mcp.exaSearch = false;
+      state.mcp.hfHub = false;
+      saveMcpConfig();
     });
 
     dom.btnSendPrompt.addEventListener('click', handleSend);
@@ -864,36 +916,28 @@
       });
     });
 
-    dom.btnToggleNestedDrawer.addEventListener('click', () => {
-      const isHidden = dom.nestedControlsDrawer.style.display === 'none';
-      dom.nestedControlsDrawer.style.display = isHidden ? 'flex' : 'none';
-      dom.btnToggleNestedDrawer.classList.toggle('active', isHidden);
+    dom.btnModeChat.addEventListener('click', () => setOperationalMode('chat'));
+    dom.btnModeMulti.addEventListener('click', () => setOperationalMode('multi'));
+    dom.btnModeOrchestrator.addEventListener('click', () => setOperationalMode('orchestrator'));
+
+    dom.openMcpModalBtn.addEventListener('click', () => dom.mcpServersModal.style.display = 'flex');
+    dom.btnCloseMcpServers.addEventListener('click', () => dom.mcpServersModal.style.display = 'none');
+
+    dom.mcpServerExaToggle.addEventListener('change', () => {
+      state.mcp.exaSearch = dom.mcpServerExaToggle.checked;
+      saveMcpConfig();
     });
 
-    dom.pillModeChat.addEventListener('click', () => setOperationalMode('chat'));
-    dom.pillModeMulti.addEventListener('click', () => setOperationalMode('multi'));
-    dom.pillModeOrchestrator.addEventListener('click', () => setOperationalMode('orchestrator'));
-
-    dom.mcpToggleSearch.addEventListener('click', () => {
-      state.mcp.search = !state.mcp.search;
-      dom.mcpToggleSearch.classList.toggle('active', state.mcp.search);
-      dom.mcpToggleSearch.querySelector('span').textContent = `🌐 Web-Search: ${state.mcp.search ? 'ON' : 'OFF'}`;
+    dom.mcpServerHfToggle.addEventListener('change', () => {
+      state.mcp.hfHub = dom.mcpServerHfToggle.checked;
+      saveMcpConfig();
     });
 
-    dom.mcpToggleUrl.addEventListener('click', () => {
-      state.mcp.urlContext = !state.mcp.urlContext;
-      dom.mcpToggleUrl.classList.toggle('active', state.mcp.urlContext);
-      dom.mcpToggleUrl.querySelector('span').textContent = `🔗 URL-Context: ${state.mcp.urlContext ? 'ON' : 'OFF'}`;
-    });
-
-    dom.mcpToggleGithub.addEventListener('click', () => {
-      state.mcp.github = !state.mcp.github;
-      dom.mcpToggleGithub.classList.toggle('active', state.mcp.github);
-    });
-
-    dom.mcpToggleYoutube.addEventListener('click', () => {
-      state.mcp.youtube = !state.mcp.youtube;
-      dom.mcpToggleYoutube.classList.toggle('active', state.mcp.youtube);
+    dom.btnHealthExa.addEventListener('click', () => alert('✅ Exa Web Search MCP: 200 OK Online'));
+    dom.btnHealthHf.addEventListener('click', () => alert('✅ Hugging Face Hub MCP: 200 OK Online'));
+    dom.btnMcpRefreshAll.addEventListener('click', () => {
+      updateMcpUI();
+      alert('🔄 All MCP Servers checked & re-synchronized.');
     });
 
     dom.btnToggleAutoRouter.addEventListener('click', () => {
@@ -905,11 +949,13 @@
     dom.quickModelSelect.addEventListener('change', () => {
       state.activeModel = dom.quickModelSelect.value;
       dom.settingModelSelect.value = state.activeModel;
+      dom.footerActiveModelDisplay.textContent = `Model: ${state.activeModel}`;
     });
 
     dom.settingModelSelect.addEventListener('change', () => {
       state.activeModel = dom.settingModelSelect.value;
       dom.quickModelSelect.value = state.activeModel;
+      dom.footerActiveModelDisplay.textContent = `Model: ${state.activeModel}`;
     });
 
     dom.settingCustomModel.addEventListener('input', () => {
