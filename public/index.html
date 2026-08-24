@@ -12,7 +12,7 @@
 </head>
 <body>
   <div id="app-root" class="app-layout">
-    <!-- TOP HEADER -->
+    <!-- TOP CLEAN HEADER -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
@@ -20,12 +20,6 @@
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
           <span class="brand-title">AetherSpace</span>
-        </div>
-
-        <div class="mode-switcher">
-          <button class="mode-btn active" id="btn-mode-chat" data-mode="chat">Direct Chat</button>
-          <button class="mode-btn" id="btn-mode-multi" data-mode="multi">Multi-Agent</button>
-          <button class="mode-btn" id="btn-mode-orchestrator" data-mode="orchestrator">Orchestration</button>
         </div>
       </div>
 
@@ -42,11 +36,6 @@
           </button>
         </div>
 
-        <button class="action-btn" id="open-mcp-modal-btn" title="Model Context Protocol (MCP) Servers">
-          <span>🤿 MCP Servers</span>
-          <span class="badge" id="mcp-server-count-badge">2 Configured</span>
-        </button>
-
         <button class="action-btn" id="open-key-vault-btn" title="API Key Vault">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Key Vault</span>
@@ -60,13 +49,13 @@
       </div>
     </header>
 
-    <!-- MAIN CANVAS -->
+    <!-- MAIN CHAT CANVAS -->
     <main class="main-canvas">
       <div class="chat-viewport" id="chat-viewport">
         <div class="chat-messages-container" id="chat-messages">
           <div class="welcome-screen" id="welcome-screen">
             <h1 class="welcome-title">AetherSpace Studio</h1>
-            <p class="welcome-subtitle">Unified SOTA Multi-Provider Hub with MCP Server Integration. Direct Chat, Multi-Agent Consensus, and Supervisor Orchestration.</p>
+            <p class="welcome-subtitle">Unified SOTA Multi-Provider AI Studio with HuggingChat MCP Tools. Direct Chat, Multi-Agent Consensus, and Supervisor Orchestration.</p>
             <div class="quick-tags">
               <button class="tag-btn" data-preset="Wie lautet das heutige Datum und die aktuelle Uhrzeit in Deutschland?">🕒 Datum & Echtzeit-Check</button>
               <button class="tag-btn" data-preset="Was sind die neuesten Entwicklungen und Nachrichten zu Künstlicher Intelligenz heute?">🌐 Live Web-Suche</button>
@@ -85,9 +74,12 @@
         </div>
 
         <div class="prompt-bar-card">
-          <!-- INLINE PROMPT INPUT ROW -->
+          <!-- ATTACHED CONTEXT CHIPS -->
+          <div class="attached-context-tray" id="attached-context-tray" style="display:none;"></div>
+
+          <!-- INPUT ROW WITH PLUS, MCP PILL, TEXTAREA, MIC, SEND -->
           <div class="prompt-input-row">
-            <!-- FLOATING + ACTION BUTTON -->
+            <!-- FLOATING + ACTION DROPDOWN -->
             <div class="prompt-action-dropdown-wrapper">
               <button class="prompt-plus-btn" id="btn-prompt-plus" title="Add tools, files, or MCP servers">
                 <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -95,42 +87,58 @@
 
               <!-- + POPOVER MENU -->
               <div class="prompt-plus-menu" id="prompt-plus-menu" style="display:none;">
+                <div class="plus-menu-item has-submenu" id="menu-item-add-file">
+                  <span class="menu-item-icon">📄</span>
+                  <span class="menu-item-text">Add text file &gt;</span>
+                  <div class="plus-submenu" id="plus-file-submenu">
+                    <div class="submenu-item" id="submenu-upload-device">📤 Upload from device</div>
+                    <div class="submenu-item" id="submenu-fetch-url">🔗 Fetch from URL</div>
+                  </div>
+                </div>
                 <div class="plus-menu-item" id="menu-item-mcp-servers">
                   <span class="menu-item-icon">🤿</span>
                   <span class="menu-item-text">MCP Servers &gt;</span>
-                </div>
-                <div class="plus-menu-item" id="menu-item-toggle-search">
-                  <span class="menu-item-icon">🌐</span>
-                  <span class="menu-item-text" id="label-menu-search">Web Search (Exa): ON</span>
-                </div>
-                <div class="plus-menu-item" id="menu-item-toggle-url">
-                  <span class="menu-item-icon">🔗</span>
-                  <span class="menu-item-text" id="label-menu-url">Live URL-Context: ON</span>
                 </div>
               </div>
             </div>
 
             <!-- ACTIVE MCP PILL BADGE -->
-            <div class="active-mcp-pill" id="active-mcp-pill">
+            <div class="active-mcp-pill" id="active-mcp-pill" title="Click to manage MCP servers">
               <span class="mcp-icon">🤿</span>
               <span class="mcp-label" id="active-mcp-pill-text">MCP (1)</span>
-              <span class="mcp-close" id="btn-close-mcp-pill" title="Disable all MCP servers">&times;</span>
+              <span class="mcp-close" id="btn-close-mcp-pill" title="Disable all MCP tools">&times;</span>
             </div>
 
             <textarea class="prompt-input" id="prompt-input" rows="2" placeholder="Ask anything, paste URL context, or instruct multi-agent synthesis (Enter to send, Shift+Enter for newline)..."></textarea>
+            
+            <!-- HIDDEN FILE INPUT -->
+            <input type="file" id="hidden-device-file-input" multiple style="display:none;">
 
-            <button class="send-btn" id="btn-send-prompt">
+            <!-- MICROPHONE VOICE-TO-TEXT BUTTON -->
+            <button class="mic-btn" id="btn-mic-record" title="Voice Input (Speech-to-Text)">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+
+            <!-- SEND BUTTON -->
+            <button class="send-btn" id="btn-send-prompt" title="Send Prompt">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </button>
           </div>
 
-          <!-- BOTTOM FOOTER DETAILS -->
+          <!-- BOTTOM FOOTER CONTROLS -->
           <div class="prompt-bar-footer">
             <div class="footer-left">
               <span class="footer-model-text" id="footer-active-model-display">Model: deepseek-ai/DeepSeek-V4-Flash-0731</span>
-              <span class="mode-badge" id="active-mode-badge">Direct Chat</span>
+              
+              <!-- INLINE MODE SELECTOR -->
+              <div class="inline-mode-toggle">
+                <button class="mode-pill active" id="pill-mode-chat" data-mode="chat">💬 Direct Chat</button>
+                <button class="mode-pill" id="pill-mode-multi" data-mode="multi">👥 Multi-Agent</button>
+                <button class="mode-pill" id="pill-mode-orchestrator" data-mode="orchestrator">⚡ Orchestration</button>
+              </div>
+
               <button class="tool-chip" id="btn-clear-chat">Clear</button>
-              <button class="tool-chip" id="btn-export-codepen" title="Export to CodePen">CodePen</button>
+              <button class="tool-chip" id="btn-export-codepen" title="Export generated code to CodePen">CodePen</button>
             </div>
             <div class="footer-right">
               <span class="mcp-realtime-clock" id="mcp-realtime-clock">--:--:--</span>
@@ -141,7 +149,7 @@
       </div>
     </main>
 
-    <!-- MCP SERVERS MODAL (HUGGINGCHAT 2026 SPEC) -->
+    <!-- MCP SERVERS MODAL (MATCHING HUGGINGCHAT SPEC) -->
     <div class="modal-overlay" id="mcp-servers-modal" style="display:none;">
       <div class="modal-card wide">
         <div class="modal-header">
@@ -186,28 +194,49 @@
                     <span class="slider"></span>
                   </label>
                 </div>
+                <div class="mcp-card-status">
+                  <span class="status-dot green"></span> <span id="status-exa-text">Connected</span> • <span>3 tools</span>
+                </div>
                 <div class="mcp-card-url">https://mcp.exa.ai/mcp?tools=web_search_ex...</div>
                 <div class="mcp-card-actions">
                   <button class="btn-xs health-btn" id="btn-health-exa">🩺 Health Check</button>
+                  <button class="btn-xs" id="btn-toggle-tools-exa">▶ Available Tools (3)</button>
+                </div>
+                <div class="mcp-tools-accordion" id="tools-accordion-exa" style="display:none;">
+                  <div class="mcp-tool-def"><code>web_search</code>: Deep real-time web retrieval.</div>
+                  <div class="mcp-tool-def"><code>get_contents</code>: Crawls webpage DOM content.</div>
+                  <div class="mcp-tool-def"><code>find_similar</code>: Discovers related links.</div>
                 </div>
               </div>
 
-              <!-- BASE SERVER 2: HUGGING FACE MCP -->
+              <!-- BASE SERVER 2: HUGGING FACE HUB -->
               <div class="mcp-card">
                 <div class="mcp-card-header">
                   <div class="mcp-card-title">
                     <span class="server-badge orange">HF</span>
-                    <strong>Hugging Face Hub</strong>
+                    <strong>Hugging Face</strong>
                   </div>
                   <label class="switch">
                     <input type="checkbox" id="mcp-server-hf-toggle" checked>
                     <span class="slider"></span>
                   </label>
                 </div>
+                <div class="mcp-card-status">
+                  <span class="status-dot green"></span> <span id="status-hf-text">Connected</span> • <span>6 tools</span>
+                </div>
                 <div class="mcp-card-url">https://hf.co/mcp?login</div>
                 <div class="mcp-card-actions">
                   <button class="btn-xs health-btn" id="btn-health-hf">🩺 Health Check</button>
                   <button class="btn-xs" id="btn-mcp-hf-settings">⚙️ Settings</button>
+                  <button class="btn-xs" id="btn-toggle-tools-hf">▶ Available Tools (6)</button>
+                </div>
+                <div class="mcp-tools-accordion" id="tools-accordion-hf" style="display:none;">
+                  <div class="mcp-tool-def"><code>model_search</code>: Query Hugging Face Hub models.</div>
+                  <div class="mcp-tool-def"><code>dataset_info</code>: Fetch dataset schema.</div>
+                  <div class="mcp-tool-def"><code>space_runner</code>: Run Serverless inference.</div>
+                  <div class="mcp-tool-def"><code>paper_search</code>: Academic ML paper explorer.</div>
+                  <div class="mcp-tool-def"><code>repo_download</code>: Extract repo weights.</div>
+                  <div class="mcp-tool-def"><code>inference_status</code>: Check endpoint health.</div>
                 </div>
               </div>
             </div>
@@ -234,6 +263,54 @@
               <li>Use the Health Check button to verify server connectivity.</li>
               <li>You can add HTTP headers for authentication when required.</li>
             </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD CUSTOM MCP SERVER MODAL (MATCHING IMAGE 3) -->
+    <div class="modal-overlay" id="add-custom-mcp-modal" style="display:none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h2>Add MCP server</h2>
+            <p class="modal-subtitle">Add a custom MCP server to AetherSpace.</p>
+          </div>
+          <button class="icon-tool-btn" id="btn-close-add-mcp">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="add-mcp-body">
+          <div class="form-group">
+            <label class="form-label">Server Name <span style="color:var(--accent-rose);">*</span></label>
+            <input type="text" class="vault-input" id="new-mcp-name" placeholder="My MCP Server">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Server URL <span style="color:var(--accent-rose);">*</span></label>
+            <input type="text" class="vault-input" id="new-mcp-url" placeholder="https://example.com/mcp">
+          </div>
+
+          <div class="form-group">
+            <button class="btn-xs secondary" id="btn-toggle-mcp-headers">▶ HTTP Headers (Optional)</button>
+            <div class="mcp-headers-box" id="mcp-headers-box" style="display:none; margin-top:8px;">
+              <input type="text" class="vault-input" id="new-mcp-header-key" placeholder="Header Name (e.g. Authorization)">
+              <input type="password" class="vault-input" id="new-mcp-header-val" placeholder="Header Value (e.g. Bearer token_xyz)" style="margin-top:6px;">
+            </div>
+          </div>
+
+          <div class="mcp-warning-box">
+            <div class="warning-icon">⚠️</div>
+            <div class="warning-text">
+              <strong>Be careful with custom MCP servers.</strong><br>
+              They receive your requests (including conversation context and any headers you add) and can run powerful tools on your behalf. Only add servers you trust.
+            </div>
+          </div>
+
+          <div class="modal-actions-right">
+            <button class="btn-sm secondary" id="btn-cancel-add-mcp">Cancel</button>
+            <button class="btn-sm primary" id="btn-confirm-add-mcp">Add Server</button>
           </div>
         </div>
       </div>

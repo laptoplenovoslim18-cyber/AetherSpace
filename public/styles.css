@@ -68,33 +68,6 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 
 .brand-icon { width: 20px; height: 20px; color: var(--accent-cyan); }
 
-.mode-switcher {
-  display: flex;
-  background-color: var(--bg-canvas);
-  padding: 3px;
-  border-radius: 6px;
-  border: 1px solid var(--border-subtle);
-  margin-left: 8px;
-}
-
-.mode-btn {
-  padding: 4px 12px;
-  border-radius: 4px;
-  background: transparent;
-  border: none;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.mode-btn.active {
-  background-color: var(--bg-surface-elevated);
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
 .pill-toggle {
   display: inline-flex;
   align-items: center;
@@ -357,7 +330,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-/* PROMPT BAR (HUGGINGCHAT 2026 DESIGN) */
+/* PROMPT BAR (HUGGINGCHAT SPEC) */
 .prompt-bar-container {
   position: absolute;
   bottom: 0;
@@ -409,6 +382,28 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 
 .prompt-bar-card:focus-within { border-color: var(--border-focus); }
 
+.attached-context-tray {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.context-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.context-chip-close { cursor: pointer; color: var(--accent-rose); font-weight: bold; }
+
 .prompt-input-row {
   display: flex;
   align-items: center;
@@ -416,9 +411,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   position: relative;
 }
 
-.prompt-action-dropdown-wrapper {
-  position: relative;
-}
+.prompt-action-dropdown-wrapper { position: relative; }
 
 .prompt-plus-btn {
   background: var(--bg-canvas);
@@ -465,12 +458,41 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   font-size: 12.5px;
   color: var(--text-primary);
   cursor: pointer;
+  position: relative;
 }
 
 .plus-menu-item:hover {
   background: #1a2336;
   color: var(--accent-cyan);
 }
+
+.plus-menu-item.has-submenu:hover .plus-submenu {
+  display: flex;
+}
+
+.plus-submenu {
+  display: none;
+  position: absolute;
+  left: 100%;
+  bottom: 0;
+  width: 180px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-active);
+  border-radius: 8px;
+  padding: 6px;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+.submenu-item {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.submenu-item:hover { background: #1a2336; color: var(--accent-cyan); }
 
 .active-mcp-pill {
   display: inline-flex;
@@ -507,6 +529,39 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   max-height: 220px;
 }
 
+.mic-btn {
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.mic-btn:hover {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-active);
+}
+
+.mic-btn.recording {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: var(--accent-rose);
+  color: var(--accent-rose);
+  animation: pulseMic 1.2s infinite;
+}
+
+@keyframes pulseMic {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); box-shadow: 0 0 10px rgba(244, 63, 94, 0.4); }
+}
+
 .send-btn {
   background: linear-gradient(135deg, #0284c7, #2563eb);
   border: none;
@@ -534,13 +589,28 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .footer-left, .footer-right { display: flex; align-items: center; gap: 8px; }
 .footer-model-text { font-family: var(--font-mono); color: var(--accent-cyan); font-size: 11px; }
 
-.mode-badge {
-  font-size: 11px;
-  font-weight: 600;
+.inline-mode-toggle {
+  display: flex;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.mode-pill {
+  background: transparent;
+  border: none;
   padding: 2px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
   border-radius: 4px;
-  background-color: var(--bg-surface-elevated);
+  cursor: pointer;
+}
+
+.mode-pill.active {
+  background: var(--bg-surface-elevated);
   color: var(--accent-cyan);
+  font-weight: 600;
 }
 
 .tool-chip {
@@ -558,7 +628,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .mcp-realtime-clock { font-family: var(--font-mono); font-size: 11px; }
 
 /* MCP MODAL STYLES (HUGGINGCHAT SPEC) */
-.mcp-servers-body {
+.mcp-servers-body, .add-mcp-body {
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -580,17 +650,8 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .summary-sub { font-size: 12px; color: var(--text-muted); }
 .summary-actions { display: flex; gap: 8px; }
 
-.mcp-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
+.mcp-section { display: flex; flex-direction: column; gap: 10px; }
+.section-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 
 .mcp-grid {
   display: grid;
@@ -608,18 +669,8 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   gap: 8px;
 }
 
-.mcp-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.mcp-card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
+.mcp-card-header { display: flex; align-items: center; justify-content: space-between; }
+.mcp-card-title { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 
 .server-badge {
   font-size: 10px;
@@ -631,6 +682,23 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .server-badge.blue { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); }
 .server-badge.orange { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
 
+.mcp-card-status {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.status-dot.green { background: var(--accent-emerald); box-shadow: 0 0 6px var(--accent-emerald); }
+.status-dot.blue { background: var(--accent-cyan); }
+
 .mcp-card-url {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -640,15 +708,28 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   white-space: nowrap;
 }
 
-.mcp-card-actions {
+.mcp-card-actions { display: flex; gap: 6px; margin-top: 4px; }
+.health-btn { border-color: rgba(56, 189, 248, 0.3); color: var(--accent-cyan); }
+
+.mcp-tools-accordion {
+  background: #040609;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px;
   display: flex;
-  gap: 6px;
-  margin-top: 4px;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
 }
 
-.health-btn {
-  border-color: rgba(56, 189, 248, 0.3);
+.mcp-tool-def {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.mcp-tool-def code {
   color: var(--accent-cyan);
+  font-family: var(--font-mono);
 }
 
 .mcp-custom-empty-box {
@@ -676,11 +757,21 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   color: var(--text-secondary);
 }
 
-.mcp-quick-tips ul {
-  margin-left: 18px;
-  margin-top: 4px;
-  line-height: 1.5;
+.mcp-quick-tips ul { margin-left: 18px; margin-top: 4px; line-height: 1.5; }
+
+.mcp-warning-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
+
+.warning-icon { font-size: 18px; }
+.modal-actions-right { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 
 /* SETTINGS & MODALS */
 .settings-slideout {
@@ -754,12 +845,13 @@ input:checked + .slider:before { transform: translateX(16px); }
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  width: 780px;
+  width: 580px;
   max-width: 90vw;
   display: flex;
   flex-direction: column;
 }
 
+.modal-card.wide { width: 780px; }
 .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
 .modal-header h2 { font-size: 15px; font-weight: 600; }
 .modal-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
